@@ -1,0 +1,29 @@
+{
+  "title": "Wearix - Modern Clothing E-commerce Framer Template",
+  "textIncludes": [
+    [
+      "Premium wear for modern living",
+      false
+    ],
+    [
+      "Fresh fits in our latest drop",
+      true
+    ],
+    [
+      "Defining modern style",
+      true
+    ],
+    [
+      "The voice of quality",
+      true
+    ],
+    [
+      "WEARIX",
+      true
+    ]
+  ],
+  "linkCount": 50,
+  "images": 64,
+  "height": 12548,
+  "afterClick": 1017
+}
