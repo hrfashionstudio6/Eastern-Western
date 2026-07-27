@@ -2397,7 +2397,7 @@ footer { padding-top: 58px; }
   .article-body { padding-bottom: 817px; }
 
   .social-section { height: 829px; min-height: 829px; }
-  footer { min-height: 882px; }
+  footer { min-height: 0; }
 }
 
 @media (max-width: 1180px) {
@@ -2630,4 +2630,75 @@ h2,
   .page-hero-copy h1,
   .article-title h1,
   .product-panel h1 { font-size: 36px; }
+}
+
+.nav-logo {
+  font-family: "Abel", sans-serif;
+  font-size: 34px;
+  line-height: 1;
+  font-weight: 400;
+  color: #fff;
+  filter: none;
+}
+
+.nav-dark .nav-logo,
+.nav-scrolled .nav-logo,
+.nav:hover .nav-logo,
+.nav.menu-open .nav-logo {
+  color: #050505;
+  filter: none;
+}
+
+@media (max-width: 900px) {
+  .nav-logo { font-size: 28px; }
+}
+
+@media (max-width: 420px) {
+  .nav-logo { font-size: 24px; }
+}
+
+.nav-logo {
+  width: 210px;
+  justify-content: center;
+}
+
+.nav-logo-mark {
+  display: block;
+  width: 64px;
+  height: auto;
+}
+
+.nav-logo-word {
+  display: none;
+  font-family: "Abel", sans-serif;
+  font-size: 34px;
+  line-height: 1;
+  font-weight: 700;
+  color: currentColor;
+}
+
+.nav:hover .nav-logo-mark,
+.nav-scrolled .nav-logo-mark,
+.nav-dark .nav-logo-mark {
+  display: none;
+}
+
+.nav:hover .nav-logo-word,
+.nav-scrolled .nav-logo-word,
+.nav-dark .nav-logo-word {
+  display: block;
+}
+
+.nav.menu-open .nav-logo-mark {
+  display: block;
+  filter: none;
+}
+
+.nav.menu-open .nav-logo-word {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .nav-logo { width: auto; }
+  .nav-logo-mark { width: 58px; }
 }

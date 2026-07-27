@@ -119,7 +119,7 @@ function Header({ dark = false, scrolled = false, cartCount = 0, onSearch, onCar
 
   return (
     <nav className={`nav ${dark ? "nav-dark" : ""} ${scrolled ? "nav-scrolled" : ""} ${menuOpen ? "menu-open" : ""}`}>
-      <a className="brand-logo nav-logo" href="/" aria-label="EasternWestern home"><img src="/assets/easternwestern-logo.png" alt="EasternWestern" /></a>
+      <a className="brand-logo nav-logo" href="/" aria-label="EasternWestern home"><img className="nav-logo-mark" src="/assets/easternwestern-logo.png" alt="" /><span className="nav-logo-word">EasternWestern</span></a>
       <div className="nav-links">{links.map(([label, href]) => <a href={href} key={label}><span>{label}</span><span>{label}</span></a>)}</div>
       <div className="nav-actions">
         <button className="search-button" aria-label="Search Icon" onClick={onSearch}><span /></button>
