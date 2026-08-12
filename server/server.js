@@ -211,7 +211,13 @@ async function getDb() {
   if (!mongoUri) throw new Error("MONGODB_URI missing");
   if (!dbPromise) {
     const client = new MongoClient(mongoUri, { serverSelectionTimeoutMS: 8000 });
-    dbPromise = client.connect().then(() => client.db(dbName));
+    dbPromise = client.connect()
+      .then(() => client.db(dbName))
+      .catch(async (error) => {
+        dbPromise = undefined;
+        await client.close().catch(() => {});
+        throw error;
+      });
   }
   return dbPromise;
 }
