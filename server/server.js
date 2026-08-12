@@ -11,8 +11,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const port = Number(process.env.PORT || 5050);
 const host = process.env.HOST || "0.0.0.0";
-const mongoUri = process.env.MONGODB_URI;
 const dbName = process.env.MONGODB_DB || "easternwestern";
+const rawMongoUri = process.env.MONGODB_URI;
+const mongoUri = normalizeMongoUri(rawMongoUri);
 const adminPassword = process.env.ADMIN_PASSWORD;
 const adminToken = process.env.ADMIN_TOKEN;
 const customerSecret = process.env.CUSTOMER_TOKEN_SECRET || adminToken || "easternwestern-local-customer-secret";
@@ -21,6 +22,20 @@ const localStorePath = path.resolve(__dirname, "../data/local-store.json");
 let dbPromise;
 
 app.use(express.json({ limit: "16mb" }));
+
+function normalizeMongoUri(uri) {
+  const value = String(uri || "").trim();
+  const match = value.match(/^mongodb\+srv:\/\/([^@]+)@cluster0\.qrsel9m\.mongodb\.net\/?(?:\?(.*))?$/);
+  if (!match) return value;
+  const credentials = match[1];
+  const query = new URLSearchParams(match[2] || "");
+  query.set("replicaSet", "atlas-10svam-shard-0");
+  query.set("authSource", query.get("authSource") || "admin");
+  query.set("tls", "true");
+  query.set("retryWrites", query.get("retryWrites") || "true");
+  query.set("w", query.get("w") || "majority");
+  return `mongodb://${credentials}@ac-8iufvlj-shard-00-00.qrsel9m.mongodb.net:27017,ac-8iufvlj-shard-00-01.qrsel9m.mongodb.net:27017,ac-8iufvlj-shard-00-02.qrsel9m.mongodb.net:27017/${dbName}?${query.toString()}`;
+}
 
 function priceValue(price) {
   return Number(String(price || "").replace(/[^0-9.]/g, "")) || 0;
@@ -195,7 +210,7 @@ function localId() {
 async function getDb() {
   if (!mongoUri) throw new Error("MONGODB_URI missing");
   if (!dbPromise) {
-    const client = new MongoClient(mongoUri);
+    const client = new MongoClient(mongoUri, { serverSelectionTimeoutMS: 8000 });
     dbPromise = client.connect().then(() => client.db(dbName));
   }
   return dbPromise;
