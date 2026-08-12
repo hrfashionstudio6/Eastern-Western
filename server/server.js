@@ -10,7 +10,7 @@ import { defaultBlogs, defaultContent, defaultProducts } from "./defaultData.js"
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const port = Number(process.env.PORT || 5050);
-const host = process.env.HOST || "127.0.0.1";
+const host = process.env.HOST || "0.0.0.0";
 const mongoUri = process.env.MONGODB_URI;
 const dbName = process.env.MONGODB_DB || "easternwestern";
 const adminPassword = process.env.ADMIN_PASSWORD;
