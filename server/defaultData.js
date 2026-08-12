@@ -1,0 +1,136 @@
+export const defaultContent = {
+  key: "main",
+  settings: {
+    brandName: "EasternWestern",
+    logoUrl: "/assets/easternwestern-logo.png",
+    faviconUrl: "/favicon.png",
+    heroKicker: "Soft",
+    heroCompanion: "Warm Winter Layers",
+    heroTitle: "Premium wear\nfor modern living",
+    heroText: "Discover our new range of soft clothes made for your daily look and your best days with the finest fabrics.",
+    offerEnabled: true,
+    offerText: "Black friday sale 50% off",
+    footerText: "A sophisticated e-commerce template designed for modern and minimalist brands.",
+    contactEmail: "test@gmail.com",
+    contactPhone: "+001 234 567 890",
+    contactAddress: "England, London",
+  },
+  pageHeroes: {
+    about: {
+      kicker: "About",
+      companion: "Know about EasternWestern",
+      title: "Timeless design, modern wearability",
+      text: "We focus on creating essential garments that remain relevant, functional, and refined across seasons.",
+      image: "/assets/53.png",
+    },
+    shop: {
+      kicker: "Shop",
+      companion: "The new season",
+      title: "Elevate your daily wardrobe with ease",
+      text: "Explore handpicked modern silhouettes crafted from premium fabrics.",
+      image: "/assets/126.png",
+    },
+    blog: {
+      kicker: "Blog",
+      companion: "Read our stories",
+      title: "The craft behind every single stitch",
+      text: "Discover the detailed process of creating premium garments and timeless styling.",
+      image: "/assets/81.jpeg",
+    },
+    contact: {
+      kicker: "Contact",
+      companion: "Here to help you",
+      title: "Helping you define your personal style",
+      text: "Contact us today for refined service designed for the EasternWestern community.",
+      image: "/assets/88.png",
+    },
+  },
+  sections: {
+    about: {
+      logo: "/assets/easternwestern-logo.png",
+      poster: "/assets/story-poster.png",
+      year: "Since 2014",
+      title: "Defining modern style",
+      text: "A decade ago, we set out to redefine the modern silhouette. Today, we merge urban utility with high-end aesthetics in a resilient, beautiful collection.",
+    },
+    aboutTrust: {
+      rating: "4.9/5 rating",
+      text: "Trusted by 1k+ businesses",
+    },
+    aboutStats: {
+      kicker: "About EasternWestern",
+      title: "More than fashion, EasternWestern is a commitment to intentional design. Our curated collections focus on sleek silhouettes, empowering your unique and personal journey with modern ease.",
+    },
+    review: {
+      kicker: "Customer reviews",
+      title: "The voice of quality",
+      text: "Experience the difference through the words of customers who value premium fabrics and timeless design.",
+      rating: "5.0/5",
+      summary: "4.9 from 1k+ reviews",
+      quote: "The premium quality of the men's collection is truly unmatched lately. The fabrics feel incredibly premium and soft. This specific tailored fit is perfect for my busy office. A very sharp look. I love it every day.",
+      name: "James Carter",
+      role: "Creative Director",
+      image: "/assets/51.png",
+    },
+    features: {
+      kicker: "What defines our wear",
+      title: "Where style meets ease",
+      text: "Thoughtful design blending modern style, comfort, and versatility for everyday living across lifestyles.",
+    },
+    blogList: {
+      kicker: "EasternWestern Voice",
+      title: "Elevating your daily style journey",
+    },
+    contactInfo: {
+      emailIcon: "/assets/89.svg",
+      phoneIcon: "/assets/90.svg",
+      addressIcon: "/assets/91.svg",
+      image: "/assets/92.png",
+    },
+    social: {
+      kicker: "Stay connected",
+      title: "See our community\nin modern silhouettes",
+      text: "Connect with us on social media for a daily dose of fresh style, featuring exclusive looks from our community.",
+    },
+  },
+  reviewItems: [
+    { rating: "5.0/5", summary: "4.9 from 1k+ reviews", quote: "The premium quality of the men's collection is truly unmatched lately. The fabrics feel incredibly premium and soft. This specific tailored fit is perfect for my busy office. A very sharp look. I love it every day.", name: "James Carter", role: "Creative Director", image: "/assets/51.png" },
+    { rating: "4.9/5", summary: "Loved by daily customers", quote: "EasternWestern pieces feel polished without being difficult to wear. The fabric, fit, and clean styling make every outfit feel intentional.", name: "Ayesha Khan", role: "Fashion Stylist", image: "/assets/54.png" },
+    { rating: "5.0/5", summary: "Premium comfort", quote: "The collection looks minimal but feels very premium in hand. I ordered two pieces and both became my regular weekly essentials.", name: "Michael Lee", role: "Creative Lead", image: "/assets/55.png" },
+  ],
+  featureCards: [
+    { title: "Everyday Comfort", text: "Designed to feel natural on the body throughout long, active days.", tags: ["All-day wear", "Comfort", "Relaxed fit"], image: "/assets/43.png" },
+    { title: "Modern Silhouettes", text: "Contemporary shapes balance structure and ease for confident everyday styling.", tags: ["Balanced fit", "Modern", "Structured"], image: "/assets/44.jpeg" },
+    { title: "Effortless Styling", text: "Pieces work together naturally, making daily outfit choices simple and intuitive.", tags: ["Versatile", "Easy to style", "Layered"], image: "/assets/45.jpeg" },
+    { title: "Daily Essentials", text: "Core clothing pieces designed for frequent wear across modern everyday routines.", tags: ["Core pieces", "Everyday", "Wearable"], image: "/assets/46.jpeg" },
+    { title: "Wearable Design", text: "Design decisions focused on comfort, fit, and real-life wearability.", tags: ["Practical", "Functional", "Adaptable"], image: "/assets/47.jpeg" },
+    { title: "Clean Aesthetic", text: "Designed to feel natural on the body throughout long, active days.", tags: ["Clean lines", "Minimal", "Timeless"], image: "/assets/48.jpeg" },
+  ],
+  statCards: [
+    { value: "10M+", label: "Pieces worn daily", image: "/assets/64.png" },
+    { value: "98%", label: "Customer Satisfaction", image: "/assets/65.jpeg" },
+    { value: "300+", label: "Essential Styles", image: "/assets/66.jpeg" },
+    { value: "500K+", label: "Community worldwide", image: "/assets/67.png" },
+  ],
+  avatarImages: ["/assets/54.png", "/assets/55.png", "/assets/56.png", "/assets/57.png", "/assets/58.png"],
+  brandImages: ["/assets/59.svg", "/assets/60.svg", "/assets/61.svg", "/assets/62.svg", "/assets/63.svg", "/assets/59.svg", "/assets/63.svg", "/assets/61.svg"],
+  collections: [
+    { tag: "New", name: "Mens's wear", title: "Premium modern collection for men", text: "Upgrade your daily look with our crafted pieces made from the finest fabrics for lasting comfort and timeless style.", price: "$45.00", oldPrice: "$180.00", image: "/assets/35.png" },
+    { tag: "New", name: "Women's wear", title: "Modern daily wear for women", text: "Elevate your style with our signature soft pieces designed to make every single day feel truly fresh and special.", price: "$35.00", oldPrice: "$150.00", image: "/assets/36.png" },
+    { tag: "2026", name: "Children's wear", title: "Modern easy styles for children", text: "Provide your children with the best soft touch gear made for play and long lasting wear throughout every single busy day.", price: "$25.00", oldPrice: "$90.00", image: "/assets/37.png" },
+  ],
+  socialImages: ["/assets/72.png", "/assets/68.png", "/assets/69.jpg", "/assets/70.png", "/assets/71.png", "/assets/72.png", "/assets/73.png", "/assets/74.png", "/assets/72.png"],
+  heroSlides: [
+    { label: "Urban", image: "/assets/93.jpg" },
+    { label: "Latest", image: "/assets/03.jpg" },
+    { label: "Premium", image: "/assets/04.jpg" },
+    { label: "Arctic", image: "/assets/02.jpg" },
+    { label: "Casual", image: "/assets/94.png" },
+    { label: "Iconic", image: "/assets/95.png" },
+    { label: "Unique", image: "/assets/96.jpg" },
+  ],
+};
+
+export const defaultProducts = [];
+
+export const defaultBlogs = [];
