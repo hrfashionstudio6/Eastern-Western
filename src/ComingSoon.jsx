@@ -6,10 +6,10 @@ const ComingSoon = () => {
       <picture className="coming-soon-picture">
         <source
           media="(max-width: 767px)"
-          srcSet="/assets/Eastern-Western-Mobile.jpg"
+          srcSet="/assets/Eastern-Western-Mobile-v2.jpg"
         />
         <img
-          src="/assets/Eastern-Western-Desktop.jpg"
+          src="/assets/Eastern-Western-Desktop-v2.jpg"
           alt="Eastern Western Coming Soon"
           className="coming-soon-image"
         />
