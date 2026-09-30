@@ -1,16 +1,21 @@
-import React from 'react';
-import './ComingSoon.css';
+import './ComingSoon.css'
 
 const ComingSoon = () => {
   return (
-    <div className="coming-soon-container">
-      <img
-        src="/assets/coming-soon.jpg"
-        alt="Eastern Western Winter '26 Collection Coming Soon"
-        className="coming-soon-image"
-      />
+    <div className="coming-soon-shell">
+      <picture className="coming-soon-picture">
+        <source
+          media="(max-width: 767px)"
+          srcSet="/assets/Eastern-Western-Mobile.jpg"
+        />
+        <img
+          src="/assets/Eastern-Western-Desktop.jpg"
+          alt="Eastern Western Coming Soon"
+          className="coming-soon-image"
+        />
+      </picture>
     </div>
-  );
-};
+  )
+}
 
-export default ComingSoon;
+export default ComingSoon
