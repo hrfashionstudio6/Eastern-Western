@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import AdminDashboard from "./AdminDashboard.jsx";
 import { formatPKR, priceAmount } from "../shared/money.js";
+import { defaultContent } from "../server/defaultData.js";
 import "./index.css";
 
 const logo = "/assets/easternwestern-logo.png";
@@ -53,71 +54,7 @@ const shopProducts = [
 
 const allProducts = shopProducts;
 
-const fallbackSiteData = {
-  content: {
-    settings: {
-      heroKicker: "Soft",
-      heroCompanion: "Warm Winter Layers",
-      heroTitle: "Premium wear\nfor modern living",
-      heroText: "Discover our new range of soft clothes made for your daily look and your best days with the finest fabrics.",
-      offerEnabled: true,
-      offerText: "Black friday sale 50% off",
-      brandName: "EasternWestern",
-      logoUrl: "/assets/easternwestern-logo.png",
-      faviconUrl: "/favicon.png",
-      footerText: "A sophisticated e-commerce template designed for modern and minimalist brands.",
-      contactEmail: "test@gmail.com",
-      contactPhone: "+001 234 567 890",
-      contactAddress: "England, London",
-    },
-    pageHeroes: {
-      about: { kicker: "About", companion: "Know about EasternWestern", title: "Timeless design, modern wearability", text: "We focus on creating essential garments that remain relevant, functional, and refined across seasons.", image: "/assets/53.png" },
-      shop: { kicker: "Shop", companion: "The new season", title: "Elevate your daily wardrobe with ease", text: "Explore handpicked modern silhouettes crafted from premium fabrics.", image: "/assets/126.png" },
-      blog: { kicker: "Blog", companion: "Read our stories", title: "The craft behind every single stitch", text: "Discover the detailed process of creating premium garments and timeless styling.", image: "/assets/81.jpeg" },
-      contact: { kicker: "Contact", companion: "Here to help you", title: "Helping you define your personal style", text: "Contact us today for refined service designed for the EasternWestern community.", image: "/assets/88.png" },
-    },
-    sections: {
-      about: { logo: "/assets/easternwestern-logo.png", poster: "/assets/story-poster.png", year: "Since 2014", title: "Defining modern style", text: "A decade ago, we set out to redefine the modern silhouette. Today, we merge urban utility with high-end aesthetics in a resilient, beautiful collection." },
-      aboutTrust: { rating: "4.9/5 rating", text: "Trusted by 1k+ businesses" },
-      aboutStats: { kicker: "About EasternWestern", title: "More than fashion, EasternWestern is a commitment to intentional design. Our curated collections focus on sleek silhouettes, empowering your unique and personal journey with modern ease." },
-      review: { kicker: "Customer reviews", title: "The voice of quality", text: "Experience the difference through the words of customers who value premium fabrics and timeless design.", rating: "5.0/5", summary: "4.9 from 1k+ reviews", quote: "The premium quality of the men's collection is truly unmatched lately. The fabrics feel incredibly premium and soft. This specific tailored fit is perfect for my busy office. A very sharp look. I love it every day.", name: "James Carter", role: "Creative Director", image: "/assets/51.png" },
-      features: { kicker: "What defines our wear", title: "Where style meets ease", text: "Thoughtful design blending modern style, comfort, and versatility for everyday living across lifestyles." },
-      blogList: { kicker: "EasternWestern Voice", title: "Elevating your daily style journey" },
-      contactInfo: { emailIcon: "/assets/89.svg", phoneIcon: "/assets/90.svg", addressIcon: "/assets/91.svg", image: "/assets/92.png" },
-      social: { kicker: "Stay connected", title: "See our community\nin modern silhouettes", text: "Connect with us on social media for a daily dose of fresh style, featuring exclusive looks from our community." },
-    },
-    heroSlides: heroSlides.map(([label, image]) => ({ label, image })),
-    reviewItems: [
-      { rating: "5.0/5", summary: "4.9 from 1k+ reviews", quote: "The premium quality of the men's collection is truly unmatched lately. The fabrics feel incredibly premium and soft. This specific tailored fit is perfect for my busy office. A very sharp look. I love it every day.", name: "James Carter", role: "Creative Director", image: "/assets/51.png" },
-      { rating: "4.9/5", summary: "Loved by daily customers", quote: "EasternWestern pieces feel polished without being difficult to wear. The fabric, fit, and clean styling make every outfit feel intentional.", name: "Ayesha Khan", role: "Fashion Stylist", image: "/assets/54.png" },
-      { rating: "5.0/5", summary: "Premium comfort", quote: "The collection looks minimal but feels very premium in hand. I ordered two pieces and both became my regular weekly essentials.", name: "Michael Lee", role: "Creative Lead", image: "/assets/55.png" },
-    ],
-    featureCards: [
-      { title: "Everyday Comfort", text: "Designed to feel natural on the body throughout long, active days.", tags: ["All-day wear", "Comfort", "Relaxed fit"], image: "/assets/43.png" },
-      { title: "Modern Silhouettes", text: "Contemporary shapes balance structure and ease for confident everyday styling.", tags: ["Balanced fit", "Modern", "Structured"], image: "/assets/44.jpeg" },
-      { title: "Effortless Styling", text: "Pieces work together naturally, making daily outfit choices simple and intuitive.", tags: ["Versatile", "Easy to style", "Layered"], image: "/assets/45.jpeg" },
-      { title: "Daily Essentials", text: "Core clothing pieces designed for frequent wear across modern everyday routines.", tags: ["Core pieces", "Everyday", "Wearable"], image: "/assets/46.jpeg" },
-      { title: "Wearable Design", text: "Design decisions focused on comfort, fit, and real-life wearability.", tags: ["Practical", "Functional", "Adaptable"], image: "/assets/47.jpeg" },
-      { title: "Clean Aesthetic", text: "Designed to feel natural on the body throughout long, active days.", tags: ["Clean lines", "Minimal", "Timeless"], image: "/assets/48.jpeg" },
-    ],
-    statCards: [
-      { value: "10M+", label: "Pieces worn daily", image: "/assets/64.png" },
-      { value: "98%", label: "Customer Satisfaction", image: "/assets/65.jpeg" },
-      { value: "300+", label: "Essential Styles", image: "/assets/66.jpeg" },
-      { value: "500K+", label: "Community worldwide", image: "/assets/67.png" },
-    ],
-    avatarImages: ["/assets/54.png", "/assets/55.png", "/assets/56.png", "/assets/57.png", "/assets/58.png"],
-    brandImages: ["/assets/59.svg", "/assets/60.svg", "/assets/61.svg", "/assets/62.svg", "/assets/63.svg", "/assets/59.svg", "/assets/63.svg", "/assets/61.svg"],
-    collections: [
-      { tag: "New", name: "Mens's wear", title: "Premium modern collection for men", text: "Upgrade your daily look with crafted pieces made from refined fabrics.", price: "$45.00", oldPrice: "$180.00", image: "/assets/35.png" },
-      { tag: "New", name: "Women's wear", title: "Modern daily wear for women", text: "Elevate your daily style with soft pieces designed for fresh everyday looks.", price: "$35.00", oldPrice: "$150.00", image: "/assets/36.png" },
-      { tag: "2026", name: "Children's wear", title: "Modern easy styles for children", text: "Soft-touch clothing made for play, comfort, and long-lasting wear.", price: "$25.00", oldPrice: "$90.00", image: "/assets/37.png" },
-    ],
-    socialImages: ["/assets/72.png", "/assets/68.png", "/assets/69.jpg", "/assets/70.png", "/assets/71.png", "/assets/72.png", "/assets/73.png", "/assets/74.png", "/assets/72.png"],
-  },
-  products: [],
-  blogs: [],
-};
+const fallbackSiteData = { content: defaultContent, products: [], blogs: [] };
 
 function productDocToItem(product) {
   const media = Array.isArray(product.media) ? product.media.filter(Boolean) : [];
@@ -372,7 +309,7 @@ function CheckoutPage({ items, customerAccount, customerToken, onQty, onRemove, 
   const submitOrder = async (event) => {
     event.preventDefault();
     if (!customerAccount) {
-      setOrderMessage("Login required for order tracking");
+      setOrderMessage("Please log in to place your order and view its updates.");
       onNeedLogin?.();
       return;
     }
@@ -405,7 +342,7 @@ function CheckoutPage({ items, customerAccount, customerToken, onQty, onRemove, 
       <section className="section checkout-page checkout-success">
         <Kicker>Order placed</Kicker>
         <h1>Your order is saved</h1>
-        <p>Order number: <b>{orderComplete}</b>. Login account mein tracking show ho jayegi.</p>
+        <p>Order number: <b>{orderComplete}</b>. You can view order updates in your account.</p>
         <Button dark href="/shop">Continue shopping</Button>
       </section>
     );
@@ -416,7 +353,7 @@ function CheckoutPage({ items, customerAccount, customerToken, onQty, onRemove, 
       <section className="section checkout-page checkout-success">
         <Kicker>Checkout</Kicker>
         <h1>Your cart is empty</h1>
-        <p>Order details page cart items add karne ke baad show hogi.</p>
+        <p>Add an article to your cart to continue to checkout.</p>
         <Button dark href="/shop">Shop all items</Button>
       </section>
     );
@@ -622,7 +559,7 @@ function Products({ title, subtitle, items = [], id = "shop" }) {
         <div><Kicker>{title}</Kicker><h2>{subtitle}</h2></div>
         <Button dark href="/shop">See all collections</Button>
       </div>
-      {items.length ? <div className="product-grid">{items.map((item) => <ProductCard key={item[1]} item={item} />)}</div> : <EmptyState title="No listings yet" text="Add real products from the dashboard." />}
+      {items.length ? <div className="product-grid">{items.map((item) => <ProductCard key={item[1]} item={item} />)}</div> : <EmptyState title="New styles coming soon" text="Our available articles will appear here. Check back for new arrivals." />}
     </section>
   );
 }
@@ -648,7 +585,7 @@ function ReviewSection({ content }) {
     <section id="reviews" className="section review">
       <div className="center-head reveal"><Kicker>{review.kicker}</Kicker><h2>{review.title}</h2><p>{review.text}</p></div>
       <div className="review-slider reveal">
-        <button type="button" onClick={() => goReview(-1)} aria-label="Previous review">&lt;</button>
+        <button type="button" onClick={() => goReview(-1)} aria-label="Previous shopping tip">&lt;</button>
         <div className="review-window">
           <div className="review-track" style={{ transform: `translateX(-${activeReview * 100}%)` }}>
             {reviews.map((item, index) => (
@@ -660,10 +597,10 @@ function ReviewSection({ content }) {
             ))}
           </div>
         </div>
-        <button type="button" onClick={() => goReview(1)} aria-label="Next review">&gt;</button>
+        <button type="button" onClick={() => goReview(1)} aria-label="Next shopping tip">&gt;</button>
       </div>
       <div className="review-dots">
-        {reviews.map((item, index) => <button type="button" className={activeReview === index ? "active" : ""} onClick={() => setActiveReview(index)} key={`${item.name}-${index}`} aria-label={`Show review ${index + 1}`} />)}
+        {reviews.map((item, index) => <button type="button" className={activeReview === index ? "active" : ""} onClick={() => setActiveReview(index)} key={`${item.name}-${index}`} aria-label={`Show shopping tip ${index + 1}`} />)}
       </div>
     </section>
   );
@@ -680,25 +617,28 @@ function FeaturesSection({ content }) {
   );
 }
 
-function CollectionsSection({ content }) {
+function CollectionsSection({ content, products = [] }) {
   const liveCollections = Array.isArray(content?.collections) && content.collections.length
     ? content.collections.map((item) => [item.tag, item.name, item.title, item.text, item.price, item.oldPrice, item.image])
-    : collections;
+    : defaultContent.collections.map((item) => [item.tag, item.name, item.title, item.text, item.price, item.oldPrice, item.image]);
+  const groups = productGroups(products);
   return (
     <section id="collections" className="section collections">
       <div className="section-head reveal">
-        <div><Kicker>Our Collections</Kicker><h2>Modern collections defined by simplicity</h2></div>
+        <div><Kicker>Our Collections</Kicker><h2>Find a style for your wardrobe</h2></div>
         <Button dark href="/shop">Shop all items</Button>
       </div>
-      {liveCollections.map((c, i) => (
+      {liveCollections.map((c, i) => {
+        const articles = groups[["UNSTITCHED", "READY TO WEAR", "FREEDOM TO BUY"][i]] || [];
+        return (
         <div className={`collection reveal ${i % 2 ? "flip" : ""}`} key={c[1]}>
           <div className="collection-copy">
-            <div className="tag">{c[0]}</div><h4>{c[1]}</h4><h3>{c[2]}</h3><p>{c[3]}</p>
-            <small>Pricing start from:</small><strong>{formatPKR(c[4])} {c[5] && <s>{formatPKR(c[5])}</s>}</strong><Button dark href="/shop">All collections</Button>
+            <div className="tag">{articles.length ? "Explore" : "Upcoming"}</div><h4>{c[1]}</h4><h3>{c[2]}</h3><p>{c[3]}</p>
+            {articles.length ? <><small>Articles start from:</small><strong>{formatPKR(Math.min(...articles.map((item) => priceAmount(item[3]))))}</strong></> : <small>Articles will appear here when available.</small>}<Button dark href="/shop">Explore the shop</Button>
           </div>
           <div className="collection-img"><img src={c[6]} alt={c[1]} /></div>
         </div>
-      ))}
+      ); })}
     </section>
   );
 }
@@ -708,8 +648,8 @@ function BlogList({ compact = false, posts: suppliedPosts, allPosts = blogs, con
   const section = { ...fallbackSiteData.content.sections.blogList, ...(content?.sections?.blogList || {}) };
   return (
     <section id={compact ? "blog-list" : "home-blog"} className={`section blog ${compact ? "blog-index" : ""}`}>
-      {!compact && <div className="section-head reveal"><div><Kicker>{section.kicker}</Kicker><h2>{section.title}</h2></div><Button dark href="/blog">Read all blogs</Button></div>}
-      {posts.length ? <div className="blog-grid">{posts.map((b, i) => <a className={`blog-card reveal ${i === 0 ? "large" : ""}`} href={slugPath("blog", b[2])} key={b[1]}>{b[6] ? <img src={b[6]} alt="" /> : <div className="media-placeholder">No image</div>}<div><span>{b[0]}</span><h3>{b[1]}</h3>{(!compact || i === 0) && <p>{b[3]}</p>}<small>{b[4]} <b>{b[5]}</b></small></div></a>)}</div> : <EmptyState title="No blogs yet" text="Add real blog posts from the dashboard." />}
+      {!compact && <div className="section-head reveal"><div><Kicker>{section.kicker}</Kicker><h2>{section.title}</h2></div><Button dark href="/blog">Read the journal</Button></div>}
+      {posts.length ? <div className="blog-grid">{posts.map((b, i) => <a className={`blog-card reveal ${i === 0 ? "large" : ""}`} href={slugPath("blog", b[2])} key={b[1]}>{b[6] ? <img src={b[6]} alt="" /> : <div className="media-placeholder">No image</div>}<div><span>{b[0]}</span><h3>{b[1]}</h3>{(!compact || i === 0) && <p>{b[3]}</p>}<small>{b[4]} <b>{b[5]}</b></small></div></a>)}</div> : <EmptyState title="Stories coming soon" text="Visit again for style notes and updates from Eastern Western." />}
     </section>
   );
 }
@@ -727,14 +667,13 @@ function SocialSection({ content }) {
 
 function Footer({ settings = fallbackSiteData.content.settings }) {
   const footerSettings = { ...fallbackSiteData.content.settings, ...settings };
-  const socialLinks = [["Instagram", "https://instagram.com/"], ["Dribbble", "https://dribbble.com/"], ["Facebook", "https://facebook.com/"], ["Twitter", "https://x.com/"], ["Youtube", "https://youtube.com/"]];
   return (
     <footer id="footer">
-      <div className="newsletter"><h3>Subscribe to<br />our news later</h3><form><input placeholder="Enter email" /><button>Subscribe</button></form></div>
+      <div className="newsletter"><h3>Need help with<br />an article or order?</h3><Button href="/contact">Contact our team</Button></div>
       <div className="footer-grid">
         <div><a className="brand-logo footer-logo" href="/" aria-label="EasternWestern home"><img src={footerSettings.logoUrl || "/assets/easternwestern-logo.png"} alt="EasternWestern" /></a><p>{footerSettings.footerText}</p><Button href="/contact">Contact EasternWestern</Button></div>
-        <div><h4>Quick Links</h4>{[["Home", "/"], ["About", "/about"], ["Blog", "/blog"], ["Shop", "/shop"], ["Reviews", "/about"], ["Styles", "/blog"]].map(([x, href]) => <a href={href} key={x}>{x}</a>)}</div>
-        <div><h4>Follow us:</h4>{socialLinks.map(([label, href]) => <a href={href} key={label} target="_blank" rel="noreferrer">{label}</a>)}</div>
+        <div><h4>Explore</h4>{[["Home", "/"], ["Our story", "/about"], ["Style journal", "/blog"], ["Shop articles", "/shop"]].map(([label, href]) => <a href={href} key={label}>{label}</a>)}</div>
+        <div><h4>Shopping help</h4><a href="/contact">Article enquiries</a><a href="/contact">Order support</a><a href="/contact">Delivery questions</a><a href="/contact">Exchange enquiries</a></div>
         <div><h4>Get in touch</h4><a href={`mailto:${footerSettings.contactEmail}`}>{footerSettings.contactEmail}</a><a href={`tel:${footerSettings.contactPhone}`}>{footerSettings.contactPhone}</a><a href={`https://maps.google.com/?q=${encodeURIComponent(footerSettings.contactAddress || "")}`} target="_blank" rel="noreferrer">{footerSettings.contactAddress}</a></div>
       </div>
       <div className="footer-word">{footerSettings.brandName || "EasternWestern"}</div>
@@ -774,7 +713,7 @@ function PopularPicks({ products = [], active = "UNSTITCHED", onSelect }) {
   };
   return (
     <section className="popular-picks">
-      <p>DISCOVER OUR MOST-POPULAR PICKS</p>
+      <p>EXPLORE THE EASTERN WESTERN COLLECTION</p>
       <div className="pick-tabs">
         {shopPickTabs.map((label) => <button className={selected === label ? "active" : ""} disabled={!groups[label].length} onClick={() => choose(label)} key={label}>{label}{!groups[label].length && <small>Upcoming</small>}</button>)}
       </div>
@@ -786,7 +725,7 @@ function PopularPicks({ products = [], active = "UNSTITCHED", onSelect }) {
             </a>
           ))}
         </div>
-      ) : <EmptyState title="No listings yet" text="Add products from the dashboard." />}
+      ) : <EmptyState title="New styles coming soon" text="Our available articles will appear here. Check back for new arrivals." />}
     </section>
   );
 }
@@ -814,19 +753,19 @@ function HomePage({ data }) {
   return (
     <>
       <section id="home-hero" className="hero">
-        <img key={activeHero[1]} src={activeHero[1]} alt="Modern black leather outfit" />
+        <img key={activeHero[1]} src={activeHero[1]} alt="Eastern Western clothing collection" />
         <div className="hero-overlay" />
         <div className="thumbs">{slides.map(([label, src], i) => <button className={i === slideIndex ? "active" : ""} onClick={() => setActiveSlide(i)} key={label} aria-label={`Show ${label} collection`}><img src={src} alt="" /><span>{label}</span></button>)}</div>
       </section>
       <PopularPicks products={data.products} />
-      <Products id="new-arrivals" title="New Arrivals" subtitle="Fresh fits in our latest drop" items={homeArrivals} />
+      <Products id="new-arrivals" title="New Arrivals" subtitle="Discover our latest articles" items={homeArrivals} />
       <section id="about" className="about-hero">
         <video autoPlay muted loop playsInline poster={about.poster || "/assets/story-poster.png"}><source src="/assets/story.mp4" type="video/mp4" /></video>
         <div className="hero-overlay" />
         <div className="about-copy reveal"><img src={about.logo || logo} alt="" /><p>{about.year}</p><h2>{about.title}</h2><p>{about.text}</p><div className="row"><Button href="/about">More about us</Button><Button ghost href="/contact">Contact us</Button></div></div>
       </section>
-      <Products id="best-sellers" title="Best sellers" subtitle="Our signature best selling pieces" items={homeSellers} />
-      <CollectionsSection content={data.content} />
+      <Products id="best-sellers" title="Best sellers" subtitle="Explore more from Eastern Western" items={homeSellers} />
+      <CollectionsSection content={data.content} products={data.products} />
       <ReviewSection content={data.content} />
       <FeaturesSection content={data.content} />
       <BlogList allPosts={data.blogs} content={data.content} />
@@ -854,14 +793,12 @@ function AboutPage({ content }) {
   const aboutTrust = { ...fallbackSiteData.content.sections.aboutTrust, ...(content?.sections?.aboutTrust || {}) };
   const aboutStats = { ...fallbackSiteData.content.sections.aboutStats, ...(content?.sections?.aboutStats || {}) };
   const liveStats = Array.isArray(content?.statCards) && content.statCards.length ? content.statCards : fallbackSiteData.content.statCards;
-  const avatarImages = Array.isArray(content?.avatarImages) && content.avatarImages.length ? content.avatarImages : fallbackSiteData.content.avatarImages;
-  const brandImages = Array.isArray(content?.brandImages) && content.brandImages.length ? content.brandImages : fallbackSiteData.content.brandImages;
   return (
     <>
       <PageHero {...heroContent} id="about-hero" />
       <section id="about-trust" className="section rating-strip reveal">
-        <div className="rating-copy"><div className="avatar-stack">{avatarImages.map((src, i) => <img src={src} key={`${src}-${i}`} alt="" />)}</div><div><b>{aboutTrust.rating}</b><p>{aboutTrust.text}</p></div></div>
-        <div className="brand-marquee"><div>{brandImages.map((src, i) => <img src={src} key={`${src}-${i}`} alt="" />)}</div></div>
+        <div className="rating-copy"><div><b>{aboutTrust.rating}</b><p>{aboutTrust.text}</p></div></div>
+        <div><b>Prices in PKR</b><p>Cash on Delivery is currently available at checkout.</p></div>
       </section>
       <section id="about-stats" className="section about-stats">
         <div className="center-head reveal"><Kicker>{aboutStats.kicker}</Kicker><h2>{aboutStats.title}</h2></div>
@@ -890,9 +827,9 @@ function ShopPage({ products, content }) {
           <h3>Availability</h3>
           <label><input type="checkbox" /> In stock only</label>
           <h3>By Price</h3>
-          <label><input type="checkbox" /> Rs. 0 to Rs. 3,000</label>
-          <label><input type="checkbox" /> Rs. 3,000 to Rs. 6,000</label>
-          <label><input type="checkbox" /> Rs. 6,000 to Rs. 15,000</label>
+          <label><input type="checkbox" /> PKR 0 to PKR 3,000</label>
+          <label><input type="checkbox" /> PKR 3,000 to PKR 6,000</label>
+          <label><input type="checkbox" /> PKR 6,000 to PKR 15,000</label>
           <h3>By Pieces</h3>
           <label><input type="checkbox" /> 1 Piece</label>
           <label><input type="checkbox" /> 2 Pieces</label>
@@ -907,7 +844,7 @@ function ShopPage({ products, content }) {
             <div><b>{selectedFilter}</b><span>{currentProducts.length} products</span></div>
             <select aria-label="Sort products"><option>Featured</option><option>Best selling</option><option>Price, low to high</option><option>Price, high to low</option></select>
           </div>
-          {currentProducts.length ? <div className="product-grid listing-grid">{currentProducts.map((item) => <ProductCard key={item[1]} item={item} listing />)}</div> : <EmptyState title="No listings yet" text="Add real products from the dashboard." />}
+          {currentProducts.length ? <div className="product-grid listing-grid">{currentProducts.map((item) => <ProductCard key={item[1]} item={item} listing />)}</div> : <EmptyState title="New styles coming soon" text="Our available articles will appear here. Check back for new arrivals." />}
         </div>
       </section>
       <SocialSection content={content} />
@@ -924,10 +861,11 @@ function ProductPage({ slug, products, onAddToCart }) {
   useEffect(() => {
     setActiveImage(firstImage);
   }, [firstImage, slug]);
-  if (!product) return <><PageHero kicker="Shop" companion="No product" title="Product not found" text="Add real products from the dashboard." image={hero} /><SocialSection /></>;
+  if (!product) return <><PageHero kicker="Shop" companion="No product" title="Product not found" text="Our available articles will appear here. Check back for new arrivals." image={hero} /><SocialSection /></>;
   const relatedProducts = sourceProducts.filter((item) => item[2] !== product[2]).slice(0, 3);
-  const specs = [["Material", "Premium organic cotton textured knit"], ["Care", "Machine wash cold, lay flat"], ["Warranty", "One year full quality guarantee"]];
-  const trust = [["Trusted Quality", "Every piece is checked to ensure it meets our standards."], ["Real Time Tracking", "Get live updates from our warehouse to your doorstep."], ["Secure Payments", "Shop confidently with our secure, encrypted checkout."], ["Easy Returns", "Change your mind? Return any item easily within thirty days."]];
+  const materials = [...new Set((product.variants || []).map((variant) => variant.material).filter(Boolean))];
+  const specs = [["Fabric", materials.join(", ") || "Check the article description or ask us for details."], ["Care", "Ask us for article-specific care instructions before washing."], ["Exchanges", "Contact us to confirm the terms for your article before ordering."]];
+  const trust = [["Article details", "Check the photos, description and included pieces before ordering."], ["Order support", "Contact us with your order number if you need help."], ["Cash on Delivery", "This is the payment method currently available at checkout."], ["Prices in PKR", "Article prices and your order subtotal are shown in Pakistani rupees."]];
   return (
     <>
       <section className="section product-detail">
@@ -952,7 +890,7 @@ function ProductPage({ slug, products, onAddToCart }) {
           <div><Kicker>More styles</Kicker><h2>You may also like</h2></div>
           <Button dark href="/shop">Shop all items</Button>
         </div>
-        {relatedProducts.length ? <div className="product-grid">{relatedProducts.map((item) => <ProductCard key={item[1]} item={item} />)}</div> : <EmptyState title="No related listings" text="Add more products from the dashboard." />}
+        {relatedProducts.length ? <div className="product-grid">{relatedProducts.map((item) => <ProductCard key={item[1]} item={item} />)}</div> : <EmptyState title="More articles coming soon" text="Explore the shop for other available articles." />}
       </section>
       <SocialSection />
     </>
@@ -975,7 +913,7 @@ function BlogPage({ posts, content }) {
 
 function BlogDetailPage({ slug, posts }) {
   const post = posts.find((b) => b[2] === slug) || posts[0];
-  if (!post) return <><PageHero kicker="Blog" companion="No post" title="Blog not found" text="Add real blog posts from the dashboard." image={hero} /><SocialSection /></>;
+  if (!post) return <><PageHero kicker="Blog" companion="No post" title="Blog not found" text="Visit again for style notes and updates from Eastern Western." image={hero} /><SocialSection /></>;
   const bodyBlocks = String(post[7] || "").split(/\n+/).map((block) => block.trim()).filter(Boolean);
   return (
     <>
@@ -985,21 +923,13 @@ function BlogDetailPage({ slug, posts }) {
       </section>
       <article className="article-body reveal">
         {bodyBlocks.length ? bodyBlocks.map((block, index) => index === 0 ? <h2 key={block}>{block}</h2> : <p key={block}>{block}</p>) : <>
-        <h2>1. Why Quality Matters</h2>
-        <p>Finding the right balance between comfort and aesthetics is the foundation of modern fashion. It is not about how many items you own, but how those items work together to create a cohesive look that feels both effortless and intentional.</p>
-        <ul><li>Durability: Premium fabrics ensure your pieces last through seasons of wear.</li><li>Versatility: A neutral base allows you to mix and match with ease.</li><li>Comfort: Well-tailored silhouettes provide confidence throughout the day.</li></ul>
-        <h2>2. Essential Pieces Every Closet Needs</h2>
-        <p>True style starts with the basics. Investing in a few core items allows you to build a signature look without overcomplicating your daily routine. Look for pieces that speak to your personality while maintaining a clean, sophisticated edge.</p>
-        <ul><li>Heavyweight Tees: Look for high-density cotton for a structured, boxy fit.</li><li>Relaxed Trousers: Transition from day to night with ease and elegance.</li><li>Statement Outerwear: A bold coat or leather jacket elevates any simple outfit.</li></ul>
-        <h2>3. Three Golden Styling Rules</h2>
-        <p>1. Focus on the Silhouette Always balance your proportions. If you are wearing oversized bottoms, consider a more structured top to maintain a clean visual line.</p>
-        <p>2. Stick to Tonal Palettes Monochrome dressing is the fastest way to look expensive. Experiment with different shades of the same color, like charcoal, slate, and black.</p>
-        <p>3. Layer with Intention Layering is an art form. Use different textures like leather over knitwear to add depth and visual interest to a simple ensemble.</p>
-        <h2>Bonus Tips</h2>
-        <p>Mastering your personal style is a journey of trial and error. Don't be afraid to break the rules once you understand them, but always prioritize how a garment makes you feel over how it looks on a hanger.</p>
-        <ul><li>Tailoring: A small adjustment to the hem can change the entire vibe.</li><li>Accessories: Minimal jewelry adds a polished finish without distraction.</li><li>Confidence: The best outfit is always the one worn with complete self-assurance.</li></ul>
-        <div className="article-images"><img src="/assets/77.jpeg" alt="Minimal street style" /><img src="/assets/78.jpeg" alt="Minimal street style" /></div>
-        <a className="next-blog" href="/blog/elevate-everyday-outfits-using-modern-minimalist-styling">Next blog <span>+</span></a>
+        <h2>Choose an article that suits your plans</h2>
+        <p>Browse the photos and read the product description before ordering. Check the pieces included, available sizes and colour options for your chosen article.</p>
+        <h2>Check the details</h2>
+        <p>Fabric and care instructions can vary between articles. Contact Eastern Western with the product code if you need information that is not listed.</p>
+        <h2>Ready to explore?</h2>
+        <p>Visit the shop to see the available collection. Prices are in PKR and Cash on Delivery is currently available at checkout.</p>
+        <a className="next-blog" href="/shop">Explore the collection <span>+</span></a>
         </>}
       </article>
       <SocialSection />
@@ -1008,7 +938,6 @@ function BlogDetailPage({ slug, posts }) {
 }
 
 function ContactPage({ content }) {
-  const [sent, setSent] = useState(false);
   const heroContent = pageHero(content, "contact");
   const settings = { ...fallbackSiteData.content.settings, ...(content?.settings || {}) };
   const contactInfo = { ...fallbackSiteData.content.sections.contactInfo, ...(content?.sections?.contactInfo || {}) };
@@ -1020,12 +949,18 @@ function ContactPage({ content }) {
           {[[contactInfo.emailIcon, settings.contactEmail, "Email Address"], [contactInfo.phoneIcon, settings.contactPhone, "Phone Number"], [contactInfo.addressIcon, settings.contactAddress, "Location"]].map(([icon, value, label]) => <article key={label}><img src={icon} alt="" /><b>{value}</b><span>{label}</span></article>)}
         </div>
         <div className="contact-main reveal">
-          <img src={contactInfo.image} alt="Woman in blue modern outfit" />
-          <form className="contact-form" onSubmit={(event) => { event.preventDefault(); setSent(true); }}>
-            <label>First Name<input required placeholder="Nasir" /></label><label>Last Name<input required placeholder="Nawaz" /></label>
-            <label>Email<input type="email" required placeholder="test@gmail.com" /></label><label>Phone No<input placeholder="+123 456 789 00" /></label>
-            <label className="wide">Subject<input required placeholder="Enquiry ...." /></label><label className="wide">Message<textarea required placeholder="Enter message here..." /></label>
-            <button className="wide" type="submit">{sent ? "Message Sent" : "Send Message"}</button>
+          <img src={contactInfo.image} alt="Eastern Western style" />
+          <form className="contact-form" onSubmit={(event) => {
+            event.preventDefault();
+            const fields = new FormData(event.currentTarget);
+            const body = `${fields.get("message")}\n\nName: ${fields.get("firstName")} ${fields.get("lastName")}\nEmail: ${fields.get("email")}\nPhone: ${fields.get("phone")}`;
+            window.location.href = `mailto:${settings.contactEmail}?subject=${encodeURIComponent(fields.get("subject") || "Eastern Western enquiry")}&body=${encodeURIComponent(body)}`;
+          }}>
+            <label>First name<input name="firstName" required placeholder="First name" /></label><label>Last name<input name="lastName" required placeholder="Last name" /></label>
+            <label>Email<input name="email" type="email" required placeholder="you@example.com" /></label><label>Mobile number<input name="phone" placeholder="03XX XXXXXXX" /></label>
+            <label className="wide">Subject<input name="subject" required placeholder="Article code or order number" /></label><label className="wide">Message<textarea name="message" required placeholder="Tell us which article or order you need help with" /></label>
+            <p className="wide">This form opens an email draft in your email app. You can also contact us using the details above.</p>
+            <button className="wide" type="submit">Open email draft</button>
           </form>
         </div>
       </section>
@@ -1035,7 +970,7 @@ function ContactPage({ content }) {
 }
 
 function NotFoundPage() {
-  return <PageHero kicker="404" title="Page not found" text="This route is not part of the EasternWestern site." image={hero} />;
+  return <PageHero kicker="404" title="Page not found" text="We could not find this page. Visit the shop to explore our available articles." image={hero} />;
 }
 
 function Router({ data, onAddToCart, cartItems, customerAccount, customerToken, onQty, onRemove, onOrderSuccess, onNeedLogin }) {

@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import { defaultBlogs, defaultContent, defaultProducts } from "./defaultData.js";
 import { prepareProductImport } from "../shared/product-import.js";
 import { priceAmount } from "../shared/money.js";
+import { localizeBrandContent } from "../shared/brand-copy.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -227,7 +228,11 @@ async function removeLegacyDemoCatalog(db) {
 }
 
 async function ensureContent(db) {
-  const existing = await db.get("siteContent", { key: "main" });
+  let existing = await db.get("siteContent", { key: "main" });
+  if (existing && existing.brandCopyVersion !== 1) {
+    existing = { ...localizeBrandContent(existing), updatedAt: new Date() };
+    await db.update("siteContent", { key: "main" }, existing);
+  }
   if (!existing) {
     await db.update("siteContent", { key: "main" }, { ...defaultContent, key: "main", updatedAt: new Date() }, { upsert: true });
   } else {

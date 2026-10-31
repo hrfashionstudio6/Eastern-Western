@@ -1,4 +1,6 @@
-export const defaultContent = {
+import { localizeBrandContent } from "../shared/brand-copy.js";
+
+const templateContent = {
   key: "main",
   settings: {
     brandName: "EasternWestern",
@@ -131,6 +133,9 @@ export const defaultContent = {
   ],
 };
 
+export const defaultContent = localizeBrandContent(templateContent);
+
 export const defaultProducts = [];
 
 export const defaultBlogs = [];
+
