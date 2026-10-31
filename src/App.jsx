@@ -946,7 +946,7 @@ function ProductPage({ slug, products, onAddToCart }) {
         <div className="product-panel reveal">
           <div className="breadcrumbs"><b>Shop</b><span />{product.category || "Listing"}</div>
           <h1>{product[1]}</h1>
-          <div className="detail-price"><b>USD {product[3]}</b><s>USD {product[4]}</s></div>
+          <div className="detail-price"><b>PKR {priceValue(product[3]).toLocaleString("en-PK")}</b>{product[4] && <s>PKR {priceValue(product[4]).toLocaleString("en-PK")}</s>}</div>
           <p>{product[7]}</p>
           {product.variants?.length > 0 && <div className="variant-list">{product.variants.map((variant, i) => <span key={`${variant.sku}-${i}`}>{[variant.size, variant.color].filter(Boolean).join(" / ") || variant.sku}</span>)}</div>}
           <button className="btn btn-dark cart-add-btn" onClick={() => onAddToCart(product)}><span>Add to cart</span><span>Added to cart</span></button>
