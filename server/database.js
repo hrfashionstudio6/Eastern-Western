@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 
 export const tables = Object.freeze({
   products: "ew_products", blogs: "ew_blogs", customers: "ew_customers",
-  orders: "ew_orders", siteContent: "ew_site_content", systemFlags: "ew_system_flags",
+  orders: "ew_orders", siteContent: "ew_site_content", systemFlags: "ew_system_flags", uploads: "ew_uploads",
 });
 let dbPromise;
 let pool;
@@ -148,3 +148,4 @@ export async function closeDb() {
   pool = undefined;
   dbPromise = undefined;
 }
+

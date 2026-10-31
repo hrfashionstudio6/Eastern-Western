@@ -79,6 +79,12 @@ async function saveImageUpload({ dataUrl, fileName, prefix = "" }) {
     error.status = 400;
     throw error;
   }
+  if (databaseConfigured()) {
+    const name = `${crypto.randomUUID()}${extension}`;
+    const db = await getDb();
+    await db.insert("uploads", { _id: name, mime: mime.toLowerCase(), base64 });
+    return `/api/media/${name}`;
+  }
   const rawName = path.parse(String(fileName || "image")).name;
   const safeName = rawName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "image";
   const finalName = `${Date.now()}-${prefix ? `${prefix}-` : ""}${safeName}${extension}`;
@@ -638,6 +644,17 @@ app.use((error, _req, res, _next) => {
 });
 
 const distPath = path.resolve(__dirname, "../dist");
+app.get("/api/media/:name", async (req, res) => {
+  try {
+    const db = await getDb();
+    const image = await db.get("uploads", { _id: req.params.name });
+    if (!image) return res.status(404).end();
+    res.set("Content-Type", image.mime);
+    res.set("Cache-Control", "public, max-age=31536000, immutable");
+    res.set("X-Content-Type-Options", "nosniff");
+    res.send(Buffer.from(image.base64, "base64"));
+  } catch { res.status(503).end(); }
+});
 app.use("/uploads", express.static(uploadDir));
 app.use(express.static(distPath));
 app.get(/.*/, (_req, res) => res.sendFile(path.join(distPath, "index.html")));
