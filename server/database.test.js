@@ -1,6 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { connectionOptions, where, createRepository } from "./database.js";
+
+test("Hostinger's CommonJS loader can require the ESM entry point", () => {
+  execFileSync(process.execPath, ["-e", "require('./server.js')"], {
+    cwd: new URL("..", import.meta.url), env: { ...process.env, NODE_ENV: "test" }, stdio: "pipe",
+  });
+});
 
 test("Hostinger environment and URL credentials support escaped passwords", () => {
   assert.equal(connectionOptions({ DB_NAME: "site", DB_USER: "app", DB_PASSWORD: "a@:/?#" }).password, "a@:/?#");

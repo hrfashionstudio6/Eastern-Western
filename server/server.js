@@ -633,7 +633,7 @@ app.get(/.*/, (_req, res) => res.sendFile(path.join(distPath, "index.html")));
 export { app };
 
 let server;
-if (process.env.NODE_ENV !== "test") {
+async function start() {
   // Verify storage and finish the optional one-time import before serving traffic.
   if (databaseConfigured() || process.env.NODE_ENV === "production") await getDb();
   server = app.listen(port, host, () => {
@@ -643,3 +643,8 @@ if (process.env.NODE_ENV !== "test") {
     server.close(async () => { await closeDb(); process.exit(0); });
   });
 }
+
+if (process.env.NODE_ENV !== "test") start().catch((error) => {
+  console.error("Database initialization failed:", error.code || error.name);
+  process.exit(1);
+});
