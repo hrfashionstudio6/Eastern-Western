@@ -1058,7 +1058,8 @@ function App() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
   useEffect(() => {
-    document.title = "EasternWestern - Modern Clothing E-commerce";
+    const pageTitle = pathname.startsWith("/shop/") ? "Article" : ({ "/about": "Our story", "/shop": "Shop", "/blog": "Style journal", "/contact": "Contact", "/checkout": "Checkout" })[pathname];
+    document.title = pageTitle ? `${pageTitle} | Eastern Western` : "Eastern Western | Pakistani Clothing";
     const io = new IntersectionObserver((entries) => {
       entries.forEach((entry) => entry.isIntersecting && entry.target.classList.add("visible"));
     }, { rootMargin: "420px 0px", threshold: 0.01 });
