@@ -266,7 +266,7 @@ function Kicker({ children }) {
   return <div className="kicker"><span />{children}</div>;
 }
 
-function Header({ dark = false, scrolled = false, cartCount = 0, customer, onSearch, onCart, onAccount }) {
+function Header({ dark = false, scrolled = false, productDetail = false, cartCount = 0, customer, onSearch, onCart, onAccount }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const links = [["Home", "/"], ["About", "/about"], ["Shop", "/shop"], ["Blog", "/blog"], ["Contact", "/contact"]];
 
@@ -276,7 +276,7 @@ function Header({ dark = false, scrolled = false, cartCount = 0, customer, onSea
   }, [menuOpen]);
 
   return (
-    <nav className={`nav ${dark ? "nav-dark" : ""} ${scrolled ? "nav-scrolled" : ""} ${menuOpen ? "menu-open" : ""}`}>
+    <nav className={`nav ${dark ? "nav-dark" : ""} ${scrolled ? "nav-scrolled" : ""} ${productDetail ? "nav-product-detail" : ""} ${menuOpen ? "menu-open" : ""}`}>
       <a className="brand-logo nav-logo" href="/" aria-label="EasternWestern home"><img className="nav-logo-mark" src="/assets/easternwestern-logo.png" alt="" /><span className="nav-logo-word">EasternWestern</span></a>
       <div className="nav-links">{links.map(([label, href]) => <a href={href} key={label}><span>{label}</span><span>{label}</span></a>)}</div>
       <div className="nav-actions">
@@ -1143,7 +1143,7 @@ function App() {
   return (
     <main>
       <SaleBar settings={siteData.content?.settings || fallbackSiteData.content.settings} />
-      <Header dark={darkHeader} scrolled={scrolled} cartCount={cartCount} customer={customerAccount} onSearch={() => setSearchOpen(true)} onCart={() => setCartOpen(true)} onAccount={() => setCustomerOpen(true)} />
+      <Header dark={darkHeader} scrolled={scrolled} productDetail={pathname.startsWith("/shop/")} cartCount={cartCount} customer={customerAccount} onSearch={() => setSearchOpen(true)} onCart={() => setCartOpen(true)} onAccount={() => setCustomerOpen(true)} />
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
       <CustomerPanel open={customerOpen} token={customerToken} customer={customerAccount} onClose={() => setCustomerOpen(false)} onAuth={saveCustomerAuth} onLogout={logoutCustomer} />
       <CartDrawer open={cartOpen} items={cartItems} onClose={() => setCartOpen(false)} onQty={updateCartQty} onRemove={removeFromCart} />
@@ -1154,3 +1154,4 @@ function App() {
 }
 
 export default App;
+

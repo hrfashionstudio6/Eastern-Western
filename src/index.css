@@ -4640,4 +4640,7 @@ body {
 @media (min-width: 901px) {
   .product-detail { grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 32px; }
 }
+/* Detail-page navigation stays full width before and after scrolling. */
+.nav.nav-product-detail { max-width: none; background: #fff; color: #050505; }
+.product-main > img, .product-thumbnails img { object-fit: cover; object-position: center top; }
 
