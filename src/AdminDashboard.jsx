@@ -232,6 +232,41 @@ function fileToDataUrl(file) {
   });
 }
 
+async function prepareUpload(file) {
+  if (file.size > 8 * 1024 * 1024) throw new Error("Photo must be smaller than 8 MB");
+  if (!/^image\/(jpeg|png|webp|gif)$/.test(file.type)) throw new Error("Choose a JPG, PNG, WebP or GIF photo");
+  const original = await fileToDataUrl(file);
+  if (file.size < 250000 || file.type === "image/gif") return original;
+  const image = new Image();
+  image.src = original;
+  await image.decode();
+  const scale = Math.min(1, 1600 / Math.max(image.width, image.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(image.width * scale);
+  canvas.height = Math.round(image.height * scale);
+  canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
+  const optimized = canvas.toDataURL(file.type === "image/png" ? "image/png" : "image/jpeg", 0.82);
+  return optimized.length < original.length ? optimized : original;
+}
+
+async function sendImage(file, token) {
+  const dataUrl = await prepareUpload(file);
+  const body = JSON.stringify({ fileName: file.name, dataUrl });
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 45000);
+    try {
+      return await request("/api/admin/uploads", token, { method: "POST", body, signal: controller.signal });
+    } catch (error) {
+      const connectionError = error.name === "AbortError" || error instanceof TypeError;
+      if (!connectionError) throw error;
+      if (attempt === 1) throw new Error("Photo upload connection timed out. Please try Upload again; your product details are still here.");
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+}
+
 async function request(path, token, options = {}) {
   const response = await fetch(path, {
     ...options,
@@ -312,11 +347,8 @@ export default function AdminDashboard() {
     if (!file) return;
     setUploadingField(field);
     try {
-      const dataUrl = await fileToDataUrl(file);
-      const payload = await request("/api/admin/uploads", token, {
-        method: "POST",
-        body: JSON.stringify({ fileName: file.name, dataUrl }),
-      });
+      setMessage("Uploading photo — please wait...");
+      const payload = await sendImage(file, token);
       applyUrl(payload.url);
       setMessage("Image uploaded");
     } catch (error) {
@@ -1010,3 +1042,4 @@ function UploadTextarea({ ariaLabel, className = "", value, onChange, onUpload, 
     </div>
   );
 }
+
