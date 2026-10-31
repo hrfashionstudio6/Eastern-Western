@@ -437,7 +437,7 @@ img {
 }
 
 .rating-strip b::before {
-  content: "★★★★★ ";
+  content: none;
   color: #ff7a00;
 }
 
