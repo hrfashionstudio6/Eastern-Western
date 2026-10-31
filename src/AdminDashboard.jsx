@@ -373,18 +373,8 @@ export default function AdminDashboard() {
     try {
       if (!/\.xlsx$/i.test(file.name)) throw new Error("Choose an Excel .xlsx file. In Google Sheets use File > Download > Microsoft Excel (.xlsx).");
       if (file.size > 5 * 1024 * 1024) throw new Error("Excel file must be smaller than 5 MB.");
-      const { default: ExcelJS } = await import("exceljs");
-      const workbook = new ExcelJS.Workbook();
-      await workbook.xlsx.load(await file.arrayBuffer());
-      const sheet = workbook.getWorksheet("Products");
-      if (!sheet) throw new Error("Products sheet not found. Please use the template.");
-      if (sheet.rowCount > 1001) throw new Error("Import up to 1,000 rows at a time.");
-      const rows = [];
-      sheet.eachRow({ includeEmpty: true }, row => {
-        const values = [];
-        for (let column = 1; column <= 14; column += 1) values.push(row.getCell(column).text);
-        rows.push(values);
-      });
+      const { readSheet } = await import("read-excel-file/universal");
+      const rows = await readSheet(await file.arrayBuffer(), "Products");
       const result = prepareProductImport(rows, data.products);
       setImportPreview({ ...result, rows, fileName: file.name });
     } catch (error) { setMessage(error.message); }
