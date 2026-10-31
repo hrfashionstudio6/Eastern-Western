@@ -4643,4 +4643,8 @@ body {
 /* Detail-page navigation stays full width before and after scrolling. */
 .nav.nav-product-detail { max-width: none; background: #fff; color: #050505; }
 .product-main > img, .product-thumbnails img { object-fit: cover; object-position: center top; }
+.pick-tabs button { display: inline-flex; align-items: baseline; gap: 7px; }
+.pick-tabs button:disabled { color: #929292; cursor: default; border-bottom: 0; }
+.pick-tabs button small { font-size: 10px; letter-spacing: .02em; text-transform: none; font-weight: 400; }
+.catalog-sidebar button:disabled { color: #929292; cursor: default; }
 

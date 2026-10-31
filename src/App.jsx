@@ -751,24 +751,25 @@ function pageHero(content, key) {
 const shopPickTabs = ["UNSTITCHED", "READY TO WEAR", "LUXURY PRET", "FREEDOM TO BUY", "MEN", "ACCESSORIES"];
 
 function productGroups(products = []) {
+  const category = (item) => String(item.category || "").trim().toUpperCase();
   return {
     "All Products": products,
-    "UNSTITCHED": products.filter((item) => String(item.category || "").includes("UNSTITCHED")),
-    "READY TO WEAR": products.filter((item) => String(item.category || "").includes("READY")),
-    "LUXURY PRET": products.filter((item) => String(item.category || "").includes("LUXURY")),
-    "FREEDOM TO BUY": products.filter((item) => String(item.category || "").includes("FABRIC")),
-    "MEN": products.filter((item) => String(item.category || "").includes("MEN")),
-    "ACCESSORIES": products.filter((item) => String(item.category || "").includes("ACCESS")),
+    "UNSTITCHED": products.filter((item) => category(item).includes("UNSTITCHED")),
+    "READY TO WEAR": products.filter((item) => category(item).includes("READY")),
+    "LUXURY PRET": products.filter((item) => category(item).includes("LUXURY")),
+    "FREEDOM TO BUY": products.filter((item) => category(item).includes("FABRIC")),
+    "MEN": products.filter((item) => ["MEN", "MEN'S WEAR", "MENS WEAR"].includes(category(item))),
+    "ACCESSORIES": products.filter((item) => category(item).includes("ACCESS")),
     "Sale": products.filter((item) => String(item[0] || "").includes("Save") || (item.tags || []).some((tag) => String(tag).includes("Save"))),
   };
 }
 
 function PopularPicks({ products = [], active = "UNSTITCHED", onSelect }) {
   const [localActive, setLocalActive] = useState(active);
-  const selected = onSelect ? active : localActive;
   const groups = productGroups(products);
-  const currentProducts = groups[selected]?.length ? groups[selected] : products;
-  const pickProducts = [...currentProducts, ...products.filter((item) => !currentProducts.includes(item))].slice(0, 4);
+  const requested = onSelect ? active : localActive;
+  const selected = groups[requested]?.length ? requested : shopPickTabs.find((label) => groups[label].length) || "";
+  const pickProducts = (groups[selected] || []).slice(0, 4);
   const choose = (label) => {
     if (onSelect) onSelect(label);
     else setLocalActive(label);
@@ -777,7 +778,7 @@ function PopularPicks({ products = [], active = "UNSTITCHED", onSelect }) {
     <section className="popular-picks">
       <p>DISCOVER OUR MOST-POPULAR PICKS</p>
       <div className="pick-tabs">
-        {shopPickTabs.map((label) => <button className={selected === label ? "active" : ""} onClick={() => choose(label)} key={label}>{label}</button>)}
+        {shopPickTabs.map((label) => <button className={selected === label ? "active" : ""} disabled={!groups[label].length} onClick={() => choose(label)} key={label}>{label}{!groups[label].length && <small>Upcoming</small>}</button>)}
       </div>
       {pickProducts.length ? (
         <div className="pick-grid">
@@ -793,7 +794,6 @@ function PopularPicks({ products = [], active = "UNSTITCHED", onSelect }) {
 }
 
 function HomePage({ data }) {
-  const settings = { ...fallbackSiteData.content.settings, ...(data.content?.settings || {}) };
   const sourceSlides = data.content?.heroSlides?.length ? data.content.heroSlides : fallbackSiteData.content.heroSlides;
   const slides = sourceSlides.map((slide) => [slide.label, slide.image]).filter((slide) => slide[1]);
   const homeArrivals = data.products.filter((item) => item[0] === "New").slice(0, 9);
@@ -818,12 +818,6 @@ function HomePage({ data }) {
       <section id="home-hero" className="hero">
         <img key={activeHero[1]} src={activeHero[1]} alt="Modern black leather outfit" />
         <div className="hero-overlay" />
-        <div className="hero-copy reveal visible">
-          <div className="hero-tag"><span>{settings.heroKicker}</span><b>{settings.heroCompanion}</b></div>
-          <h1>{String(settings.heroTitle || "").split("\n").map((line) => <span key={line}>{line}<br /></span>)}</h1>
-          <p>{settings.heroText}</p>
-          <div className="row"><Button href="/shop">See all collections</Button><Button ghost href="/contact">Contact us</Button></div>
-        </div>
         <div className="thumbs">{slides.map(([label, src], i) => <button className={i === slideIndex ? "active" : ""} onClick={() => setActiveSlide(i)} key={label} aria-label={`Show ${label} collection`}><img src={src} alt="" /><span>{label}</span></button>)}</div>
       </section>
       <PopularPicks products={data.products} />
@@ -885,15 +879,16 @@ function ShopPage({ products, content }) {
   const heroContent = pageHero(content, "shop");
   const listings = products;
   const groups = productGroups(listings);
-  const currentProducts = groups[filter]?.length ? groups[filter] : listings;
+  const selectedFilter = groups[filter]?.length ? filter : shopPickTabs.find((label) => groups[label].length) || "All Products";
+  const currentProducts = groups[selectedFilter];
   return (
     <>
       <PageHero {...heroContent} id="shop-hero" />
-      <PopularPicks products={listings} active={filter} onSelect={setFilter} />
+      <PopularPicks products={listings} active={selectedFilter} onSelect={setFilter} />
       <section id="shop-listings" className="section catalog-section">
         <aside className="catalog-sidebar">
           <h3>Categories</h3>
-          {Object.keys(groups).map((label) => <button className={filter === label ? "active" : ""} onClick={() => setFilter(label)} key={label}>{label}</button>)}
+          {Object.keys(groups).map((label) => <button className={selectedFilter === label ? "active" : ""} disabled={!groups[label].length} onClick={() => setFilter(label)} key={label}>{label}</button>)}
           <h3>Availability</h3>
           <label><input type="checkbox" /> In stock only</label>
           <h3>By Price</h3>
@@ -911,7 +906,7 @@ function ShopPage({ products, content }) {
         </aside>
         <div className="catalog-results">
           <div className="catalog-toolbar">
-            <div><b>{filter}</b><span>{currentProducts.length} products</span></div>
+            <div><b>{selectedFilter}</b><span>{currentProducts.length} products</span></div>
             <select aria-label="Sort products"><option>Featured</option><option>Best selling</option><option>Price, low to high</option><option>Price, high to low</option></select>
           </div>
           {currentProducts.length ? <div className="product-grid listing-grid">{currentProducts.map((item) => <ProductCard key={item[1]} item={item} listing />)}</div> : <EmptyState title="No listings yet" text="Add real products from the dashboard." />}
