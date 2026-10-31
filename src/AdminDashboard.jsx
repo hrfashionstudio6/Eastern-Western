@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import "./admin.css";
 import { prepareProductImport } from "../shared/product-import.js";
+import { formatPKR } from "../shared/money.js";
 
 const tabs = ["Overview", "Listings", "Orders", "Site Editor", "Blogs", "Settings"];
 const tabIcons = {
@@ -723,11 +724,11 @@ export default function AdminDashboard() {
               <article><span>Listings</span><b>{data.products.length}</b></article>
               <article><span>Blogs</span><b>{data.blogs.length}</b></article>
               <article><span>Orders</span><b>{data.orders.length}</b></article>
-              <article><span>Revenue</span><b>${revenue.toFixed(2)}</b></article>
+              <article><span>Revenue</span><b>{formatPKR(revenue)}</b></article>
             </div>
             <div className="overview-charts">
               <article className="chart-card chart-wide">
-                <div className="chart-head"><div><span>Sales graph</span><h3>Revenue this week</h3></div><b>${revenue.toFixed(2)}</b></div>
+                <div className="chart-head"><div><span>Sales graph</span><h3>Revenue this week</h3></div><b>{formatPKR(revenue)}</b></div>
                 <div className="bar-chart">
                   {weeklyRevenue.map((row) => <div className="bar-column" key={row.label}><i style={{ height: `${Math.max(8, (row.value / maxWeeklyRevenue) * 100)}%` }} /><span>{row.label}</span></div>)}
                 </div>
@@ -876,7 +877,7 @@ export default function AdminDashboard() {
                     <small>{order.items?.map((item) => `${item.name} x${item.qty}`).join(", ")}</small>
                   </div>
                   <div className="order-payment">
-                    <b>${Number(order.subtotal || 0).toFixed(2)}</b>
+                    <b>{formatPKR(order.subtotal)}</b>
                     <span>{order.paymentMethod || "Cash on Delivery"}</span>
                     <span>{order.items?.length || 0} items</span>
                     {order.paymentProofUrl && <a href={order.paymentProofUrl} target="_blank" rel="noreferrer"><img src={order.paymentProofUrl} alt="Payment proof" /></a>}
@@ -922,7 +923,7 @@ function AdminTable({ rows, fields, onEdit, onDelete }) {
     <div className="admin-table">
       {rows.length ? rows.map((row) => (
         <article key={row.id}>
-          {fields.map((field) => field === "image" ? <img className="admin-row-thumb" src={row.image || row.media?.[0] || "/assets/easternwestern-logo.png"} alt="" key={field} /> : <span key={field}>{row[field]}</span>)}
+          {fields.map((field) => field === "image" ? <img className="admin-row-thumb" src={row.image || row.media?.[0] || "/assets/easternwestern-logo.png"} alt="" key={field} /> : <span key={field}>{field === "price" ? formatPKR(row[field]) : row[field]}</span>)}
           <button onClick={() => onEdit(row)}>Edit</button>
           <button onClick={() => onDelete(row.id)}>Delete</button>
         </article>

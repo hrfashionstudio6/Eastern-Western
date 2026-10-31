@@ -484,7 +484,7 @@ function productPayload(body) {
     slug: body.slug || String(body.name || "product").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
     category: body.category || "UNSTITCHED NEW IN",
     sku: String(body.sku || "").trim(),
-    price: body.price || "$0.00",
+    price: body.price || "PKR 0",
     compareAtPrice,
     oldPrice: compareAtPrice,
     image,

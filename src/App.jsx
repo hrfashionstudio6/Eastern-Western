@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import AdminDashboard from "./AdminDashboard.jsx";
+import { formatPKR } from "../shared/money.js";
 import "./index.css";
 
 const logo = "/assets/easternwestern-logo.png";
@@ -242,11 +243,8 @@ function cartSubtotal(items) {
   return items.reduce((sum, item) => sum + priceValue(item.price) * item.qty, 0);
 }
 
-function cartMoney(value, items = []) {
-  const usesRs = items.some((item) => String(item.price || "").includes("Rs"));
-  return usesRs
-    ? `Rs. ${value.toLocaleString("en-US", { maximumFractionDigits: 2 })}`
-    : `$${value.toFixed(2)}`;
+function cartMoney(value) {
+  return formatPKR(value);
 }
 
 function fileToDataUrl(file) {
@@ -308,7 +306,7 @@ function CartDrawer({ open, items, onClose, onQty, onRemove }) {
                   <img src={item.image} alt="" />
                   <div>
                     <h3>{item.name}</h3>
-                    <p>{item.price}</p>
+                    <p>{formatPKR(item.price)}</p>
                     <div className="qty-row">
                       <button aria-label={`Decrease ${item.name}`} onClick={() => onQty(item.slug, item.qty - 1)}>-</button>
                       <span>{item.qty}</span>
@@ -462,7 +460,7 @@ function CheckoutPage({ items, customerAccount, customerToken, onQty, onRemove, 
               <img src={item.image} alt="" />
               <div>
                 <h3>{item.name}</h3>
-                <p>{item.price}</p>
+                <p>{formatPKR(item.price)}</p>
                 <div className="qty-row">
                   <button aria-label={`Decrease ${item.name}`} onClick={() => onQty(item.slug, item.qty - 1)}>-</button>
                   <span>{item.qty}</span>
@@ -602,12 +600,12 @@ function ProductCard({ item, listing = false }) {
           <>
             <h3>{name}</h3>
             <small>{item.category || "EasternWestern New In"}</small>
-            <div className="price-row"><span>Sale price</span><b>{price}</b>{old && <s>Regular price {old}</s>}</div>
+            <div className="price-row"><span>Sale price</span><b>{formatPKR(price)}</b>{old && <s>Regular price {formatPKR(old)}</s>}</div>
           </>
         ) : (
           <>
             <h3>{name}</h3>
-            <div><b>{price}</b>{old && <s>{old}</s>}</div>
+            <div><b>{formatPKR(price)}</b>{old && <s>{formatPKR(old)}</s>}</div>
           </>
         )}
       </div>
@@ -696,7 +694,7 @@ function CollectionsSection({ content }) {
         <div className={`collection reveal ${i % 2 ? "flip" : ""}`} key={c[1]}>
           <div className="collection-copy">
             <div className="tag">{c[0]}</div><h4>{c[1]}</h4><h3>{c[2]}</h3><p>{c[3]}</p>
-            <small>Pricing start from:</small><strong>{c[4]} <s>{c[5]}</s></strong><Button dark href="/shop">All collections</Button>
+            <small>Pricing start from:</small><strong>{formatPKR(c[4])} {c[5] && <s>{formatPKR(c[5])}</s>}</strong><Button dark href="/shop">All collections</Button>
           </div>
           <div className="collection-img"><img src={c[6]} alt={c[1]} /></div>
         </div>
@@ -941,7 +939,7 @@ function ProductPage({ slug, products, onAddToCart }) {
         <div className="product-panel reveal">
           <div className="breadcrumbs"><b>Shop</b><span />{product.category || "Listing"}</div>
           <h1>{product[1]}</h1>
-          <div className="detail-price"><b>PKR {priceValue(product[3]).toLocaleString("en-PK")}</b>{product[4] && <s>PKR {priceValue(product[4]).toLocaleString("en-PK")}</s>}</div>
+          <div className="detail-price"><b>{formatPKR(product[3])}</b>{product[4] && <s>{formatPKR(product[4])}</s>}</div>
           <p>{product[7]}</p>
           {product.variants?.length > 0 && <div className="variant-list">{product.variants.map((variant, i) => <span key={`${variant.sku}-${i}`}>{[variant.size, variant.color].filter(Boolean).join(" / ") || variant.sku}</span>)}</div>}
           <button className="btn btn-dark cart-add-btn" onClick={() => onAddToCart(product)}><span>Add to cart</span><span>Added to cart</span></button>
