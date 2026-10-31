@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import useSiteRoute from "./useSiteRoute.js";
 import AdminDashboard from "./AdminDashboard.jsx";
 import { formatPKR, priceAmount } from "../shared/money.js";
 import { defaultContent } from "../server/defaultData.js";
@@ -989,7 +990,8 @@ function Router({ data, onAddToCart, cartItems, customerAccount, customerToken, 
 }
 
 function App() {
-  const pathname = window.location.pathname;
+  const route = useSiteRoute();
+  const pathname = route.split(/[?#]/)[0];
   const darkHeader = pathname.startsWith("/shop/");
   const [siteData, setSiteData] = useState(() => normalizeSiteData());
   const [searchOpen, setSearchOpen] = useState(false);
@@ -1005,6 +1007,12 @@ function App() {
     }
   });
   const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    setSearchOpen(false);
+    setCartOpen(false);
+    setCustomerOpen(false);
+    if (!window.location.hash) window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [route]);
   const cartCount = cartItems.reduce((sum, item) => sum + item.qty, 0);
   const addToCart = (product) => {
     const nextItem = cartProduct(product);
@@ -1048,7 +1056,7 @@ function App() {
       document.getElementById(window.location.hash.slice(1))?.scrollIntoView();
     }, 120);
     return () => window.clearTimeout(timer);
-  }, [siteData]);
+  }, [siteData, route]);
   useEffect(() => {
     localStorage.setItem("easternwestern-cart", JSON.stringify(cartItems));
   }, [cartItems]);
@@ -1077,7 +1085,7 @@ function App() {
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
       <CustomerPanel open={customerOpen} token={customerToken} customer={customerAccount} onClose={() => setCustomerOpen(false)} onAuth={saveCustomerAuth} onLogout={logoutCustomer} />
       <CartDrawer open={cartOpen} items={cartItems} onClose={() => setCartOpen(false)} onQty={updateCartQty} onRemove={removeFromCart} />
-      <Router data={siteData} onAddToCart={addToCart} cartItems={cartItems} customerAccount={customerAccount} customerToken={customerToken} onQty={updateCartQty} onRemove={removeFromCart} onOrderSuccess={() => setCartItems([])} onNeedLogin={() => setCustomerOpen(true)} />
+      <Router key={pathname} data={siteData} onAddToCart={addToCart} cartItems={cartItems} customerAccount={customerAccount} customerToken={customerToken} onQty={updateCartQty} onRemove={removeFromCart} onOrderSuccess={() => setCartItems([])} onNeedLogin={() => setCustomerOpen(true)} />
       <Footer settings={siteData.content?.settings || fallbackSiteData.content.settings} />
     </main>
   );
