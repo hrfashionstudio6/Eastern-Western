@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import useSiteRoute from "./useSiteRoute.js";
+import { withLoading } from "./loading-state.js";
 import AdminDashboard from "./AdminDashboard.jsx";
 import { formatPKR, priceAmount } from "../shared/money.js";
 import { defaultContent } from "../server/defaultData.js";
@@ -307,7 +308,11 @@ function CheckoutPage({ items, customerAccount, customerToken, onQty, onRemove, 
     }
   };
 
-  const submitOrder = async (event) => {
+  const submitOrder = (event) => {
+    event.preventDefault();
+    return withLoading("Placing your order…", () => submitOrderAction(event));
+  };
+  const submitOrderAction = async (event) => {
     event.preventDefault();
     if (!customerAccount) {
       setOrderMessage("Please log in to place your order and view its updates.");

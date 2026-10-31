@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { withLoading } from "./loading-state.js";
 import "./admin.css";
 import { prepareProductImport } from "../shared/product-import.js";
 import { formatPKR } from "../shared/money.js";
@@ -352,7 +353,11 @@ export default function AdminDashboard() {
     }
   }
 
-  async function uploadImage(file, field, applyUrl) {
+  function uploadImage(file, field, applyUrl) {
+    if (!file) return;
+    return withLoading("Uploading photo…", () => uploadImageAction(file, field, applyUrl));
+  }
+  async function uploadImageAction(file, field, applyUrl) {
     if (!file) return;
     setUploadingField(field);
     try {
@@ -367,7 +372,11 @@ export default function AdminDashboard() {
     }
   }
 
-  async function readProductFile(file) {
+  function readProductFile(file) {
+    if (!file) return;
+    return withLoading("Reading Excel file…", () => readProductFileAction(file));
+  }
+  async function readProductFileAction(file) {
     if (!file) return;
     setImportBusy(true);
     setImportPreview(null);
@@ -382,7 +391,10 @@ export default function AdminDashboard() {
     finally { setImportBusy(false); }
   }
 
-  async function importProducts() {
+  function importProducts() {
+    return withLoading("Importing products…", importProductsAction);
+  }
+  async function importProductsAction() {
     if (!importPreview || importPreview.errors.length || importBusy) return;
     setImportBusy(true);
     try {
@@ -394,7 +406,11 @@ export default function AdminDashboard() {
     finally { setImportBusy(false); }
   }
 
-  async function saveProduct(event) {
+  function saveProduct(event) {
+    event.preventDefault();
+    return withLoading(productForm.id ? "Updating product…" : "Adding product…", () => saveProductAction(event));
+  }
+  async function saveProductAction(event) {
     event.preventDefault();
     try {
       const { mediaText, tagsText, ...cleanForm } = productForm;
@@ -414,7 +430,11 @@ export default function AdminDashboard() {
     }
   }
 
-  async function saveBlog(event) {
+  function saveBlog(event) {
+    event.preventDefault();
+    return withLoading(blogForm.id ? "Updating blog…" : "Adding blog…", () => saveBlogAction(event));
+  }
+  async function saveBlogAction(event) {
     event.preventDefault();
     try {
       const body = { ...blogForm, slug: blogForm.slug || slugify(blogForm.title) };
@@ -427,7 +447,11 @@ export default function AdminDashboard() {
     }
   }
 
-  async function saveContent(event) {
+  function saveContent(event) {
+    event?.preventDefault();
+    return withLoading("Saving website changes…", () => saveContentAction(event));
+  }
+  async function saveContentAction(event) {
     event?.preventDefault();
     try {
       await request("/api/admin/content", token, {
@@ -478,7 +502,11 @@ export default function AdminDashboard() {
     setter((current) => [...current, item]);
   }
 
-  async function remove(kind, id) {
+  function remove(kind, id) {
+    const label = ({ products: "product", blogs: "blog", orders: "order" })[kind] || "item";
+    return withLoading(`Deleting ${label}…`, () => removeAction(kind, id));
+  }
+  async function removeAction(kind, id) {
     try {
       await request(`/api/admin/${kind}/${id}`, token, { method: "DELETE" });
       await load();
@@ -487,7 +515,10 @@ export default function AdminDashboard() {
     }
   }
 
-  async function updateOrder(order, updates) {
+  function updateOrder(order, updates) {
+    return withLoading("Updating order…", () => updateOrderAction(order, updates));
+  }
+  async function updateOrderAction(order, updates) {
     try {
       await request(`/api/admin/orders/${order.id}`, token, { method: "PATCH", body: JSON.stringify(updates) });
       await load();

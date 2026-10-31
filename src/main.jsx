@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
+import LoadingPopup from './LoadingPopup.jsx'
 import ComingSoon from './ComingSoon.jsx'
 
 const comingSoonEnabled = import.meta.env.VITE_COMING_SOON !== 'false'
@@ -19,6 +20,8 @@ if (comingSoonEnabled) {
   root.render(
     <StrictMode>
       <App />
+      <LoadingPopup />
     </StrictMode>,
   )
 }
+
