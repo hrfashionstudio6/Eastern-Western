@@ -617,28 +617,29 @@ function FeaturesSection({ content }) {
   );
 }
 
-function CollectionsSection({ content, products = [] }) {
-  const liveCollections = Array.isArray(content?.collections) && content.collections.length
-    ? content.collections.map((item) => [item.tag, item.name, item.title, item.text, item.price, item.oldPrice, item.image])
-    : defaultContent.collections.map((item) => [item.tag, item.name, item.title, item.text, item.price, item.oldPrice, item.image]);
-  const groups = productGroups(products);
+function CollectionsSection({ products = [] }) {
+  const articles = products.slice(0, 3);
   return (
     <section id="collections" className="section collections">
       <div className="section-head reveal">
         <div><Kicker>Our Collections</Kicker><h2>Find a style for your wardrobe</h2></div>
         <Button dark href="/shop">Shop all items</Button>
       </div>
-      {liveCollections.map((c, i) => {
-        const articles = groups[["UNSTITCHED", "READY TO WEAR", "FREEDOM TO BUY"][i]] || [];
-        return (
-        <div className={`collection reveal ${i % 2 ? "flip" : ""}`} key={c[1]}>
+      {articles.map((item, i) => (
+        <div className={`collection reveal ${i % 2 ? "flip" : ""}`} key={item.id || item[2]}>
           <div className="collection-copy">
-            <div className="tag">{articles.length ? "Explore" : "Upcoming"}</div><h4>{c[1]}</h4><h3>{c[2]}</h3><p>{c[3]}</p>
-            {articles.length ? <><small>Articles start from:</small><strong>{formatPKR(Math.min(...articles.map((item) => priceAmount(item[3]))))}</strong></> : <small>Articles will appear here when available.</small>}<Button dark href="/shop">Explore the shop</Button>
+            {item[0] && <div className="tag">{item[0]}</div>}
+            <h4>{item.category}</h4><h3>{item[1]}</h3><p>{item[7]}</p>
+            <strong>{formatPKR(item[3])}</strong>
+            {priceAmount(item[4]) > priceAmount(item[3]) && <del>{formatPKR(item[4])}</del>}
+            <Button dark href={slugPath("shop", item[2])}>View article</Button>
           </div>
-          <div className="collection-img"><img src={c[6]} alt={c[1]} /></div>
+          <a className="collection-img" href={slugPath("shop", item[2])} aria-label={`View ${item[1]}`}>
+            {item[5] ? <img src={item[5]} alt={item[1]} loading="lazy" /> : <div className="media-placeholder">No image</div>}
+          </a>
         </div>
-      ); })}
+      ))}
+      {!articles.length && <EmptyState title="New styles coming soon" text="Visit again for the latest articles from Eastern Western." />}
     </section>
   );
 }
