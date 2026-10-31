@@ -4637,4 +4637,5 @@ body {
 @media (max-width: 900px) { .product-main { height: auto; aspect-ratio: auto; } }
 .product-card:hover .product-media img:first-child,
 .product-card:hover .product-media img:nth-child(2) { transform: none; }
+.product-thumbnails { flex-wrap: wrap; }
 
