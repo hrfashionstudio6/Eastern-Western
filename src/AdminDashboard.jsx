@@ -35,7 +35,7 @@ const sectionIcons = {
 };
 const productCategories = ["UNSTITCHED NEW IN", "READY TO WEAR", "FABRIC NEW IN", "Men's Wear", "Women's Wear", "Children's Wear"];
 const productTags = ["New", "Best seller", "Save 25%", "New In", "Fabric"];
-const blankProduct = { tag: "New", name: "", slug: "", category: "UNSTITCHED NEW IN", sku: "", price: "", oldPrice: "", image: "", hoverImage: "", mediaText: "", tagsText: "", variantsText: "", description: "", stock: 0, status: "published", featured: false, sortOrder: 0 };
+const blankProduct = { tag: "New", name: "", slug: "", category: "UNSTITCHED NEW IN", sku: "", price: "", oldPrice: "", image: "", hoverImage: "", mediaText: "", tagsText: "", variants: [], description: "", stock: 0, status: "published", featured: false, sortOrder: 0 };
 const blankBlog = { category: "Style Guide", title: "", slug: "", excerpt: "", readTime: "5 min read", date: "", image: "", body: "", status: "published", sortOrder: 0 };
 const siteEditorSections = [
   { id: "offerBar", label: "Offer bar", page: "/", hash: "offer-bar" },
@@ -84,24 +84,13 @@ function lines(value) {
   return String(value || "").split(/\r?\n|,/).map((item) => item.trim()).filter(Boolean);
 }
 
-function variantsFromText(value) {
-  return String(value || "").split(/\r?\n/).map((line) => {
-    const [size, color, sku, price, stock, image, material] = line.split("|").map((part) => part?.trim() || "");
-    return { size, color, sku, price, stock: Number(stock) || 0, image, material };
-  }).filter((variant) => variant.size || variant.color || variant.sku || variant.material);
-}
-
-function variantsToText(variants = []) {
-  return variants.map((variant) => [variant.size, variant.color, variant.sku, variant.price, variant.stock, variant.image, variant.material].map((value) => value || "").join("|")).join("\n");
-}
-
 function productToForm(product) {
   return {
     ...blankProduct,
     ...product,
     mediaText: (product.media || []).join("\n"),
     tagsText: (product.tags || []).join(", "),
-    variantsText: variantsToText(product.variants || []),
+    variants: (product.variants || []).map((variant) => ({ ...variant })),
   };
 }
 
@@ -340,13 +329,13 @@ export default function AdminDashboard() {
   async function saveProduct(event) {
     event.preventDefault();
     try {
-      const { mediaText, tagsText, variantsText, ...cleanForm } = productForm;
+      const { mediaText, tagsText, ...cleanForm } = productForm;
       const body = {
         ...cleanForm,
         slug: productForm.slug || slugify(productForm.name),
         media: lines(mediaText),
         tags: lines(tagsText),
-        variants: variantsFromText(variantsText),
+        variants: productForm.variants || [],
       };
       const url = productForm.id ? `/api/admin/products/${productForm.id}` : "/api/admin/products";
       await request(url, token, { method: productForm.id ? "PUT" : "POST", body: JSON.stringify(body) });
@@ -701,21 +690,49 @@ export default function AdminDashboard() {
 
         {active === "Listings" && (
           <AdminPanel title={productForm.id ? "Edit listing" : "Add listing"}>
-            <form className="admin-form" onSubmit={saveProduct}>
-              {["name", "slug", "sku", "price", "oldPrice"].map((field) => <input key={field} value={productForm[field] || ""} onChange={(event) => setProductForm({ ...productForm, [field]: event.target.value })} placeholder={field} />)}
-              <ImageInput label="image" value={productForm.image || ""} uploading={uploadingField === "product-image"} onChange={(value) => setProductForm({ ...productForm, image: value })} onUpload={(file) => uploadImage(file, "product-image", (url) => setProductForm((current) => ({ ...current, image: url })))} />
-              <ImageInput label="hoverImage" value={productForm.hoverImage || ""} uploading={uploadingField === "product-hover"} onChange={(value) => setProductForm({ ...productForm, hoverImage: value })} onUpload={(file) => uploadImage(file, "product-hover", (url) => setProductForm((current) => ({ ...current, hoverImage: url })))} />
-              <select value={productForm.category} onChange={(event) => setProductForm({ ...productForm, category: event.target.value })}>{productCategories.map((x) => <option key={x}>{x}</option>)}</select>
-              <select value={productForm.tag} onChange={(event) => setProductForm({ ...productForm, tag: event.target.value })}>{productTags.map((x) => <option key={x}>{x}</option>)}</select>
-              <select value={productForm.status} onChange={(event) => setProductForm({ ...productForm, status: event.target.value })}>{["published", "draft"].map((x) => <option key={x}>{x}</option>)}</select>
-              <input type="number" value={productForm.stock} onChange={(event) => setProductForm({ ...productForm, stock: event.target.value })} placeholder="stock" />
-              <input type="number" value={productForm.sortOrder} onChange={(event) => setProductForm({ ...productForm, sortOrder: event.target.value })} placeholder="sort order" />
-              <label className="admin-check"><input type="checkbox" checked={Boolean(productForm.featured)} onChange={(event) => setProductForm({ ...productForm, featured: event.target.checked })} /> Featured</label>
-              <textarea value={productForm.description} onChange={(event) => setProductForm({ ...productForm, description: event.target.value })} placeholder="description" />
-              <UploadTextarea value={productForm.mediaText} uploading={uploadingField === "product-media"} onChange={(value) => setProductForm({ ...productForm, mediaText: value })} onUpload={(file) => uploadImage(file, "product-media", (url) => setProductForm((current) => ({ ...current, mediaText: appendTextLine(current.mediaText, url) })))} placeholder="media images, one URL per line" />
-              <textarea value={productForm.tagsText} onChange={(event) => setProductForm({ ...productForm, tagsText: event.target.value })} placeholder="tags, comma separated" />
-              <UploadTextarea value={productForm.variantsText} uploading={uploadingField === "product-variants"} onChange={(value) => setProductForm({ ...productForm, variantsText: value })} onUpload={(file) => uploadImage(file, "product-variants", (url) => setProductForm((current) => ({ ...current, variantsText: appendTextLine(current.variantsText, `||||0|${url}|`) })))} placeholder="variant lines: size|color|sku|price|stock|image|material" />
-              <button>{productForm.id ? "Update listing" : "Add listing"}</button>
+            <form className="admin-form listing-form" onSubmit={saveProduct}>
+              <fieldset className="listing-section">
+                <legend>Product details</legend>
+                <ListingField label="Product name / Naam"><input required value={productForm.name} onChange={(e) => setProductForm({ ...productForm, name: e.target.value })} placeholder="e.g. Embroidered 3-Piece Suit" /></ListingField>
+                <ListingField label="Product code (optional)"><input value={productForm.sku || ""} onChange={(e) => setProductForm({ ...productForm, sku: e.target.value })} placeholder="e.g. EW-001" /></ListingField>
+                <ListingField label="Category / Kis qisam ka product?"><select value={productForm.category} onChange={(e) => setProductForm({ ...productForm, category: e.target.value })}>{productCategories.map((x) => <option key={x} value={x}>{({ "UNSTITCHED NEW IN": "Unstitched", "READY TO WEAR": "Ready to Wear", "FABRIC NEW IN": "Fabric" })[x] || x}</option>)}</select></ListingField>
+                <ListingField label="Selling price / Qeemat"><input required value={productForm.price} onChange={(e) => setProductForm({ ...productForm, price: e.target.value })} placeholder="e.g. PKR 5,500" /></ListingField>
+                <ListingField label="Old price (only for discount)"><input value={productForm.oldPrice || ""} onChange={(e) => setProductForm({ ...productForm, oldPrice: e.target.value })} placeholder="e.g. PKR 6,500 — otherwise leave blank" /></ListingField>
+                <ListingField label="Available pieces / Kitne pieces hain?"><input type="number" min="0" value={productForm.stock} onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })} /></ListingField>
+                <ListingField label="Product details / Kya shamil hai?" wide><textarea rows="3" value={productForm.description} onChange={(e) => setProductForm({ ...productForm, description: e.target.value })} placeholder="e.g. Khaddar 3-piece suit: shirt, trouser aur dupatta. Embroidered front." /></ListingField>
+              </fieldset>
+              <fieldset className="listing-section">
+                <legend>Product photos</legend>
+                <div className="listing-photo"><span>Main photo</span><ImageInput label="Main photo" value={productForm.image || ""} uploading={uploadingField === "product-image"} onChange={(value) => setProductForm({ ...productForm, image: value })} onUpload={(file) => uploadImage(file, "product-image", (url) => setProductForm((current) => ({ ...current, image: url })))} /></div>
+                <div className="listing-photo"><span>Second photo <small>Shown when the mouse moves over the product</small></span><ImageInput label="Second photo" value={productForm.hoverImage || ""} uploading={uploadingField === "product-hover"} onChange={(value) => setProductForm({ ...productForm, hoverImage: value })} onUpload={(file) => uploadImage(file, "product-hover", (url) => setProductForm((current) => ({ ...current, hoverImage: url })))} /></div>
+                <div className="listing-photo listing-gallery"><span>More photos <small>Front, back and embroidery details</small></span><UploadTextarea ariaLabel="More photo links" value={productForm.mediaText} uploading={uploadingField === "product-media"} onChange={(value) => setProductForm({ ...productForm, mediaText: value })} onUpload={(file) => uploadImage(file, "product-media", (url) => setProductForm((current) => ({ ...current, mediaText: appendTextLine(current.mediaText, url) })))} placeholder="Upload photos, or paste one photo link on each line" /></div>
+              </fieldset>
+              <fieldset className="listing-section listing-options">
+                <legend>Sizes, colours and fabric (optional)</legend>
+                <p className="listing-help">Har size aur colour ke liye alag option add karein. Size nahi hai to Unstitched ya Free Size likhein.</p>
+                {(productForm.variants || []).map((variant, index) => (
+                  <div className="listing-variant" key={index}>
+                    <div className="listing-variant-head"><strong>Option {index + 1}</strong><button className="admin-secondary" type="button" onClick={() => setProductForm((current) => ({ ...current, variants: current.variants.filter((_, i) => i !== index) }))}>Remove option</button></div>
+                    {[["size", "Size", "e.g. S, M, L or Unstitched"], ["color", "Colour / Rang", "e.g. Maroon"], ["material", "Fabric / Kapra", "e.g. Khaddar"], ["sku", "Option code (optional)", "e.g. EW-001-M"], ["price", "Option price", "e.g. PKR 5,500"], ["stock", "Available pieces", "e.g. 5"]].map(([field, label, example]) => (
+                      <ListingField key={field} label={label}><input type={field === "stock" ? "number" : "text"} min={field === "stock" ? "0" : undefined} value={variant[field] ?? ""} placeholder={example} onChange={(e) => setProductForm((current) => ({ ...current, variants: current.variants.map((item, i) => i === index ? { ...item, [field]: e.target.value } : item) }))} /></ListingField>
+                    ))}
+                    <div className="listing-photo"><span>Photo for this option (optional)</span><ImageInput label={`Option ${index + 1} photo`} value={variant.image || ""} uploading={uploadingField === `product-variant-${index}`} onChange={(value) => setProductForm((current) => ({ ...current, variants: current.variants.map((item, i) => i === index ? { ...item, image: value } : item) }))} onUpload={(file) => uploadImage(file, `product-variant-${index}`, (url) => setProductForm((current) => ({ ...current, variants: current.variants.map((item, i) => i === index ? { ...item, image: url } : item) })))} /></div>
+                  </div>
+                ))}
+                <button className="admin-secondary" type="button" disabled={Boolean(uploadingField)} onClick={() => setProductForm((current) => ({ ...current, variants: [...(current.variants || []), { size: "", color: "", material: "", sku: "", price: "", stock: 0, image: "" }] }))}>+ Add size / colour option</button>
+              </fieldset>
+              <fieldset className="listing-section">
+                <legend>Website display</legend>
+                <ListingField label="Product label"><select value={productForm.tag} onChange={(e) => setProductForm({ ...productForm, tag: e.target.value })}>{productTags.map((x) => <option key={x}>{x}</option>)}</select></ListingField>
+                <ListingField label="Show on website?"><select value={productForm.status} onChange={(e) => setProductForm({ ...productForm, status: e.target.value })}><option value="published">Yes — show now</option><option value="draft">Not yet — save as draft</option></select></ListingField>
+                <label className="listing-featured"><input type="checkbox" checked={Boolean(productForm.featured)} onChange={(e) => setProductForm({ ...productForm, featured: e.target.checked })} /> Highlight on homepage</label>
+              </fieldset>
+              <details className="listing-advanced"><summary>Extra settings (optional)</summary><div className="listing-section">
+                <ListingField label="Website link name"><input value={productForm.slug || ""} onChange={(e) => setProductForm({ ...productForm, slug: e.target.value })} placeholder="Leave blank — made from product name" /></ListingField>
+                <ListingField label="Display order"><input type="number" value={productForm.sortOrder} onChange={(e) => setProductForm({ ...productForm, sortOrder: e.target.value })} placeholder="Smaller number appears first" /></ListingField>
+                <ListingField label="Search words (optional)"><input value={productForm.tagsText || ""} onChange={(e) => setProductForm({ ...productForm, tagsText: e.target.value })} placeholder="e.g. winter, embroidered, khaddar" /></ListingField>
+              </div></details>
+              <button className="listing-save" disabled={Boolean(uploadingField)}>{productForm.id ? "Save product changes" : "Add product"}</button>
             </form>
             <div className="listing-list-head">
               <h3>Product list</h3>
@@ -959,6 +976,10 @@ function ImageListEditor({ title, images, uploadingField, onAdd, onRemove, onCha
   );
 }
 
+function ListingField({ label, children, wide = false }) {
+  return <label className={`listing-field${wide ? " listing-wide" : ""}`}><span>{label}</span>{children}</label>;
+}
+
 function ImageInput({ label, value, onChange, onUpload, uploading }) {
   return (
     <div className="admin-image-field">
@@ -976,10 +997,10 @@ function ImageInput({ label, value, onChange, onUpload, uploading }) {
   );
 }
 
-function UploadTextarea({ className = "", value, onChange, onUpload, uploading, placeholder }) {
+function UploadTextarea({ ariaLabel, className = "", value, onChange, onUpload, uploading, placeholder }) {
   return (
     <div className={`upload-textarea ${className}`}>
-      <textarea value={value || ""} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} />
+      <textarea aria-label={ariaLabel} value={value || ""} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} />
       <label className="upload-picker">
         <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => { onUpload(event.target.files?.[0]); event.target.value = ""; }} />
         {uploading ? "Uploading..." : "Upload image"}
