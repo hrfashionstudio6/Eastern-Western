@@ -434,7 +434,7 @@ function CheckoutPage({ items, customerAccount, customerToken, onQty, onRemove, 
           <input required value={customer.phone} onChange={(event) => updateCustomer("phone", event.target.value)} placeholder="Phone" />
           <textarea required value={customer.address} onChange={(event) => updateCustomer("address", event.target.value)} placeholder="Delivery address" />
           <div className="payment-options">
-            {["Cash on Delivery", "Bank Transfer", "JazzCash", "Easypaisa"].map((method) => (
+            {["Cash on Delivery"].map((method) => (
               <label key={method}><input type="radio" checked={paymentMethod === method} onChange={() => setPaymentMethod(method)} />{method}</label>
             ))}
           </div>
