@@ -251,12 +251,17 @@ async function prepareUpload(file) {
 
 async function sendImage(file, token) {
   const dataUrl = await prepareUpload(file);
-  const body = JSON.stringify({ fileName: file.name, dataUrl });
+  const [header, encoded] = dataUrl.split(",");
+  const mime = header.match(/^data:([^;]+)/)[1];
+  const binary = atob(encoded);
+  const body = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) body[index] = binary.charCodeAt(index);
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 45000);
+    const timer = setTimeout(() => controller.abort(), 90000);
     try {
-      return await request("/api/admin/uploads", token, { method: "POST", body, signal: controller.signal });
+      return await request("/api/admin/uploads", token, { method: "POST", body, signal: controller.signal,
+        headers: { "Content-Type": mime, "X-File-Name": encodeURIComponent(file.name) } });
     } catch (error) {
       const connectionError = error.name === "AbortError" || error instanceof TypeError;
       if (!connectionError) throw error;

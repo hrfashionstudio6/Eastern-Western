@@ -17,6 +17,7 @@ const customerSecret = process.env.CUSTOMER_TOKEN_SECRET || adminToken || "easte
 const uploadDir = path.resolve(__dirname, "../public/uploads");
 const localStorePath = path.resolve(__dirname, "../data/local-store.json");
 
+app.use("/api/admin/uploads", express.raw({ type: ["image/jpeg", "image/png", "image/webp", "image/gif"], limit: "8mb" }));
 app.use(express.json({ limit: "16mb" }));
 
 // Keep the site available while startup validates/imports its storage. API
@@ -406,7 +407,10 @@ app.post("/api/admin/login", (req, res) => {
 
 app.post("/api/admin/uploads", requireAdmin, async (req, res) => {
   try {
-    const url = await saveImageUpload({ dataUrl: req.body.dataUrl, fileName: req.body.fileName });
+    const upload = Buffer.isBuffer(req.body)
+      ? { dataUrl: `data:${req.get("content-type").split(";")[0]};base64,${req.body.toString("base64")}`, fileName: decodeURIComponent(req.get("x-file-name") || "photo") }
+      : req.body;
+    const url = await saveImageUpload({ dataUrl: upload.dataUrl, fileName: upload.fileName });
     res.status(201).json({ url });
   } catch (error) {
     res.status(error.status || 500).json({ error: error.message });
@@ -662,3 +666,4 @@ if (process.env.NODE_ENV !== "test") start().catch((error) => {
   console.error("Database initialization failed:", error.code || error.name);
   process.exit(1);
 });
+
