@@ -1,6 +1,6 @@
 import "dotenv/config";
 import express from "express";
-import { MongoClient, ObjectId } from "mongodb";
+import { getDb, databaseConfigured, closeDb } from "./database.js";
 import fs from "node:fs/promises";
 import path from "node:path";
 import crypto from "node:crypto";
@@ -11,31 +11,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const port = Number(process.env.PORT || 5050);
 const host = process.env.HOST || "0.0.0.0";
-const dbName = process.env.MONGODB_DB || "easternwestern";
-const rawMongoUri = process.env.MONGODB_URI;
-const mongoUri = normalizeMongoUri(rawMongoUri);
 const adminPassword = process.env.ADMIN_PASSWORD;
 const adminToken = process.env.ADMIN_TOKEN;
 const customerSecret = process.env.CUSTOMER_TOKEN_SECRET || adminToken || "easternwestern-local-customer-secret";
 const uploadDir = path.resolve(__dirname, "../public/uploads");
 const localStorePath = path.resolve(__dirname, "../data/local-store.json");
-let dbPromise;
 
 app.use(express.json({ limit: "16mb" }));
-
-function normalizeMongoUri(uri) {
-  const value = String(uri || "").trim();
-  const match = value.match(/^mongodb\+srv:\/\/([^@]+)@cluster0\.qrsel9m\.mongodb\.net\/?(?:\?(.*))?$/);
-  if (!match) return value;
-  const credentials = match[1];
-  const query = new URLSearchParams(match[2] || "");
-  query.set("replicaSet", "atlas-10svam-shard-0");
-  query.set("authSource", query.get("authSource") || "admin");
-  query.set("tls", "true");
-  query.set("retryWrites", query.get("retryWrites") || "true");
-  query.set("w", query.get("w") || "majority");
-  return `mongodb://${credentials}@ac-8iufvlj-shard-00-00.qrsel9m.mongodb.net:27017,ac-8iufvlj-shard-00-01.qrsel9m.mongodb.net:27017,ac-8iufvlj-shard-00-02.qrsel9m.mongodb.net:27017/${dbName}?${query.toString()}`;
-}
 
 function priceValue(price) {
   return Number(String(price || "").replace(/[^0-9.]/g, "")) || 0;
@@ -48,7 +30,7 @@ function cleanId(doc) {
 }
 
 function objectId(id) {
-  return ObjectId.isValid(id) ? new ObjectId(id) : null;
+  return typeof id === "string" && id.length > 0 && id.length <= 191 ? id : null;
 }
 
 function uploadExtension(mime, fileName = "") {
@@ -147,7 +129,7 @@ async function customerFromRequest(req) {
     const db = await getDb();
     const id = objectId(payload.id);
     const query = id ? { _id: id } : { id: payload.id };
-    return cleanCustomer(await db.collection("customers").findOne(query));
+    return cleanCustomer(await db.get("customers", query));
   } catch {
     const store = await readLocalStore();
     return cleanCustomer(store.customers.find((customer) => customer.id === payload.id || customer.email === payload.email));
@@ -184,6 +166,11 @@ function mergeContent(content = {}) {
 }
 
 async function readLocalStore() {
+  if (databaseConfigured() || process.env.NODE_ENV === "production") {
+    const error = new Error("Database unavailable");
+    error.status = 503;
+    throw error;
+  }
   try {
     const store = JSON.parse(await fs.readFile(localStorePath, "utf8"));
     return {
@@ -207,45 +194,27 @@ function localId() {
   return `local-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-async function getDb() {
-  if (!mongoUri) throw new Error("MONGODB_URI missing");
-  if (!dbPromise) {
-    const client = new MongoClient(mongoUri, { serverSelectionTimeoutMS: 8000 });
-    dbPromise = client.connect()
-      .then(() => client.db(dbName))
-      .catch(async (error) => {
-        dbPromise = undefined;
-        await client.close().catch(() => {});
-        throw error;
-      });
-  }
-  return dbPromise;
-}
-
 async function removeLegacyDemoCatalog(db) {
-  const flags = db.collection("systemFlags");
-  if (await flags.findOne({ key: "removedDemoListings" })) return;
+  if (await db.get("systemFlags", { key: "removedDemoListings" })) return;
   const productSlugs = defaultProducts.map((product) => product.slug).filter(Boolean);
   const blogSlugs = defaultBlogs.map((blog) => blog.slug).filter(Boolean);
   await Promise.all([
-    productSlugs.length ? db.collection("products").deleteMany({ slug: { $in: productSlugs } }) : Promise.resolve(),
-    blogSlugs.length ? db.collection("blogs").deleteMany({ slug: { $in: blogSlugs } }) : Promise.resolve(),
+    productSlugs.length ? db.remove("products", { slug: { $in: productSlugs } }) : Promise.resolve(),
+    blogSlugs.length ? db.remove("blogs", { slug: { $in: blogSlugs } }) : Promise.resolve(),
   ]);
-  await flags.updateOne(
+  await db.update("systemFlags",
     { key: "removedDemoListings" },
-    { $set: { key: "removedDemoListings", completedAt: new Date(), updatedAt: new Date() } },
+    { key: "removedDemoListings", completedAt: new Date(), updatedAt: new Date() },
     { upsert: true }
   );
 }
 
 async function ensureContent(db) {
-  const content = db.collection("siteContent");
-  const existing = await content.findOne({ key: "main" });
+  const existing = await db.get("siteContent", { key: "main" });
   if (!existing) {
-    await content.insertOne({ ...defaultContent, updatedAt: new Date() });
+    await db.update("siteContent", { key: "main" }, { ...defaultContent, key: "main", updatedAt: new Date() }, { upsert: true });
   } else {
-    await content.updateOne({ key: "main" }, {
-      $set: {
+    await db.update("siteContent", { key: "main" }, {
         settings: { ...defaultContent.settings, ...(existing.settings || {}) },
         pageHeroes: { ...defaultContent.pageHeroes, ...(existing.pageHeroes || {}) },
         sections: { ...defaultContent.sections, ...(existing.sections || {}) },
@@ -258,7 +227,6 @@ async function ensureContent(db) {
         collections: Array.isArray(existing.collections) && existing.collections.length ? existing.collections : defaultContent.collections,
         socialImages: Array.isArray(existing.socialImages) && existing.socialImages.length ? existing.socialImages : defaultContent.socialImages,
         updatedAt: existing.updatedAt || new Date(),
-      },
     });
   }
   await removeLegacyDemoCatalog(db);
@@ -269,18 +237,18 @@ async function getPublicData() {
     const db = await getDb();
     await ensureContent(db);
     const [content, products, blogs] = await Promise.all([
-      db.collection("siteContent").findOne({ key: "main" }),
-      db.collection("products").find({ status: "published" }).sort({ sortOrder: 1, createdAt: 1 }).toArray(),
-      db.collection("blogs").find({ status: "published" }).sort({ sortOrder: 1, createdAt: 1 }).toArray(),
+      db.get("siteContent", { key: "main" }),
+      db.list("products", { status: "published" }, { sortOrder: 1, createdAt: 1 }),
+      db.list("blogs", { status: "published" }, { sortOrder: 1, createdAt: 1 }),
     ]);
-    return { content: cleanId(content), products: products.map(cleanId), blogs: blogs.map(cleanId), usingMongo: true };
+    return { content: cleanId(content), products: products.map(cleanId), blogs: blogs.map(cleanId), database: "mysql", usingDatabase: true };
   } catch (error) {
     const store = await readLocalStore();
     return {
       content: store.content,
       products: store.products.filter((product) => product.status === "published"),
       blogs: store.blogs.filter((blog) => blog.status === "published"),
-      usingMongo: false,
+      database: "local", usingDatabase: false,
       error: error.message,
     };
   }
@@ -296,10 +264,10 @@ function requireAdmin(req, res, next) {
 app.get("/api/health", async (_req, res) => {
   try {
     const db = await getDb();
-    await db.command({ ping: 1 });
-    res.json({ ok: true, mongo: true });
-  } catch (error) {
-    res.status(503).json({ ok: false, mongo: false, error: error.message });
+    await db.ping();
+    res.json({ ok: true, database: "mysql" });
+  } catch {
+    res.status(503).json({ ok: false, database: "mysql", error: "Database unavailable" });
   }
 });
 
@@ -325,18 +293,19 @@ app.post("/api/customers/register", async (req, res) => {
   const customer = { name, email, phone, passwordHash: hashPassword(password), createdAt: new Date(), updatedAt: new Date() };
   try {
     const db = await getDb();
-    const exists = await db.collection("customers").findOne({ email });
+    const exists = await db.get("customers", { email });
     if (exists) return res.status(409).json({ error: "Email already registered" });
-    const result = await db.collection("customers").insertOne(customer);
+    const result = await db.insert("customers", customer);
     const saved = cleanCustomer({ _id: result.insertedId, ...customer });
     res.status(201).json({ customer: saved, token: customerToken(saved) });
   } catch (error) {
+    if (error.code === "ER_DUP_ENTRY") return res.status(409).json({ error: "Email already registered" });
     const store = await readLocalStore();
     if (store.customers.some((item) => item.email === email)) return res.status(409).json({ error: "Email already registered" });
     const saved = { id: localId(), ...customer };
     store.customers.push(saved);
     await writeLocalStore(store);
-    res.status(201).json({ customer: cleanCustomer(saved), token: customerToken(saved), usingMongo: false, error: error.message });
+    res.status(201).json({ customer: cleanCustomer(saved), token: customerToken(saved), database: "local", usingDatabase: false, error: error.message });
   }
 });
 
@@ -345,7 +314,7 @@ app.post("/api/customers/login", async (req, res) => {
   const password = String(req.body.password || "");
   try {
     const db = await getDb();
-    const customer = await db.collection("customers").findOne({ email });
+    const customer = await db.get("customers", { email });
     if (!customer || !verifyPassword(password, customer.passwordHash)) return res.status(401).json({ error: "Wrong email or password" });
     const clean = cleanCustomer(customer);
     res.json({ customer: clean, token: customerToken(clean) });
@@ -354,7 +323,7 @@ app.post("/api/customers/login", async (req, res) => {
     const customer = store.customers.find((item) => item.email === email);
     if (!customer || !verifyPassword(password, customer.passwordHash)) return res.status(401).json({ error: "Wrong email or password" });
     const clean = cleanCustomer(customer);
-    res.json({ customer: clean, token: customerToken(clean), usingMongo: false, error: error.message });
+    res.json({ customer: clean, token: customerToken(clean), database: "local", usingDatabase: false, error: error.message });
   }
 });
 
@@ -365,12 +334,12 @@ app.get("/api/customer/me", requireCustomer, (req, res) => {
 app.get("/api/customer/orders", requireCustomer, async (req, res) => {
   try {
     const db = await getDb();
-    const orders = await db.collection("orders").find({ $or: [{ customerId: req.customer.id }, { "customer.email": req.customer.email }] }).sort({ createdAt: -1 }).toArray();
+    const orders = await db.list("orders", { $or: [{ customerId: req.customer.id }, { "customer.email": req.customer.email }] }, { createdAt: -1 });
     res.json({ orders: orders.map(cleanId) });
   } catch (error) {
     const store = await readLocalStore();
     const orders = store.orders.filter((order) => order.customerId === req.customer.id || order.customer?.email === req.customer.email);
-    res.json({ orders, usingMongo: false, error: error.message });
+    res.json({ orders, database: "local", usingDatabase: false, error: error.message });
   }
 });
 
@@ -410,14 +379,14 @@ app.post("/api/orders", async (req, res) => {
   try {
     const db = await getDb();
     await ensureContent(db);
-    const result = await db.collection("orders").insertOne(order);
+    const result = await db.insert("orders", order);
     res.status(201).json({ order: cleanId({ _id: result.insertedId, ...order }) });
   } catch (error) {
     const store = await readLocalStore();
     const localOrder = { id: localId(), ...order };
     store.orders.unshift(localOrder);
     await writeLocalStore(store);
-    res.status(201).json({ order: localOrder, usingMongo: false, error: error.message });
+    res.status(201).json({ order: localOrder, database: "local", usingDatabase: false, error: error.message });
   }
 });
 
@@ -441,15 +410,15 @@ app.get("/api/admin/dashboard", requireAdmin, async (_req, res) => {
     const db = await getDb();
     await ensureContent(db);
     const [content, products, blogs, orders] = await Promise.all([
-      db.collection("siteContent").findOne({ key: "main" }),
-      db.collection("products").find().sort({ sortOrder: 1, createdAt: 1 }).toArray(),
-      db.collection("blogs").find().sort({ sortOrder: 1, createdAt: 1 }).toArray(),
-      db.collection("orders").find().sort({ createdAt: -1 }).toArray(),
+      db.get("siteContent", { key: "main" }),
+      db.list("products", {}, { sortOrder: 1, createdAt: 1 }),
+      db.list("blogs", {}, { sortOrder: 1, createdAt: 1 }),
+      db.list("orders", {}, { createdAt: -1 }),
     ]);
     res.json({ content: cleanId(content), products: products.map(cleanId), blogs: blogs.map(cleanId), orders: orders.map(cleanId) });
   } catch (error) {
     const store = await readLocalStore();
-    res.json({ ...store, usingMongo: false, error: error.message });
+    res.json({ ...store, database: "local", usingDatabase: false, error: error.message });
   }
 });
 
@@ -457,13 +426,13 @@ app.put("/api/admin/content", requireAdmin, async (req, res) => {
   const next = { ...req.body, key: "main", updatedAt: new Date() };
   try {
     const db = await getDb();
-    await db.collection("siteContent").updateOne({ key: "main" }, { $set: next }, { upsert: true });
-    res.json({ content: cleanId(await db.collection("siteContent").findOne({ key: "main" })) });
+    await db.update("siteContent", { key: "main" }, next, { upsert: true });
+    res.json({ content: cleanId(await db.get("siteContent", { key: "main" })) });
   } catch (error) {
     const store = await readLocalStore();
     store.content = mergeContent(next);
     await writeLocalStore(store);
-    res.json({ content: store.content, usingMongo: false, error: error.message });
+    res.json({ content: store.content, database: "local", usingDatabase: false, error: error.message });
   }
 });
 
@@ -517,14 +486,14 @@ app.post("/api/admin/products", requireAdmin, async (req, res) => {
   const product = { ...productPayload(req.body), createdAt: new Date() };
   try {
     const db = await getDb();
-    const result = await db.collection("products").insertOne(product);
+    const result = await db.insert("products", product);
     res.status(201).json({ product: cleanId({ _id: result.insertedId, ...product }) });
   } catch (error) {
     const store = await readLocalStore();
     const localProduct = { id: localId(), ...product };
     store.products.push(localProduct);
     await writeLocalStore(store);
-    res.status(201).json({ product: localProduct, usingMongo: false, error: error.message });
+    res.status(201).json({ product: localProduct, database: "local", usingDatabase: false, error: error.message });
   }
 });
 
@@ -534,13 +503,13 @@ app.put("/api/admin/products/:id", requireAdmin, async (req, res) => {
   try {
     if (!id) throw new Error("Local id");
     const db = await getDb();
-    await db.collection("products").updateOne({ _id: id }, { $set: next });
-    res.json({ product: cleanId(await db.collection("products").findOne({ _id: id })) });
+    await db.update("products", { _id: id }, next);
+    res.json({ product: cleanId(await db.get("products", { _id: id })) });
   } catch (error) {
     const store = await readLocalStore();
     store.products = store.products.map((product) => product.id === req.params.id ? { ...product, ...next } : product);
     await writeLocalStore(store);
-    res.json({ product: store.products.find((product) => product.id === req.params.id), usingMongo: false, error: error.message });
+    res.json({ product: store.products.find((product) => product.id === req.params.id), database: "local", usingDatabase: false, error: error.message });
   }
 });
 
@@ -549,13 +518,13 @@ app.delete("/api/admin/products/:id", requireAdmin, async (req, res) => {
   try {
     if (!id) throw new Error("Local id");
     const db = await getDb();
-    await db.collection("products").deleteOne({ _id: id });
+    await db.remove("products", { _id: id });
     res.json({ ok: true });
   } catch (error) {
     const store = await readLocalStore();
     store.products = store.products.filter((product) => product.id !== req.params.id);
     await writeLocalStore(store);
-    res.json({ ok: true, usingMongo: false, error: error.message });
+    res.json({ ok: true, database: "local", usingDatabase: false, error: error.message });
   }
 });
 
@@ -579,14 +548,14 @@ app.post("/api/admin/blogs", requireAdmin, async (req, res) => {
   const blog = { ...blogPayload(req.body), createdAt: new Date() };
   try {
     const db = await getDb();
-    const result = await db.collection("blogs").insertOne(blog);
+    const result = await db.insert("blogs", blog);
     res.status(201).json({ blog: cleanId({ _id: result.insertedId, ...blog }) });
   } catch (error) {
     const store = await readLocalStore();
     const localBlog = { id: localId(), ...blog };
     store.blogs.push(localBlog);
     await writeLocalStore(store);
-    res.status(201).json({ blog: localBlog, usingMongo: false, error: error.message });
+    res.status(201).json({ blog: localBlog, database: "local", usingDatabase: false, error: error.message });
   }
 });
 
@@ -596,13 +565,13 @@ app.put("/api/admin/blogs/:id", requireAdmin, async (req, res) => {
   try {
     if (!id) throw new Error("Local id");
     const db = await getDb();
-    await db.collection("blogs").updateOne({ _id: id }, { $set: next });
-    res.json({ blog: cleanId(await db.collection("blogs").findOne({ _id: id })) });
+    await db.update("blogs", { _id: id }, next);
+    res.json({ blog: cleanId(await db.get("blogs", { _id: id })) });
   } catch (error) {
     const store = await readLocalStore();
     store.blogs = store.blogs.map((blog) => blog.id === req.params.id ? { ...blog, ...next } : blog);
     await writeLocalStore(store);
-    res.json({ blog: store.blogs.find((blog) => blog.id === req.params.id), usingMongo: false, error: error.message });
+    res.json({ blog: store.blogs.find((blog) => blog.id === req.params.id), database: "local", usingDatabase: false, error: error.message });
   }
 });
 
@@ -611,13 +580,13 @@ app.delete("/api/admin/blogs/:id", requireAdmin, async (req, res) => {
   try {
     if (!id) throw new Error("Local id");
     const db = await getDb();
-    await db.collection("blogs").deleteOne({ _id: id });
+    await db.remove("blogs", { _id: id });
     res.json({ ok: true });
   } catch (error) {
     const store = await readLocalStore();
     store.blogs = store.blogs.filter((blog) => blog.id !== req.params.id);
     await writeLocalStore(store);
-    res.json({ ok: true, usingMongo: false, error: error.message });
+    res.json({ ok: true, database: "local", usingDatabase: false, error: error.message });
   }
 });
 
@@ -641,14 +610,19 @@ app.patch("/api/admin/orders/:id", requireAdmin, async (req, res) => {
   try {
     if (!id) throw new Error("Local id");
     const db = await getDb();
-    await db.collection("orders").updateOne({ _id: id }, { $set: next });
-    res.json({ order: cleanId(await db.collection("orders").findOne({ _id: id })) });
+    await db.update("orders", { _id: id }, next);
+    res.json({ order: cleanId(await db.get("orders", { _id: id })) });
   } catch (error) {
     const store = await readLocalStore();
     store.orders = store.orders.map((order) => order.id === req.params.id ? { ...order, ...next } : order);
     await writeLocalStore(store);
-    res.json({ order: store.orders.find((order) => order.id === req.params.id), usingMongo: false, error: error.message });
+    res.json({ order: store.orders.find((order) => order.id === req.params.id), database: "local", usingDatabase: false, error: error.message });
   }
+});
+
+app.use((error, _req, res, _next) => {
+  if (error.code === "ER_DUP_ENTRY") return res.status(409).json({ error: "Record already exists" });
+  res.status(error.status || 503).json({ error: error.status === 400 ? error.message : "Database unavailable" });
 });
 
 const distPath = path.resolve(__dirname, "../dist");
@@ -656,6 +630,16 @@ app.use("/uploads", express.static(uploadDir));
 app.use(express.static(distPath));
 app.get(/.*/, (_req, res) => res.sendFile(path.join(distPath, "index.html")));
 
-app.listen(port, host, () => {
+export { app };
+
+let server;
+if (process.env.NODE_ENV !== "test") {
+  // Verify storage and finish the optional one-time import before serving traffic.
+  if (databaseConfigured() || process.env.NODE_ENV === "production") await getDb();
+  server = app.listen(port, host, () => {
   console.log(`EasternWestern API running on http://${host}:${port}`);
-});
+  });
+  for (const signal of ["SIGTERM", "SIGINT"]) process.once(signal, () => {
+    server.close(async () => { await closeDb(); process.exit(0); });
+  });
+}
