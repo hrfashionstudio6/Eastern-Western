@@ -635,7 +635,7 @@ function CollectionsSection({ products = [] }) {
             <Button dark href={slugPath("shop", item[2])}>View article</Button>
           </div>
           <a className="collection-img" href={slugPath("shop", item[2])} aria-label={`View ${item[1]}`}>
-            {item[5] ? <img src={item[5]} alt={item[1]} loading="lazy" /> : <div className="media-placeholder">No image</div>}
+            {(item.media?.[3] || item[5]) ? <img src={item.media?.[3] || item[5]} alt={item[1]} loading="lazy" /> : <div className="media-placeholder">No image</div>}
           </a>
         </div>
       ))}
