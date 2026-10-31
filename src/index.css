@@ -4638,4 +4638,12 @@ body {
 .product-card:hover .product-media img:first-child,
 .product-card:hover .product-media img:nth-child(2) { transform: none; }
 .product-thumbnails { flex-wrap: wrap; }
+/* Compact product photo boxes without cropping the article. */
+.product-main { max-width: 420px; margin-inline: auto; align-self: start; }
+.product-main > img { height: clamp(320px, 110vw, 520px); max-height: 520px; }
+.product-media, .catalog-card .product-media { max-height: 420px; }
+.pick-tile { height: 420px; aspect-ratio: auto; }
+@media (min-width: 901px) {
+  .product-detail { grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 32px; }
+}
 
