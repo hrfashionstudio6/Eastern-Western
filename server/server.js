@@ -7,6 +7,7 @@ import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { defaultBlogs, defaultContent, defaultProducts } from "./defaultData.js";
 import { prepareProductImport } from "../shared/product-import.js";
+import { priceAmount } from "../shared/money.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -30,7 +31,7 @@ app.use("/api", async (_req, res, next) => {
 });
 
 function priceValue(price) {
-  return Number(String(price || "").replace(/[^0-9.]/g, "")) || 0;
+  return priceAmount(price);
 }
 
 function cleanId(doc) {

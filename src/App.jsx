@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import AdminDashboard from "./AdminDashboard.jsx";
-import { formatPKR } from "../shared/money.js";
+import { formatPKR, priceAmount } from "../shared/money.js";
 import "./index.css";
 
 const logo = "/assets/easternwestern-logo.png";
@@ -236,7 +236,7 @@ function cartProduct(item) {
 }
 
 function priceValue(price) {
-  return Number(String(price).replace(/[^0-9.]/g, "")) || 0;
+  return priceAmount(price);
 }
 
 function cartSubtotal(items) {
