@@ -8,8 +8,15 @@ test("upload sends the original Blob and retries temporary gateway errors", asyn
   let attempts = 0;
   const result = await sendPreparedImage(body, "لباس.jpg", "test-token", async (url, options) => {
     assert.equal(url, "/api/admin/uploads");
-    assert.equal(options.body, body);
-    assert.equal(options.headers["Content-Type"], "image/webp");
+    if (!attempts) {
+      assert.equal(options.body, body);
+      assert.equal(options.headers["Content-Type"], "image/webp");
+    } else {
+      assert.equal(options.headers["Content-Type"], "application/json");
+      const upload = JSON.parse(options.body);
+      assert.equal(upload.fileName, "لباس.jpg");
+      assert.equal(upload.dataUrl, "data:image/webp;base64,cGhvdG8=");
+    }
     return ++attempts === 1 ? new Response("gateway", { status: 504 }) : Response.json({ url: "/api/media/photo.webp" });
   });
   assert.equal(attempts, 2);

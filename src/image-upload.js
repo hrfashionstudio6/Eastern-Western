@@ -36,13 +36,22 @@ export async function prepareUpload(file) {
 }
 
 export async function sendPreparedImage(body, fileName, token, fetcher = fetch) {
+  let jsonBody;
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 30000);
     try {
+      // Some hosting proxies reject raw image request bodies. The fallback
+      // encodes the already compressed photo, never the large original file.
+      if (attempt > 0 && !jsonBody) {
+        const bytes = new Uint8Array(await body.arrayBuffer());
+        let binary = "";
+        for (let i = 0; i < bytes.length; i += 8192) binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
+        jsonBody = JSON.stringify({ fileName, dataUrl: `data:${body.type};base64,${btoa(binary)}` });
+      }
       const response = await fetcher("/api/admin/uploads", {
-        method: "POST", body, signal: controller.signal,
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": body.type, "X-File-Name": encodeURIComponent(fileName) },
+        method: "POST", body: attempt > 0 ? jsonBody : body, signal: controller.signal,
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": attempt > 0 ? "application/json" : body.type, "X-File-Name": encodeURIComponent(fileName) },
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
@@ -53,9 +62,12 @@ export async function sendPreparedImage(body, fileName, token, fetcher = fetch) 
       if (!payload.url) throw new Error("The server did not return a photo. Please try again.");
       return payload;
     } catch (error) {
-      const retryable = error.name === "AbortError" || error instanceof TypeError || [408, 429, 500, 502, 503, 504].includes(error.status);
+      const retryable = error.name === "AbortError" || error instanceof TypeError || [403, 408, 415, 429, 500, 502, 503, 504].includes(error.status);
       if (!retryable) throw error;
-      if (attempt === 2) throw new Error("The upload connection is unavailable. Your product details are safe; please try Upload again.");
+      if (attempt === 2) {
+        const reason = error.name === "AbortError" ? "Server response timed out" : error.message;
+        throw new Error(`Photo upload failed: ${reason}. Your product details are safe. Please try again.`);
+      }
     } finally { clearTimeout(timer); }
   }
 }
