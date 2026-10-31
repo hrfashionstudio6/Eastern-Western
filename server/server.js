@@ -19,6 +19,14 @@ const localStorePath = path.resolve(__dirname, "../data/local-store.json");
 
 app.use(express.json({ limit: "16mb" }));
 
+// Keep the site available while startup validates/imports its storage. API
+// requests wait for that same initialization promise, never a partial import.
+app.use("/api", async (_req, res, next) => {
+  if (!databaseConfigured() && process.env.NODE_ENV !== "production") return next();
+  try { await getDb(); next(); }
+  catch { res.status(503).json({ error: "Database unavailable" }); }
+});
+
 function priceValue(price) {
   return Number(String(price || "").replace(/[^0-9.]/g, "")) || 0;
 }
@@ -634,14 +642,20 @@ export { app };
 
 let server;
 async function start() {
-  // Verify storage and finish the optional one-time import before serving traffic.
-  if (databaseConfigured() || process.env.NODE_ENV === "production") await getDb();
+  // LiteSpeed requires listen() synchronously, within three seconds of require().
   server = app.listen(port, host, () => {
   console.log(`EasternWestern API running on http://${host}:${port}`);
   });
   for (const signal of ["SIGTERM", "SIGINT"]) process.once(signal, () => {
     server.close(async () => { await closeDb(); process.exit(0); });
   });
+  if (databaseConfigured() || process.env.NODE_ENV === "production") {
+    try { await getDb(); }
+    catch (error) {
+      const reason = error.reason?.servers ? [...error.reason.servers.values()].map((item) => item.error?.cause?.code || item.error?.code || item.error?.name).filter(Boolean).join(",") : "";
+      console.error("Database initialization failed:", error.code || error.name, reason);
+    }
+  }
 }
 
 if (process.env.NODE_ENV !== "test") start().catch((error) => {
