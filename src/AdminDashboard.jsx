@@ -88,7 +88,7 @@ function productToForm(product) {
   return {
     ...blankProduct,
     ...product,
-    mediaText: (product.media || []).join("\n"),
+    mediaText: (product.media || []).filter((image) => image !== product.image && image !== product.hoverImage).join("\n"),
     tagsText: (product.tags || []).join(", "),
     variants: (product.variants || []).map((variant) => ({ ...variant })),
   };
@@ -705,7 +705,9 @@ export default function AdminDashboard() {
                 <legend>Product photos</legend>
                 <div className="listing-photo"><span>Main photo</span><ImageInput label="Main photo" value={productForm.image || ""} uploading={uploadingField === "product-image"} onChange={(value) => setProductForm({ ...productForm, image: value })} onUpload={(file) => uploadImage(file, "product-image", (url) => setProductForm((current) => ({ ...current, image: url })))} /></div>
                 <div className="listing-photo"><span>Second photo <small>Shown when the mouse moves over the product</small></span><ImageInput label="Second photo" value={productForm.hoverImage || ""} uploading={uploadingField === "product-hover"} onChange={(value) => setProductForm({ ...productForm, hoverImage: value })} onUpload={(file) => uploadImage(file, "product-hover", (url) => setProductForm((current) => ({ ...current, hoverImage: url })))} /></div>
-                <div className="listing-photo listing-gallery"><span>More photos <small>Front, back and embroidery details</small></span><UploadTextarea ariaLabel="More photo links" value={productForm.mediaText} uploading={uploadingField === "product-media"} onChange={(value) => setProductForm({ ...productForm, mediaText: value })} onUpload={(file) => uploadImage(file, "product-media", (url) => setProductForm((current) => ({ ...current, mediaText: appendTextLine(current.mediaText, url) })))} placeholder="Upload photos, or paste one photo link on each line" /></div>
+                {[0, 1].map((index) => (
+                  <div className="listing-photo" key={index}><span>Extra photo {index + 3}<small>Shown inside the product gallery</small></span><ImageInput label={`Photo ${index + 3}`} value={String(productForm.mediaText || "").split("\n")[index] || ""} uploading={uploadingField === `product-extra-${index}`} onChange={(value) => setProductForm((current) => { const extra = String(current.mediaText || "").split("\n"); extra[index] = value; return { ...current, mediaText: extra.join("\n") }; })} onUpload={(file) => uploadImage(file, `product-extra-${index}`, (url) => setProductForm((current) => { const extra = String(current.mediaText || "").split("\n"); extra[index] = url; return { ...current, mediaText: extra.join("\n") }; }))} /></div>
+                ))}
               </fieldset>
               <fieldset className="listing-section listing-options">
                 <legend>Sizes, colours and fabric (optional)</legend>

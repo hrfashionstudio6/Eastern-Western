@@ -478,7 +478,7 @@ function productPayload(body) {
     oldPrice: compareAtPrice,
     image,
     hoverImage,
-    media: media.length ? media : [image, hoverImage].filter(Boolean),
+    media: [...new Set([image, hoverImage, ...media].filter(Boolean))],
     tags: cleanStringArray(body.tags),
     variants: cleanVariants(body.variants),
     description: body.description || "",

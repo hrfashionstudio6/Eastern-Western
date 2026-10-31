@@ -925,7 +925,7 @@ function ShopPage({ products, content }) {
 function ProductPage({ slug, products, onAddToCart }) {
   const sourceProducts = products;
   const product = sourceProducts.find((p) => p[2] === slug) || sourceProducts[0];
-  const gallery = product ? (product.media?.length ? product.media : [product[5], product[6]]).filter(Boolean) : [];
+  const gallery = product ? [...new Set([product[5], product[6], ...(product.media || [])].filter(Boolean))] : [];
   const firstImage = gallery[0] || "";
   const [activeImage, setActiveImage] = useState(firstImage);
   useEffect(() => {
