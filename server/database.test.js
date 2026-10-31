@@ -33,3 +33,19 @@ test("unknown tables and unfiltered deletes cannot reach SQL", async () => {
   await assert.rejects(db.get("products; DROP TABLE customers", { _id: "x" }));
   await assert.rejects(db.list("orders", {}, { "createdAt; DROP TABLE orders": 1 }));
 });
+
+test("bulk imports roll back the whole batch when a later insert fails", async () => {
+  const events = [];
+  let inserts = 0;
+  const connection = {
+    async beginTransaction() { events.push("begin"); },
+    async execute() { if (++inserts === 2) throw new Error("disk full"); },
+    async commit() { events.push("commit"); },
+    async rollback() { events.push("rollback"); },
+    release() { events.push("release"); },
+  };
+  const db = createRepository({ async getConnection() { return connection; } });
+  await assert.rejects(db.insertMany("products", [{name:"one"}, {name:"two"}]), /disk full/);
+  assert.deepEqual(events, ["begin", "rollback", "release"]);
+});
+

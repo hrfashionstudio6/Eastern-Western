@@ -6,6 +6,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { defaultBlogs, defaultContent, defaultProducts } from "./defaultData.js";
+import { prepareProductImport } from "../shared/product-import.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -499,6 +500,16 @@ function productPayload(body) {
     updatedAt: new Date(),
   };
 }
+
+app.post("/api/admin/products/import", requireAdmin, async (req, res) => {
+  try {
+    const db = await getDb();
+    const { products, errors } = prepareProductImport(req.body.rows, await db.list("products"));
+    if (errors.length) return res.status(400).json({ error: errors.slice(0, 20).join("\n") });
+    await db.insertMany("products", products.map(product => ({ ...productPayload(product), createdAt: new Date() })));
+    res.status(201).json({ imported: products.length });
+  } catch (error) { res.status(error.message?.includes("sheet") || error.message?.includes("heading") || error.message?.includes("rows") ? 400 : 503).json({ error: error.message }); }
+});
 
 app.post("/api/admin/products", requireAdmin, async (req, res) => {
   const product = { ...productPayload(req.body), createdAt: new Date() };

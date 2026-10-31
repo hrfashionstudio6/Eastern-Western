@@ -99,6 +99,18 @@ export function createRepository(executor) {
       await executor.execute(`INSERT INTO ${table(name)} (id, document) VALUES (?, ?)`, [id, JSON.stringify(document)]);
       return { insertedId: id };
     },
+    async insertMany(name, documents) {
+      const connection = await executor.getConnection();
+      try {
+        await connection.beginTransaction();
+        const repository = createRepository(connection);
+        for (const document of documents) await repository.insert(name, document);
+        await connection.commit();
+      } catch (error) {
+        await connection.rollback();
+        throw error;
+      } finally { connection.release(); }
+    },
     async update(name, filter, input, { upsert = false } = {}) {
       const { _id: _ignoredId, ...document } = input;
       const query = where(filter);

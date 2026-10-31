@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import "./admin.css";
+import { prepareProductImport } from "../shared/product-import.js";
 
 const tabs = ["Overview", "Listings", "Orders", "Site Editor", "Blogs", "Settings"];
 const tabIcons = {
@@ -293,6 +294,8 @@ export default function AdminDashboard() {
   const [data, setData] = useState({ content: { settings: {}, heroSlides: [] }, products: [], blogs: [], orders: [] });
   const [message, setMessage] = useState("");
   const [productForm, setProductForm] = useState(blankProduct);
+  const [importPreview, setImportPreview] = useState(null);
+  const [importBusy, setImportBusy] = useState(false);
   const [blogForm, setBlogForm] = useState(blankBlog);
   const [settings, setSettings] = useState({});
   const [pageHeroes, setPageHeroes] = useState({});
@@ -361,6 +364,43 @@ export default function AdminDashboard() {
     } finally {
       setUploadingField("");
     }
+  }
+
+  async function readProductFile(file) {
+    if (!file) return;
+    setImportBusy(true);
+    setImportPreview(null);
+    try {
+      if (!/\.xlsx$/i.test(file.name)) throw new Error("Choose an Excel .xlsx file. In Google Sheets use File > Download > Microsoft Excel (.xlsx).");
+      if (file.size > 5 * 1024 * 1024) throw new Error("Excel file must be smaller than 5 MB.");
+      const { default: ExcelJS } = await import("exceljs");
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(await file.arrayBuffer());
+      const sheet = workbook.getWorksheet("Products");
+      if (!sheet) throw new Error("Products sheet not found. Please use the template.");
+      if (sheet.rowCount > 1001) throw new Error("Import up to 1,000 rows at a time.");
+      const rows = [];
+      sheet.eachRow({ includeEmpty: true }, row => {
+        const values = [];
+        for (let column = 1; column <= 14; column += 1) values.push(row.getCell(column).text);
+        rows.push(values);
+      });
+      const result = prepareProductImport(rows, data.products);
+      setImportPreview({ ...result, rows, fileName: file.name });
+    } catch (error) { setMessage(error.message); }
+    finally { setImportBusy(false); }
+  }
+
+  async function importProducts() {
+    if (!importPreview || importPreview.errors.length || importBusy) return;
+    setImportBusy(true);
+    try {
+      const result = await request("/api/admin/products/import", token, { method: "POST", body: JSON.stringify({ rows: importPreview.rows }) });
+      setImportPreview(null);
+      await load();
+      setMessage(`${result.imported} products imported. Click Edit on each product to add its photos.`);
+    } catch (error) { setMessage(error.message); }
+    finally { setImportBusy(false); }
   }
 
   async function saveProduct(event) {
@@ -727,6 +767,17 @@ export default function AdminDashboard() {
 
         {active === "Listings" && (
           <AdminPanel title={productForm.id ? "Edit listing" : "Add listing"}>
+            <div className="listing-import">
+              <div><strong>Add products from Excel</strong><p>Sheet mein details bharein. Photos baad mein har product ke Edit se add karein.</p></div>
+              <a className="admin-secondary" href="/product-import-template.xlsx" download>Download Excel template</a>
+              <a className="admin-secondary" href="https://docs.google.com/spreadsheets/d/1JVCxI6MasbdAK7O52MphWbVZM7U1hYdTDJY5VvOkEQI/edit" target="_blank" rel="noreferrer">Open Google Sheet</a>
+              <label className="admin-secondary import-picker">{importBusy ? "Please wait..." : "Import Excel"}<input aria-label="Import Excel file" type="file" accept=".xlsx" disabled={importBusy || Boolean(uploadingField)} onChange={(event) => { readProductFile(event.target.files?.[0]); event.target.value = ""; }} /></label>
+            </div>
+            {importPreview && <section className="import-preview" aria-label="Excel import preview">
+              <h3>{importPreview.fileName}: {importPreview.products.length} products</h3>
+              {importPreview.errors.length ? <div role="alert"><strong>Fix these rows, then choose the file again:</strong><ul>{importPreview.errors.slice(0, 20).map((error, i) => <li key={i}>{error}</li>)}</ul></div> : <><p>Ready to import. Existing products will stay as they are. Photos can be added through Edit.</p><ul>{importPreview.products.slice(0, 5).map(product => <li key={product.sku}>{product.sku} — {product.name} — {product.price} — {product.stock} pieces — {product.status}</li>)}</ul>{importPreview.products.length > 5 && <p>And {importPreview.products.length - 5} more products.</p>}</>}
+              <div className="import-actions"><button type="button" disabled={importBusy || importPreview.errors.length > 0} onClick={importProducts}>{importBusy ? "Importing..." : `Import ${importPreview.products.length} products`}</button><button className="admin-secondary" type="button" disabled={importBusy} onClick={() => setImportPreview(null)}>Cancel</button></div>
+            </section>}
             <form className="admin-form listing-form" onSubmit={saveProduct}>
               <fieldset className="listing-section">
                 <legend>Product details</legend>
