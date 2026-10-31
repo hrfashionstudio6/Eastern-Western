@@ -9,6 +9,7 @@ import { defaultBlogs, defaultContent, defaultProducts } from "./defaultData.js"
 import { prepareProductImport } from "../shared/product-import.js";
 import { priceAmount } from "../shared/money.js";
 import { localizeBrandContent } from "../shared/brand-copy.js";
+import { storeImage } from "./image-storage.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -57,15 +58,17 @@ function uploadExtension(mime, fileName = "") {
   return [".jpg", ".jpeg", ".png", ".webp", ".gif"].includes(ext) ? ext : "";
 }
 
-async function saveImageUpload({ dataUrl, fileName, prefix = "" }) {
-  const match = String(dataUrl || "").match(/^data:(image\/(?:jpeg|png|webp|gif));base64,([a-z0-9+/=]+)$/i);
+async function saveImageUpload({ dataUrl, buffer: rawBuffer, mime: rawMime, fileName, prefix = "" }) {
+  const match = Buffer.isBuffer(rawBuffer) && /^image\/(jpeg|png|webp|gif)$/i.test(rawMime)
+    ? [null, rawMime, null]
+    : String(dataUrl || "").match(/^data:(image\/(?:jpeg|png|webp|gif));base64,([a-z0-9+/=]+)$/i);
   if (!match) {
     const error = new Error("Only jpg, png, webp, and gif images are allowed");
     error.status = 400;
     throw error;
   }
   const [, mime, base64] = match;
-  const buffer = Buffer.from(base64, "base64");
+  const buffer = rawBuffer || Buffer.from(base64, "base64");
   if (!buffer.length) {
     const error = new Error("Empty image");
     error.status = 400;
@@ -83,10 +86,8 @@ async function saveImageUpload({ dataUrl, fileName, prefix = "" }) {
     throw error;
   }
   if (databaseConfigured()) {
-    const name = `${crypto.randomUUID()}${extension}`;
     const db = await getDb();
-    await db.insert("uploads", { _id: name, mime: mime.toLowerCase(), base64 });
-    return `/api/media/${name}`;
+    return storeImage(db, buffer, mime, extension);
   }
   const rawName = path.parse(String(fileName || "image")).name;
   const safeName = rawName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "image";
@@ -422,9 +423,9 @@ app.post("/api/admin/login", (req, res) => {
 app.post("/api/admin/uploads", requireAdmin, async (req, res) => {
   try {
     const upload = Buffer.isBuffer(req.body)
-      ? { dataUrl: `data:${req.get("content-type").split(";")[0]};base64,${req.body.toString("base64")}`, fileName: decodeURIComponent(req.get("x-file-name") || "photo") }
+      ? { buffer: req.body, mime: req.get("content-type").split(";")[0], fileName: decodeURIComponent(req.get("x-file-name") || "photo") }
       : req.body;
-    const url = await saveImageUpload({ dataUrl: upload.dataUrl, fileName: upload.fileName });
+    const url = await saveImageUpload(upload);
     res.status(201).json({ url });
   } catch (error) {
     res.status(error.status || 500).json({ error: error.message });

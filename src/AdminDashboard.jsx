@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { withLoading } from "./loading-state.js";
+import { withLoading, updateLoadingMessage } from "./loading-state.js";
+import { prepareUpload, sendPreparedImage } from "./image-upload.js";
 import "./admin.css";
 import { prepareProductImport } from "../shared/product-import.js";
 import { formatPKR } from "../shared/money.js";
@@ -226,55 +227,6 @@ function compactReviewItems(items = []) {
   })).filter((item) => item.quote || item.name || item.image);
 }
 
-function fileToDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error("Image read failed"));
-    reader.readAsDataURL(file);
-  });
-}
-
-async function prepareUpload(file) {
-  if (file.size > 8 * 1024 * 1024) throw new Error("Photo must be smaller than 8 MB");
-  if (!/^image\/(jpeg|png|webp|gif)$/.test(file.type)) throw new Error("Choose a JPG, PNG, WebP or GIF photo");
-  const original = await fileToDataUrl(file);
-  if (file.size < 250000 || file.type === "image/gif") return original;
-  const image = new Image();
-  image.src = original;
-  await image.decode();
-  const scale = Math.min(1, 1600 / Math.max(image.width, image.height));
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.round(image.width * scale);
-  canvas.height = Math.round(image.height * scale);
-  canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
-  const optimized = canvas.toDataURL(file.type === "image/png" ? "image/png" : "image/jpeg", 0.82);
-  return optimized.length < original.length ? optimized : original;
-}
-
-async function sendImage(file, token) {
-  const dataUrl = await prepareUpload(file);
-  const [header, encoded] = dataUrl.split(",");
-  const mime = header.match(/^data:([^;]+)/)[1];
-  const binary = atob(encoded);
-  const body = new Uint8Array(binary.length);
-  for (let index = 0; index < binary.length; index += 1) body[index] = binary.charCodeAt(index);
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 90000);
-    try {
-      return await request("/api/admin/uploads", token, { method: "POST", body, signal: controller.signal,
-        headers: { "Content-Type": mime, "X-File-Name": encodeURIComponent(file.name) } });
-    } catch (error) {
-      const connectionError = error.name === "AbortError" || error instanceof TypeError;
-      if (!connectionError) throw error;
-      if (attempt === 1) throw new Error("Photo upload connection timed out. Please try Upload again; your product details are still here.");
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-}
-
 async function request(path, token, options = {}) {
   const response = await fetch(path, {
     ...options,
@@ -362,7 +314,10 @@ export default function AdminDashboard() {
     setUploadingField(field);
     try {
       setMessage("Uploading photo — please wait...");
-      const payload = await sendImage(file, token);
+      updateLoadingMessage("Preparing photo…");
+      const photo = await prepareUpload(file);
+      updateLoadingMessage("Uploading photo…");
+      const payload = await sendPreparedImage(photo, file.name, token);
       applyUrl(payload.url);
       setMessage("Image uploaded");
     } catch (error) {
