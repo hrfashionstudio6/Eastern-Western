@@ -712,7 +712,7 @@ export default function AdminDashboard() {
                 <p className="listing-help">Har size aur colour ke liye alag option add karein. Size nahi hai to Unstitched ya Free Size likhein.</p>
                 {(productForm.variants || []).map((variant, index) => (
                   <div className="listing-variant" key={index}>
-                    <div className="listing-variant-head"><strong>Option {index + 1}</strong><button className="admin-secondary" type="button" onClick={() => setProductForm((current) => ({ ...current, variants: current.variants.filter((_, i) => i !== index) }))}>Remove option</button></div>
+                    <div className="listing-variant-head"><strong>Option {index + 1}</strong><button className="admin-secondary" type="button" disabled={Boolean(uploadingField)} onClick={() => setProductForm((current) => ({ ...current, variants: current.variants.filter((_, i) => i !== index) }))}>Remove option</button></div>
                     {[["size", "Size", "e.g. S, M, L or Unstitched"], ["color", "Colour / Rang", "e.g. Maroon"], ["material", "Fabric / Kapra", "e.g. Khaddar"], ["sku", "Option code (optional)", "e.g. EW-001-M"], ["price", "Option price", "e.g. PKR 5,500"], ["stock", "Available pieces", "e.g. 5"]].map(([field, label, example]) => (
                       <ListingField key={field} label={label}><input type={field === "stock" ? "number" : "text"} min={field === "stock" ? "0" : undefined} value={variant[field] ?? ""} placeholder={example} onChange={(e) => setProductForm((current) => ({ ...current, variants: current.variants.map((item, i) => i === index ? { ...item, [field]: e.target.value } : item) }))} /></ListingField>
                     ))}
