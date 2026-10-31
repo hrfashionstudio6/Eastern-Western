@@ -4672,3 +4672,11 @@ body {
   #home-hero .thumbs button, #home-hero .thumbs button.active { flex-basis: 60px; width: 60px; height: 40px; }
 }
 
+/* Keep the full banner; restore only the preview rail on the right. */
+#home-hero > .thumbs { position: absolute; top: 50%; right: 26px; bottom: auto; left: auto; transform: translateY(-50%); flex-direction: column; justify-content: center; width: auto; max-height: 100%; padding: 0; overflow-x: hidden; overflow-y: auto; background: transparent; }
+#home-hero .thumbs button, #home-hero .thumbs button.active { flex: 0 0 52px; }
+@media (max-width: 760px) {
+  #home-hero > .thumbs { right: 8px; gap: 4px; padding: 0; }
+  #home-hero .thumbs button, #home-hero .thumbs button.active { flex: 0 0 28px; width: 40px; height: 28px; }
+}
+
