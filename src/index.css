@@ -4680,3 +4680,7 @@ body {
   #home-hero .thumbs button, #home-hero .thumbs button.active { flex: 0 0 28px; width: 40px; height: 28px; }
 }
 
+/* Start the homepage banner below the fixed announcement strip. */
+main:has(> #offer-bar) #home-hero { margin-top: 29px; }
+@media (max-width: 760px) { main:has(> #offer-bar) #home-hero { margin-top: 24px; } }
+
