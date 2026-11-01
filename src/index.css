@@ -4684,3 +4684,6 @@ body {
 main:has(> #offer-bar) #home-hero { margin-top: 29px; }
 @media (max-width: 760px) { main:has(> #offer-bar) #home-hero { margin-top: 24px; } }
 
+.swatches .listing-color { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; line-height: 1.4; }
+.swatches:has(.listing-color) { flex-wrap: wrap; }
+

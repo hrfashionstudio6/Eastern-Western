@@ -529,6 +529,7 @@ function SaleBar({ settings }) {
 
 function ProductCard({ item, listing = false }) {
   const [tag, name, slug, price, old, image, hover] = item;
+  const colors = [...new Map((item.variants || []).map((variant) => String(variant.color || "").trim()).filter(Boolean).map((color) => [color.toLowerCase(), color])).values()];
   const displayTag = listing ? (item.tags || []).find((label) => /^(save|new in|fabric)/i.test(label)) || tag : tag;
   return (
     <a className={`product-card reveal ${listing ? "catalog-card" : ""}`} href={slugPath("shop", slug)}>
@@ -552,7 +553,7 @@ function ProductCard({ item, listing = false }) {
           </>
         )}
       </div>
-      <div className="swatches"><i /><i /><i /></div>
+      {colors.length > 0 && <div className="swatches">{colors.map((color) => <span className="listing-color" key={color.toLowerCase()}>{CSS.supports("color", color) && <i style={{ backgroundColor: color }} aria-hidden="true" />}{color}</span>)}</div>}
     </a>
   );
 }
