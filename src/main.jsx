@@ -19,7 +19,7 @@ if (comingSoonEnabled) {
 } else {
   root.render(
     <StrictMode>
-      <App />
+      {/* <App /> */}
       <LoadingPopup />
     </StrictMode>,
   )
