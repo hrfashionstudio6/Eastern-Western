@@ -39,7 +39,7 @@ const sectionIcons = {
 };
 const productCategories = ["UNSTITCHED NEW IN", "READY TO WEAR", "FABRIC NEW IN", "Men's Wear", "Women's Wear", "Children's Wear"];
 const productTags = ["New", "Best seller", "Save 25%", "New In", "Fabric"];
-const blankProduct = { tag: "New", name: "", slug: "", category: "UNSTITCHED NEW IN", sku: "", price: "", oldPrice: "", image: "", hoverImage: "", mediaText: "", tagsText: "", variants: [], description: "", stock: 0, status: "published", featured: false, sortOrder: 0 };
+const blankProduct = { tag: "New", name: "", slug: "", category: "UNSTITCHED NEW IN", sku: "", price: "", oldPrice: "", image: "", hoverImage: "", mediaText: "", tagsText: "", variants: [], description: "", fabric: "", care: "", shippingTime: "", sizeChart: "", stock: 0, status: "published", featured: false, sortOrder: 0 };
 const blankBlog = { category: "Style Guide", title: "", slug: "", excerpt: "", readTime: "5 min read", date: "", image: "", body: "", status: "published", sortOrder: 0 };
 const siteEditorSections = [
   { id: "offerBar", label: "Offer bar", page: "/", hash: "offer-bar" },
@@ -767,6 +767,10 @@ export default function AdminDashboard() {
                 <ListingField label="Product details / Kya shamil hai?" wide><textarea rows="3" value={productForm.description} onChange={(e) => setProductForm({ ...productForm, description: e.target.value })} placeholder="e.g. Khaddar 3-piece suit: shirt, trouser aur dupatta. Embroidered front." /></ListingField>
               </fieldset>
               <fieldset className="listing-section">
+                <legend>Article detail information (optional)</legend>
+                {[["fabric", "Fabric / Kapra"], ["shippingTime", "Shipping time / Delivery ka waqt"], ["care", "Care instructions / Dhulai ki hidayat"], ["sizeChart", "Size chart / Naap"]].map(([field, label]) => <ListingField key={field} label={label} wide={field === "care" || field === "sizeChart"}><textarea rows="2" value={productForm[field] || ""} onChange={(e) => setProductForm({ ...productForm, [field]: e.target.value })} placeholder="Optional - khaali ho to site par nahi dikhega" /></ListingField>)}
+              </fieldset>
+              <fieldset className="listing-section">
                 <legend>Product photos</legend>
                 <div className="listing-photo"><span>Main photo</span><ImageInput label="Main photo" value={productForm.image || ""} uploading={uploadingField === "product-image"} onChange={(value) => setProductForm({ ...productForm, image: value })} onUpload={(file) => uploadImage(file, "product-image", (url) => setProductForm((current) => ({ ...current, image: url })))} /></div>
                 <div className="listing-photo"><span>Second photo <small>Shown when the mouse moves over the product</small></span><ImageInput label="Second photo" value={productForm.hoverImage || ""} uploading={uploadingField === "product-hover"} onChange={(value) => setProductForm({ ...productForm, hoverImage: value })} onUpload={(file) => uploadImage(file, "product-hover", (url) => setProductForm((current) => ({ ...current, hoverImage: url })))} /></div>
@@ -860,7 +864,7 @@ export default function AdminDashboard() {
                     <span>{order.customer?.name} - {order.customer?.phone}</span>
                     <small>{order.customer?.email}</small>
                     <small>{order.customer?.address}</small>
-                    <small>{order.items?.map((item) => `${item.name} x${item.qty}`).join(", ")}</small>
+                    <small>{order.items?.map((item) => `${item.name}${item.size || item.color ? ` (${[item.size, item.color].filter(Boolean).join(" / ")})` : ""} x${item.qty}`).join(", ")}</small>
                   </div>
                   <div className="order-payment">
                     <b>{formatPKR(order.subtotal)}</b>

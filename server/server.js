@@ -381,7 +381,7 @@ app.post("/api/orders", async (req, res) => {
   if (paymentMethod !== "Cash on Delivery") return res.status(400).json({ error: "Only Cash on Delivery is available right now" });
   const paymentProofUrl = String(req.body.paymentProofUrl || "").trim();
   if (paymentMethod !== "Cash on Delivery" && !paymentProofUrl) return res.status(400).json({ error: "Payment proof required" });
-  const orderItems = items.map((item) => ({ slug: item.slug, name: item.name, image: item.image, price: item.price, qty: Math.max(1, Number(item.qty) || 1) }));
+  const orderItems = items.map((item) => ({ slug: item.slug, size: String(item.size || ""), color: String(item.color || ""), sku: String(item.sku || ""), name: item.name, image: item.image, price: item.price, qty: Math.max(1, Number(item.qty) || 1) }));
   const subtotal = orderItems.reduce((sum, item) => sum + priceValue(item.price) * item.qty, 0);
   const order = {
     orderNo: `EW-${Date.now()}`,
@@ -501,6 +501,7 @@ function productPayload(body) {
     tags: cleanStringArray(body.tags),
     variants: cleanVariants(body.variants),
     description: body.description || "",
+    ...Object.fromEntries(["fabric", "care", "shippingTime", "sizeChart"].map(field => [field, String(body[field] || "").trim()])),
     stock: Number(body.stock) || 0,
     status: body.status || "published",
     featured: Boolean(body.featured),

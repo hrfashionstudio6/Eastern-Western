@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import useSiteRoute from "./useSiteRoute.js";
 import { withLoading } from "./loading-state.js";
 import AdminDashboard from "./AdminDashboard.jsx";
+import ArticleDetails from "./ArticleDetails.jsx";
 import { formatPKR, priceAmount } from "../shared/money.js";
 import { defaultContent } from "../server/defaultData.js";
 import "./index.css";
@@ -81,6 +82,7 @@ function productDocToItem(product) {
   item.tags = product.tags || [];
   item.variants = product.variants || [];
   item.featured = product.featured;
+  for (const field of ["fabric", "care", "shippingTime", "sizeChart"]) item[field] = product[field] || "";
   return item;
 }
 
@@ -241,18 +243,18 @@ function CartDrawer({ open, items, onClose, onQty, onRemove }) {
           <>
             <div className="cart-list">
               {items.map((item) => (
-                <article className="cart-line" key={item.slug}>
+                <article className="cart-line" key={item.cartKey || item.slug}>
                   <img src={item.image} alt="" />
                   <div>
-                    <h3>{item.name}</h3>
+                    <h3>{item.name}</h3>{(item.size || item.color) && <small>{[item.size, item.color].filter(Boolean).join(" / ")}</small>}
                     <p>{formatPKR(item.price)}</p>
                     <div className="qty-row">
-                      <button aria-label={`Decrease ${item.name}`} onClick={() => onQty(item.slug, item.qty - 1)}>-</button>
+                      <button aria-label={`Decrease ${item.name}`} onClick={() => onQty(item.cartKey || item.slug, item.qty - 1)}>-</button>
                       <span>{item.qty}</span>
-                      <button aria-label={`Increase ${item.name}`} onClick={() => onQty(item.slug, item.qty + 1)}>+</button>
+                      <button aria-label={`Increase ${item.name}`} onClick={() => onQty(item.cartKey || item.slug, item.qty + 1)}>+</button>
                     </div>
                   </div>
-                  <button className="remove-line" aria-label={`Remove ${item.name}`} onClick={() => onRemove(item.slug)}>Remove</button>
+                  <button className="remove-line" aria-label={`Remove ${item.name}`} onClick={() => onRemove(item.cartKey || item.slug)}>Remove</button>
                 </article>
               ))}
             </div>
@@ -399,18 +401,18 @@ function CheckoutPage({ items, customerAccount, customerToken, onQty, onRemove, 
         <h2>{totalItems} items</h2>
         <div className="checkout-items">
           {items.map((item) => (
-            <article className="checkout-line" key={item.slug}>
+            <article className="checkout-line" key={item.cartKey || item.slug}>
               <img src={item.image} alt="" />
               <div>
-                <h3>{item.name}</h3>
+                <h3>{item.name}</h3>{(item.size || item.color) && <small>{[item.size, item.color].filter(Boolean).join(" / ")}</small>}
                 <p>{formatPKR(item.price)}</p>
                 <div className="qty-row">
-                  <button aria-label={`Decrease ${item.name}`} onClick={() => onQty(item.slug, item.qty - 1)}>-</button>
+                  <button aria-label={`Decrease ${item.name}`} onClick={() => onQty(item.cartKey || item.slug, item.qty - 1)}>-</button>
                   <span>{item.qty}</span>
-                  <button aria-label={`Increase ${item.name}`} onClick={() => onQty(item.slug, item.qty + 1)}>+</button>
+                  <button aria-label={`Increase ${item.name}`} onClick={() => onQty(item.cartKey || item.slug, item.qty + 1)}>+</button>
                 </div>
               </div>
-              <button className="remove-line" aria-label={`Remove ${item.name}`} onClick={() => onRemove(item.slug)}>Remove</button>
+              <button className="remove-line" aria-label={`Remove ${item.name}`} onClick={() => onRemove(item.cartKey || item.slug)}>Remove</button>
             </article>
           ))}
         </div>
@@ -862,37 +864,12 @@ function ShopPage({ products, content }) {
 
 function ProductPage({ slug, products, onAddToCart }) {
   const sourceProducts = products;
-  const product = sourceProducts.find((p) => p[2] === slug) || sourceProducts[0];
-  const gallery = product ? [...new Set([product[5], product[6], ...(product.media || [])].filter(Boolean))] : [];
-  const firstImage = gallery[0] || "";
-  const [activeImage, setActiveImage] = useState(firstImage);
-  useEffect(() => {
-    setActiveImage(firstImage);
-  }, [firstImage, slug]);
+  const product = sourceProducts.find((p) => p[2] === slug);
   if (!product) return <><PageHero kicker="Shop" companion="No product" title="Product not found" text="Our available articles will appear here. Check back for new arrivals." image={hero} /><SocialSection /></>;
   const relatedProducts = sourceProducts.filter((item) => item[2] !== product[2]).slice(0, 3);
-  const materials = [...new Set((product.variants || []).map((variant) => variant.material).filter(Boolean))];
-  const specs = [["Fabric", materials.join(", ") || "Check the article description or ask us for details."], ["Care", "Ask us for article-specific care instructions before washing."], ["Exchanges", "Contact us to confirm the terms for your article before ordering."]];
-  const trust = [["Article details", "Check the photos, description and included pieces before ordering."], ["Order support", "Contact us with your order number if you need help."], ["Cash on Delivery", "This is the payment method currently available at checkout."], ["Prices in PKR", "Article prices and your order subtotal are shown in Pakistani rupees."]];
   return (
     <>
-      <section className="section product-detail">
-        <div className="product-main reveal">
-          <div className="tag">{product[0]}</div>
-          {activeImage ? <img src={activeImage} alt={product[1]} /> : <div className="media-placeholder">No image</div>}
-          <div className="product-thumbnails">{gallery.map((src, i) => <button className={src === activeImage ? "active" : ""} onClick={() => setActiveImage(src)} key={`${src}-${i}`} aria-label={`View ${product[1]} image ${i + 1}`}><img src={src} alt="" /></button>)}</div>
-        </div>
-        <div className="product-panel reveal">
-          <div className="breadcrumbs"><b>Shop</b><span />{product.category || "Listing"}</div>
-          <h1>{product[1]}</h1>
-          <div className="detail-price"><b>{formatPKR(product[3])}</b>{product[4] && <s>{formatPKR(product[4])}</s>}</div>
-          <p>{product[7]}</p>
-          {product.variants?.length > 0 && <div className="variant-list">{product.variants.map((variant, i) => <span key={`${variant.sku}-${i}`}>{[variant.size, variant.color].filter(Boolean).join(" / ") || variant.sku}</span>)}</div>}
-          <button className="btn btn-dark cart-add-btn" onClick={() => onAddToCart(product)}><span>Add to cart</span><span>Added to cart</span></button>
-          <div className="spec-list">{specs.map(([title, text]) => <div key={title}><b>{title}</b><span>{text}</span></div>)}</div>
-        </div>
-        <div className="trust-grid reveal">{trust.map(([title, text], i) => <article key={title}><i>{i + 1}</i><h3>{title}</h3><p>{text}</p></article>)}</div>
-      </section>
+      <ArticleDetails product={product} onAddToCart={onAddToCart} />
       <section className="section related-products">
         <div className="section-head reveal">
           <div><Kicker>More styles</Kicker><h2>You may also like</h2></div>
@@ -1020,12 +997,12 @@ function App() {
     if (!window.location.hash) window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, [route]);
   const cartCount = cartItems.reduce((sum, item) => sum + item.qty, 0);
-  const addToCart = (product) => {
-    const nextItem = cartProduct(product);
+  const addToCart = (product, quantity = 1, variant, option = 0) => {
+    const nextItem = { ...cartProduct(product), ...(variant ? { price: variant.price || product[3], image: variant.image || product[5], size: variant.size, color: variant.color, sku: variant.sku || product.sku } : {}), cartKey: variant ? `${product[2]}::${option}` : product[2] };
     setCartItems((items) => {
-      const exists = items.find((item) => item.slug === nextItem.slug);
-      if (exists) return items.map((item) => item.slug === nextItem.slug ? { ...item, qty: item.qty + 1 } : item);
-      return [...items, { ...nextItem, qty: 1 }];
+      const exists = items.find((item) => (item.cartKey || item.slug) === nextItem.cartKey);
+      if (exists) return items.map((item) => (item.cartKey || item.slug) === nextItem.cartKey ? { ...item, qty: item.qty + quantity } : item);
+      return [...items, { ...nextItem, qty: quantity }];
     });
     setCartOpen(true);
   };
@@ -1040,9 +1017,9 @@ function App() {
     localStorage.removeItem("ew-customer-token");
   };
   const updateCartQty = (slug, qty) => {
-    setCartItems((items) => qty <= 0 ? items.filter((item) => item.slug !== slug) : items.map((item) => item.slug === slug ? { ...item, qty } : item));
+    setCartItems((items) => qty <= 0 ? items.filter((item) => (item.cartKey || item.slug) !== slug) : items.map((item) => (item.cartKey || item.slug) === slug ? { ...item, qty } : item));
   };
-  const removeFromCart = (slug) => setCartItems((items) => items.filter((item) => item.slug !== slug));
+  const removeFromCart = (slug) => setCartItems((items) => items.filter((item) => (item.cartKey || item.slug) !== slug));
   useEffect(() => {
     fetch("/api/public-data")
       .then((response) => response.json())
