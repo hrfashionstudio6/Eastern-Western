@@ -3,6 +3,7 @@ import useSiteRoute from "./useSiteRoute.js";
 import { withLoading } from "./loading-state.js";
 import AdminDashboard from "./AdminDashboard.jsx";
 import ArticleDetails from "./ArticleDetails.jsx";
+import { routeSlug } from "../shared/route-slug.js";
 import { formatPKR, priceAmount } from "../shared/money.js";
 import { defaultContent } from "../server/defaultData.js";
 import "./index.css";
@@ -168,7 +169,7 @@ const statCards = [
 ];
 
 function slugPath(type, slug) {
-  return `/${type}/${slug}`;
+  return `/${type}/${encodeURIComponent(slug)}`;
 }
 
 function cartProduct(item) {
@@ -967,8 +968,8 @@ function Router({ data, onAddToCart, cartItems, customerAccount, customerToken, 
   if (pathname === "/checkout") return <CheckoutPage items={cartItems} customerAccount={customerAccount} customerToken={customerToken} onQty={onQty} onRemove={onRemove} onOrderSuccess={onOrderSuccess} onNeedLogin={onNeedLogin} />;
   if (pathname === "/blog") return <BlogPage posts={data.blogs} content={data.content} />;
   if (pathname === "/contact") return <ContactPage content={data.content} />;
-  if (pathname.startsWith("/shop/")) return <ProductPage slug={pathname.split("/").pop()} products={data.products} onAddToCart={onAddToCart} />;
-  if (pathname.startsWith("/blog/")) return <BlogDetailPage slug={pathname.split("/").pop()} posts={data.blogs} />;
+  if (pathname.startsWith("/shop/")) return <ProductPage slug={routeSlug(pathname)} products={data.products} onAddToCart={onAddToCart} />;
+  if (pathname.startsWith("/blog/")) return <BlogDetailPage slug={routeSlug(pathname)} posts={data.blogs} />;
   return <NotFoundPage />;
 }
 
