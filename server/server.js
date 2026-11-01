@@ -298,6 +298,25 @@ app.get("/api/public-data", async (_req, res) => {
   res.json(await getPublicData());
 });
 
+app.get("/api/products/:slug", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  try {
+    let product;
+    if (databaseConfigured()) {
+      const db = await getDb();
+      product = await db.get("products", { slug: req.params.slug, status: "published" });
+      product = cleanId(product);
+    } else {
+      const store = await readLocalStore();
+      product = store.products.find(item => item.slug === req.params.slug && item.status === "published");
+    }
+    if (!product) return res.status(404).json({ error: "Product not found" });
+    res.json({ product });
+  } catch {
+    res.status(503).json({ error: "Product could not be loaded. Please try again." });
+  }
+});
+
 app.post("/api/uploads/payment-proof", async (req, res) => {
   try {
     const url = await saveImageUpload({ dataUrl: req.body.dataUrl, fileName: req.body.fileName, prefix: "proof" });

@@ -4,6 +4,7 @@ import { withLoading } from "./loading-state.js";
 import AdminDashboard from "./AdminDashboard.jsx";
 import ArticleDetails from "./ArticleDetails.jsx";
 import { routeSlug } from "../shared/route-slug.js";
+import { loadProduct } from "../shared/load-product.js";
 import { formatPKR, priceAmount } from "../shared/money.js";
 import { defaultContent } from "../server/defaultData.js";
 import "./index.css";
@@ -865,7 +866,25 @@ function ShopPage({ products, content }) {
 
 function ProductPage({ slug, products, onAddToCart }) {
   const sourceProducts = products;
-  const product = sourceProducts.find((p) => p[2] === slug);
+  const existingProduct = sourceProducts.find((p) => p[2] === slug);
+  const [loaded, setLoaded] = useState(null);
+  const [loading, setLoading] = useState(!existingProduct);
+  const [error, setError] = useState("");
+  const [retry, setRetry] = useState(0);
+  useEffect(() => {
+    if (existingProduct) { setLoading(false); return; }
+    const controller = new AbortController();
+    setLoading(true);
+    setError("");
+    loadProduct(slug, { signal: controller.signal })
+      .then(product => { if (!controller.signal.aborted) setLoaded(product ? productDocToItem(product) : null); })
+      .catch(() => { if (!controller.signal.aborted) setError("The product could not be loaded. Please try again."); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [slug, existingProduct, retry]);
+  const product = existingProduct || loaded;
+  if (!product && loading) return <section className="section article-load" role="status"><span className="work-loading-spinner" /><p>Loading article…</p></section>;
+  if (!product && error) return <section className="section article-load" role="alert"><p>{error}</p><button className="btn btn-dark" onClick={() => setRetry(value => value + 1)}>Try again</button></section>;
   if (!product) return <><PageHero kicker="Shop" companion="No product" title="Product not found" text="Our available articles will appear here. Check back for new arrivals." image={hero} /><SocialSection /></>;
   const relatedProducts = sourceProducts.filter((item) => item[2] !== product[2]).slice(0, 3);
   return (
