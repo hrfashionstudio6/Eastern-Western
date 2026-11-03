@@ -4726,3 +4726,37 @@ main:has(> #offer-bar) #home-hero { margin-top: 29px; }
 @media(max-width:760px) { .article-layout, .article-layout:has(.article-care) { grid-template-columns: minmax(0,1fr); gap: 24px; padding-top: 105px; } .article-title h1 { font-size: 24px; } .article-photo { max-height: 600px; } .article-title { flex-wrap: wrap; } }
 .article-load { min-height: 60vh; padding-top: 180px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
 
+
+/* Keep article-card summaries compact; full text stays on the detail page. */
+.product-card .swatches,
+.collection-copy > p {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.product-card .swatches {
+  font-size: 12px;
+  line-height: 1.4;
+  max-height: 2.8em;
+}
+
+.product-card .swatches .listing-color {
+  display: inline;
+}
+
+.product-card .swatches .listing-color + .listing-color::before {
+  content: ", ";
+}
+
+.product-card .swatches .listing-color i {
+  display: inline-block;
+  margin-inline-end: 5px;
+  vertical-align: middle;
+}
+
+.collection-copy > p {
+  max-height: 3.1em;
+}
