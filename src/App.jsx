@@ -713,12 +713,32 @@ function productGroups(products = []) {
   };
 }
 
+function PickMarqueeRow({ items, reverse = false }) {
+  const moving = items.length === 4;
+  return (
+    <div className={`pick-marquee${reverse ? " pick-marquee-reverse" : ""}${moving ? "" : " pick-marquee-static"}`} role="group" aria-label={reverse ? "Collection row 2" : "Collection row 1"}>
+      <div className="pick-marquee-track">
+        {(moving ? [0, 1] : [0]).map((copy) => (
+          <div className="pick-marquee-set" key={copy} aria-hidden={copy === 1 ? true : undefined}>
+            {items.map((item) => (
+              <a href={slugPath("shop", item[2])} className="pick-tile" key={item.id || item[2]} tabIndex={copy === 1 ? -1 : undefined}>
+                <img src={item[5]} alt={copy === 1 ? "" : item[1]} loading="lazy" decoding="async" />
+              </a>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function PopularPicks({ products = [], active = "UNSTITCHED", onSelect }) {
   const [localActive, setLocalActive] = useState(active);
+  const [paused, setPaused] = useState(false);
   const groups = productGroups(products);
   const requested = onSelect ? active : localActive;
   const selected = groups[requested]?.length ? requested : shopPickTabs.find((label) => groups[label].length) || "";
-  const pickProducts = (groups[selected] || []).slice(0, 4);
+  const pickProducts = (groups[selected] || []).slice(0, 8);
   const choose = (label) => {
     if (onSelect) onSelect(label);
     else setLocalActive(label);
@@ -730,13 +750,19 @@ function PopularPicks({ products = [], active = "UNSTITCHED", onSelect }) {
         {shopPickTabs.map((label) => <button className={selected === label ? "active" : ""} disabled={!groups[label].length} onClick={() => choose(label)} key={label}>{label}{!groups[label].length && <small>Upcoming</small>}</button>)}
       </div>
       {pickProducts.length ? (
-        <div className="pick-grid">
-          {pickProducts.map((item) => (
-            <a href={slugPath("shop", item[2])} className="pick-tile" key={item[2]}>
-              <img src={item[5]} alt={item[1]} />
-            </a>
-          ))}
-        </div>
+        <>
+          {pickProducts.length >= 4 && (
+            <div className="pick-slider-controls">
+              <button type="button" className="pick-motion-control" aria-pressed={paused} aria-label={paused ? "Resume article sliders" : "Pause article sliders"} onClick={() => setPaused((value) => !value)}>
+                <span aria-hidden="true">{paused ? "▶" : "Ⅱ"}</span> {paused ? "Play" : "Pause"}
+              </button>
+            </div>
+          )}
+          <div className="pick-marquees" data-paused={paused ? "true" : undefined} key={selected}>
+            <PickMarqueeRow items={pickProducts.slice(0, 4)} />
+            {pickProducts.length > 4 && <PickMarqueeRow items={pickProducts.slice(4, 8)} reverse />}
+          </div>
+        </>
       ) : <EmptyState title="New styles coming soon" text="Our available articles will appear here. Check back for new arrivals." />}
     </section>
   );
@@ -1095,4 +1121,3 @@ function App() {
 }
 
 export default App;
-

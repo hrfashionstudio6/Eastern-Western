@@ -1151,9 +1151,11 @@ h2 {
 }
 
 .feature img {
+  display: block;
   width: 100%;
-  height: 150px;
-  object-fit: cover;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
   margin-bottom: 18px;
 }
 
@@ -4760,3 +4762,120 @@ main:has(> #offer-bar) #home-hero { margin-top: 29px; }
 .collection-copy > p {
   max-height: 3.1em;
 }
+
+/* Two seamless collection rows, moving in opposite directions. */
+.popular-picks:has(.pick-marquees) .pick-tabs {
+  margin-bottom: 20px;
+}
+
+.pick-slider-controls {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.pick-motion-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 7px 13px;
+  border: 1px solid #bbb;
+  border-radius: 999px;
+  background: transparent;
+  color: #111;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.pick-motion-control:focus-visible,
+.pick-marquee .pick-tile:focus-visible {
+  outline: 2px solid #111;
+  outline-offset: -3px;
+}
+
+.pick-marquees {
+  display: grid;
+  gap: 12px;
+}
+
+.pick-marquee {
+  --pick-gap: 12px;
+  container-type: inline-size;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.pick-marquee-track,
+.pick-marquee-set {
+  display: flex;
+  width: max-content;
+}
+
+.pick-marquee-track {
+  animation: pick-marquee-scroll 40s linear infinite;
+  will-change: transform;
+}
+
+.pick-marquee-set {
+  flex: 0 0 auto;
+  gap: var(--pick-gap);
+  padding-inline-end: var(--pick-gap);
+}
+
+.pick-marquee .pick-tile {
+  flex: 0 0 calc((100cqw - 3 * var(--pick-gap)) / 4);
+  width: calc((100cqw - 3 * var(--pick-gap)) / 4);
+  min-height: 0;
+  aspect-ratio: 4 / 5;
+}
+
+.pick-marquee .pick-tile img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.pick-marquee-reverse .pick-marquee-track {
+  animation-direction: reverse;
+}
+
+.pick-marquee-static .pick-marquee-track {
+  animation: none;
+  will-change: auto;
+}
+
+.pick-marquees[data-paused="true"] .pick-marquee-track,
+.pick-marquees:hover .pick-marquee-track,
+.pick-marquees:focus-within .pick-marquee-track {
+  animation-play-state: paused;
+}
+
+@keyframes pick-marquee-scroll {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+@media (max-width: 760px) {
+  .pick-marquees { gap: 10px; }
+  .pick-marquee { --pick-gap: 10px; }
+  .pick-marquee .pick-tile {
+    flex-basis: calc((100cqw - var(--pick-gap)) / 2);
+    width: calc((100cqw - var(--pick-gap)) / 2);
+  }
+  .pick-marquee-track { animation-duration: 32s; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pick-slider-controls { display: none; }
+  .pick-marquee { overflow-x: auto; }
+  .pick-marquee-track { animation: none; will-change: auto; }
+  .pick-marquee-set { padding-inline-end: 0; }
+  .pick-marquee-set[aria-hidden="true"] { display: none; }
+  .pick-marquee .pick-tile img { transition: none; }
+  .pick-marquee .pick-tile:hover img { transform: none; }
+}
+
