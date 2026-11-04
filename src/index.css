@@ -4801,6 +4801,11 @@ main:has(> #offer-bar) #home-hero { margin-top: 29px; }
   gap: 0;
 }
 
+/* Cover fractional-pixel seams where the animated rows meet. */
+.pick-marquee + .pick-marquee {
+  margin-block-start: -1px;
+}
+
 .pick-marquee {
   --pick-gap: 0px;
   container-type: inline-size;
