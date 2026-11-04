@@ -3,6 +3,7 @@ import useSiteRoute from "./useSiteRoute.js";
 import { withLoading } from "./loading-state.js";
 import AdminDashboard from "./AdminDashboard.jsx";
 import ArticleDetails, { ColourSwatches } from "./ArticleDetails.jsx";
+import ContactForm from "./ContactForm.jsx";
 import { routeSlug } from "../shared/route-slug.js";
 import { loadProduct } from "../shared/load-product.js";
 import { loadSiteData } from "../shared/load-site-data.js";
@@ -965,18 +966,7 @@ function ContactPage({ content }) {
         </div>
         <div className="contact-main reveal">
           <img src={contactInfo.image} alt="Eastern Western style" />
-          <form className="contact-form" onSubmit={(event) => {
-            event.preventDefault();
-            const fields = new FormData(event.currentTarget);
-            const body = `${fields.get("message")}\n\nName: ${fields.get("firstName")} ${fields.get("lastName")}\nEmail: ${fields.get("email")}\nPhone: ${fields.get("phone")}`;
-            window.location.href = `mailto:${settings.contactEmail}?subject=${encodeURIComponent(fields.get("subject") || "Eastern Western enquiry")}&body=${encodeURIComponent(body)}`;
-          }}>
-            <label>First name<input name="firstName" required placeholder="First name" /></label><label>Last name<input name="lastName" required placeholder="Last name" /></label>
-            <label>Email<input name="email" type="email" required placeholder="you@example.com" /></label><label>Mobile number<input name="phone" placeholder="03XX XXXXXXX" /></label>
-            <label className="wide">Subject<input name="subject" required placeholder="Article code or order number" /></label><label className="wide">Message<textarea name="message" required placeholder="Tell us which article or order you need help with" /></label>
-            <p className="wide">This form opens an email draft in your email app. You can also contact us using the details above.</p>
-            <button className="wide" type="submit">Open email draft</button>
-          </form>
+          <ContactForm recipient={settings.contactEmail} />
         </div>
       </section>
     </>

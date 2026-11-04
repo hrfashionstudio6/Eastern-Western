@@ -4992,3 +4992,13 @@ main:has(> #offer-bar) #home-hero { margin-top: 29px; }
 @media (prefers-reduced-motion: reduce) {
   .site-load-frame { animation: none; }
 }
+
+
+/* Direct contact-form delivery and accessible feedback. */
+.contact-form { position: relative; }
+.contact-form .contact-trap { position: absolute; left: -10000px; top: 0; width: 1px; height: 1px; overflow: hidden; }
+.contact-form .contact-form-note a { text-decoration: underline; text-underline-offset: 3px; }
+.contact-form .contact-feedback { margin: 0; padding: 12px 14px; border: 1px solid; border-radius: 5px; font-size: 14px; line-height: 1.6; }
+.contact-form .contact-feedback.is-success { background: #edf4ed; border-color: #c5d7c6; color: #315c39; }
+.contact-form .contact-feedback.is-error { background: #faf0ec; border-color: #e6c9bd; color: #813f2e; }
+.contact-form button:disabled { opacity: .55; cursor: not-allowed; }

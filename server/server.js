@@ -1,5 +1,7 @@
 import "dotenv/config";
 import express from "express";
+import nodemailer from "nodemailer";
+import { contactSmtpSettings, createContactHandler } from "./contact.js";
 import { getDb, databaseConfigured, closeDb } from "./database.js";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -22,6 +24,16 @@ const uploadDir = path.resolve(__dirname, "../public/uploads");
 const localStorePath = path.resolve(__dirname, "../data/local-store.json");
 
 app.use("/api/admin/uploads", express.raw({ type: ["image/jpeg", "image/png", "image/webp", "image/gif"], limit: "8mb" }));
+const contactSettings = contactSmtpSettings(process.env);
+const { fromAddress, toAddress, ...smtpOptions } = contactSettings || {};
+const contactTransport = contactSettings ? nodemailer.createTransport(smtpOptions) : null;
+app.get("/api/contact/status", (_req, res) => res.set("Cache-Control", "no-store").json({ available: Boolean(contactTransport) }));
+app.post("/api/contact", express.json({ limit: "24kb" }), createContactHandler({
+  sendMail: contactTransport ? message => contactTransport.sendMail(message) : null,
+  fromAddress, toAddress,
+  onError: error => console.error("Contact email delivery failed:", error.code || error.name),
+}));
+
 app.use(express.json({ limit: "16mb" }));
 
 // Keep the site available while startup validates/imports its storage. API
