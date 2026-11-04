@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import useSiteRoute from "./useSiteRoute.js";
 import { withLoading } from "./loading-state.js";
 import AdminDashboard from "./AdminDashboard.jsx";
-import ArticleDetails from "./ArticleDetails.jsx";
+import ArticleDetails, { ColourSwatches } from "./ArticleDetails.jsx";
 import { routeSlug } from "../shared/route-slug.js";
 import { loadProduct } from "../shared/load-product.js";
 import { loadSiteData } from "../shared/load-site-data.js";
@@ -249,7 +249,7 @@ function CartDrawer({ open, items, onClose, onQty, onRemove }) {
                 <article className="cart-line" key={item.cartKey || item.slug}>
                   <img src={item.image} alt="" />
                   <div>
-                    <h3>{item.name}</h3>{(item.size || item.color) && <small>{[item.size, item.color].filter(Boolean).join(" / ")}</small>}
+                    <h3>{item.name}</h3>{(item.size || item.color) && <div className="cart-option-summary">{item.size && <small>Size: {item.size}</small>}{item.color && <ColourSwatches value={item.color} />}</div>}
                     <p>{formatPKR(item.price)}</p>
                     <div className="qty-row">
                       <button aria-label={`Decrease ${item.name}`} onClick={() => onQty(item.cartKey || item.slug, item.qty - 1)}>-</button>
@@ -407,7 +407,7 @@ function CheckoutPage({ items, customerAccount, customerToken, onQty, onRemove, 
             <article className="checkout-line" key={item.cartKey || item.slug}>
               <img src={item.image} alt="" />
               <div>
-                <h3>{item.name}</h3>{(item.size || item.color) && <small>{[item.size, item.color].filter(Boolean).join(" / ")}</small>}
+                <h3>{item.name}</h3>{(item.size || item.color) && <div className="cart-option-summary">{item.size && <small>Size: {item.size}</small>}{item.color && <ColourSwatches value={item.color} />}</div>}
                 <p>{formatPKR(item.price)}</p>
                 <div className="qty-row">
                   <button aria-label={`Decrease ${item.name}`} onClick={() => onQty(item.cartKey || item.slug, item.qty - 1)}>-</button>
