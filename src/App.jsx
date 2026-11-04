@@ -667,17 +667,6 @@ function BlogList({ compact = false, posts: suppliedPosts, allPosts = blogs, con
   );
 }
 
-function SocialSection({ content }) {
-  const section = { ...fallbackSiteData.content.sections.social, ...(content?.sections?.social || {}) };
-  const images = Array.isArray(content?.socialImages) && content.socialImages.length ? content.socialImages : fallbackSiteData.content.socialImages;
-  return (
-    <section id="social" className="social-section">
-      <div className="center-head reveal"><Kicker>{section.kicker}</Kicker><h2>{String(section.title || "").split("\n").map((line) => <span key={line}>{line}<br /></span>)}</h2><p>{section.text}</p><div className="row"><Button dark href="/shop">See collections</Button><Button href="/contact">Contact us</Button></div></div>
-      <div className="social-collage">{images.map((src, i) => <img src={src} key={`${src}-${i}`} alt="" />)}</div>
-    </section>
-  );
-}
-
 function Footer({ settings = fallbackSiteData.content.settings }) {
   const footerSettings = { ...fallbackSiteData.content.settings, ...settings };
   return (
@@ -808,7 +797,6 @@ function HomePage({ data }) {
       <ReviewSection content={data.content} />
       <FeaturesSection content={data.content} />
       <BlogList allPosts={data.blogs} content={data.content} />
-      <SocialSection content={data.content} />
     </>
   );
 }
@@ -843,7 +831,6 @@ function AboutPage({ content }) {
         <div className="center-head reveal"><Kicker>{aboutStats.kicker}</Kicker><h2>{aboutStats.title}</h2></div>
         <div className="stats-grid">{liveStats.map((s) => <article className="stat-card reveal" key={s.value}><img src={s.image} alt="" /><div><h2>{s.value}</h2><p>{s.label}</p></div></article>)}</div>
       </section>
-      <SocialSection content={content} />
     </>
   );
 }
@@ -886,7 +873,6 @@ function ShopPage({ products, content }) {
           {currentProducts.length ? <div className="product-grid listing-grid">{currentProducts.map((item) => <ProductCard key={item[1]} item={item} listing />)}</div> : <EmptyState title="New styles coming soon" text="Our available articles will appear here. Check back for new arrivals." />}
         </div>
       </section>
-      <SocialSection content={content} />
     </>
   );
 }
@@ -912,7 +898,7 @@ function ProductPage({ slug, products, onAddToCart }) {
   const product = existingProduct || loaded;
   if (!product && loading) return <section className="section article-load" role="status"><span className="work-loading-spinner" /><p>Loading article…</p></section>;
   if (!product && error) return <section className="section article-load" role="alert"><p>{error}</p><button className="btn btn-dark" onClick={() => setRetry(value => value + 1)}>Try again</button></section>;
-  if (!product) return <><PageHero kicker="Shop" companion="No product" title="Product not found" text="Our available articles will appear here. Check back for new arrivals." image={hero} /><SocialSection /></>;
+  if (!product) return <><PageHero kicker="Shop" companion="No product" title="Product not found" text="Our available articles will appear here. Check back for new arrivals." image={hero} /></>;
   const relatedProducts = sourceProducts.filter((item) => item[2] !== product[2]).slice(0, 3);
   return (
     <>
@@ -924,7 +910,6 @@ function ProductPage({ slug, products, onAddToCart }) {
         </div>
         {relatedProducts.length ? <div className="product-grid">{relatedProducts.map((item) => <ProductCard key={item[1]} item={item} />)}</div> : <EmptyState title="More articles coming soon" text="Explore the shop for other available articles." />}
       </section>
-      <SocialSection />
     </>
   );
 }
@@ -938,14 +923,13 @@ function BlogPage({ posts, content }) {
       <PageHero {...heroContent} id="blog-hero" />
       <section className="section shop-filter reveal">{["All Blogs", "Style Guide", "Fashion Tips", "Brand Stories"].map((label) => <button className={filter === label ? "active" : ""} onClick={() => setFilter(label)} key={label}>{label}</button>)}</section>
       <BlogList compact posts={filtered} allPosts={posts} />
-      <SocialSection content={content} />
     </>
   );
 }
 
 function BlogDetailPage({ slug, posts }) {
   const post = posts.find((b) => b[2] === slug) || posts[0];
-  if (!post) return <><PageHero kicker="Blog" companion="No post" title="Blog not found" text="Visit again for style notes and updates from Eastern Western." image={hero} /><SocialSection /></>;
+  if (!post) return <><PageHero kicker="Blog" companion="No post" title="Blog not found" text="Visit again for style notes and updates from Eastern Western." image={hero} /></>;
   const bodyBlocks = String(post[7] || "").split(/\n+/).map((block) => block.trim()).filter(Boolean);
   return (
     <>
@@ -964,7 +948,6 @@ function BlogDetailPage({ slug, posts }) {
         <a className="next-blog" href="/shop">Explore the collection <span>+</span></a>
         </>}
       </article>
-      <SocialSection />
     </>
   );
 }
@@ -996,7 +979,6 @@ function ContactPage({ content }) {
           </form>
         </div>
       </section>
-      <SocialSection content={content} />
     </>
   );
 }
