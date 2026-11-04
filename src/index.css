@@ -4797,17 +4797,21 @@ main:has(> #offer-bar) #home-hero { margin-top: 29px; }
 }
 
 .pick-marquees {
+  --pick-blend: clamp(20px, 2.5vw, 44px);
   display: grid;
   gap: 0;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--pick-blend), #000 calc(100% - var(--pick-blend)), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 var(--pick-blend), #000 calc(100% - var(--pick-blend)), transparent);
 }
 
-/* Cover fractional-pixel seams where the animated rows meet. */
+/* Crossfade the lower row into the upper row instead of a hard join. */
 .pick-marquee + .pick-marquee {
-  margin-block-start: -1px;
+  margin-block-start: calc(-1 * var(--pick-blend));
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--pick-blend));
+  mask-image: linear-gradient(to bottom, transparent, #000 var(--pick-blend));
 }
 
 .pick-marquee {
-  --pick-gap: 0px;
   container-type: inline-size;
   overflow: hidden;
   min-width: 0;
@@ -4825,16 +4829,19 @@ main:has(> #offer-bar) #home-hero { margin-top: 29px; }
 }
 
 .pick-marquee-set {
-  flex: 0 0 auto;
-  gap: var(--pick-gap);
-  padding-inline-end: var(--pick-gap);
+  flex: 0 0 100cqw;
+  width: 100cqw;
 }
 
 .pick-marquee .pick-tile {
-  flex: 0 0 calc((100cqw - 3 * var(--pick-gap)) / 4);
-  width: calc((100cqw - 3 * var(--pick-gap)) / 4);
+  flex: 0 0 calc(25cqw + var(--pick-blend));
+  width: calc(25cqw + var(--pick-blend));
+  margin-inline-end: calc(-1 * var(--pick-blend));
   min-height: 0;
   aspect-ratio: 4 / 5;
+  background: transparent;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--pick-blend));
+  mask-image: linear-gradient(to right, transparent, #000 var(--pick-blend));
 }
 
 .pick-marquee .pick-tile img {
@@ -4865,9 +4872,10 @@ main:has(> #offer-bar) #home-hero { margin-top: 29px; }
 }
 
 @media (max-width: 760px) {
+  .pick-marquee-set { flex-basis: 200cqw; width: 200cqw; }
   .pick-marquee .pick-tile {
-    flex-basis: calc((100cqw - var(--pick-gap)) / 2);
-    width: calc((100cqw - var(--pick-gap)) / 2);
+    flex-basis: calc(50cqw + var(--pick-blend));
+    width: calc(50cqw + var(--pick-blend));
   }
   .pick-marquee-track { animation-duration: 32s; }
 }
