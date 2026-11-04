@@ -4879,3 +4879,40 @@ main:has(> #offer-bar) #home-hero { margin-top: 29px; }
   .pick-marquee .pick-tile:hover img { transform: none; }
 }
 
+
+
+/* Wait for live content before mounting pages with their photos. */
+.site-load-state {
+  min-height: 100svh;
+  padding: 28px clamp(20px, 4vw, 64px);
+}
+.site-load-brand {
+  margin: 0;
+  text-align: center;
+  font-size: 28px;
+  color: var(--black);
+}
+.site-load-frame {
+  height: clamp(260px, 64vh, 720px);
+  margin-top: 28px;
+  border-radius: 4px;
+  background: #e9e7e2;
+  animation: site-load-pulse 1.6s ease-in-out infinite alternate;
+}
+.site-load-message { text-align: center; padding: 16px; }
+.site-load-message p { margin: 0 0 12px; color: #555; }
+.site-load-message button {
+  min-height: 44px;
+  padding: 10px 22px;
+  border: 1px solid var(--black);
+  border-radius: 999px;
+  background: var(--black);
+  color: white;
+  font: inherit;
+  cursor: pointer;
+}
+.site-load-message button:focus-visible { outline: 2px solid var(--black); outline-offset: 3px; }
+@keyframes site-load-pulse { to { background: #f0efeb; } }
+@media (prefers-reduced-motion: reduce) {
+  .site-load-frame { animation: none; }
+}

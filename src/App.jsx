@@ -5,6 +5,7 @@ import AdminDashboard from "./AdminDashboard.jsx";
 import ArticleDetails from "./ArticleDetails.jsx";
 import { routeSlug } from "../shared/route-slug.js";
 import { loadProduct } from "../shared/load-product.js";
+import { loadSiteData } from "../shared/load-site-data.js";
 import { formatPKR, priceAmount } from "../shared/money.js";
 import { defaultContent } from "../server/defaultData.js";
 import "./index.css";
@@ -1018,11 +1019,27 @@ function Router({ data, onAddToCart, cartItems, customerAccount, customerToken, 
   return <NotFoundPage />;
 }
 
+function SiteLoadState({ error, onRetry }) {
+  return (
+    <main className="site-load-state" aria-busy={!error}>
+      <p className="site-load-brand">EasternWestern</p>
+      <div className="site-load-frame" aria-hidden="true" />
+      <div className="site-load-message">
+        <p role={error ? "alert" : "status"}>{error ? "We couldn't load the collection. Please try again." : "Loading our collection…"}</p>
+        {error && <button type="button" onClick={onRetry}>Try again</button>}
+      </div>
+    </main>
+  );
+}
+
 function App() {
   const route = useSiteRoute();
   const pathname = route.split(/[?#]/)[0];
   const darkHeader = pathname.startsWith("/shop/");
-  const [siteData, setSiteData] = useState(() => normalizeSiteData());
+  const isAdmin = pathname.startsWith("/admin");
+  const [siteData, setSiteData] = useState(null);
+  const [siteLoadError, setSiteLoadError] = useState(false);
+  const [siteLoadAttempt, setSiteLoadAttempt] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [customerOpen, setCustomerOpen] = useState(false);
@@ -1067,11 +1084,18 @@ function App() {
   };
   const removeFromCart = (slug) => setCartItems((items) => items.filter((item) => (item.cartKey || item.slug) !== slug));
   useEffect(() => {
-    fetch("/api/public-data")
-      .then((response) => response.json())
-      .then((payload) => setSiteData(normalizeSiteData(payload)))
-      .catch(() => setSiteData(normalizeSiteData()));
-  }, []);
+    if (isAdmin) return undefined;
+    let active = true;
+    const controller = new AbortController();
+    setSiteLoadError(false);
+    loadSiteData({ signal: controller.signal })
+      .then((payload) => { if (active) setSiteData(normalizeSiteData(payload)); })
+      .catch(() => { if (active) setSiteLoadError(true); });
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [isAdmin, siteLoadAttempt]);
   useEffect(() => {
     if (!customerToken) return;
     fetch("/api/customer/me", { headers: { Authorization: `Bearer ${customerToken}` } })
@@ -1105,7 +1129,8 @@ function App() {
     return () => io.disconnect();
   });
 
-  if (pathname.startsWith("/admin")) return <AdminDashboard />;
+  if (isAdmin) return <AdminDashboard />;
+  if (!siteData) return <SiteLoadState error={siteLoadError} onRetry={() => setSiteLoadAttempt((attempt) => attempt + 1)} />;
 
   return (
     <main>
