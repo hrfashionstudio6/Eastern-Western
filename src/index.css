@@ -4786,6 +4786,10 @@ main:has(> #offer-bar) #home-hero { margin-top: 29px; }
   .pdp-main-media { height: auto; min-height: 0; aspect-ratio: 4 / 5; }
 }
 @media (max-width: 600px) {
+  .nav.nav-product-detail { grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+  .nav.nav-product-detail .nav-logo { min-width: 0; }
+  .nav.nav-product-detail .nav-logo-word { font-size: clamp(18px, 6vw, 24px); white-space: nowrap; }
+  .nav.nav-product-detail .nav-actions { gap: 6px; }
   .section.product-detail-page { padding: 124px 18px 50px; }
   .pdp-breadcrumbs { margin-bottom: 20px; font-size: 10px; }
   .pdp-title { font-size: 32px; }
