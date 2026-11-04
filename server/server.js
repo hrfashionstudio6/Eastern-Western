@@ -1,3 +1,4 @@
+import { publicProduct } from "../shared/public-product.js";
 import "dotenv/config";
 import express from "express";
 import nodemailer from "nodemailer";
@@ -276,12 +277,12 @@ async function getPublicData() {
       db.list("products", { status: "published" }, { sortOrder: 1, createdAt: 1 }),
       db.list("blogs", { status: "published" }, { sortOrder: 1, createdAt: 1 }),
     ]);
-    return { content: cleanId(content), products: products.map(cleanId), blogs: blogs.map(cleanId), database: "mysql", usingDatabase: true };
+    return { content: cleanId(content), products: products.map(product => publicProduct(cleanId(product))), blogs: blogs.map(cleanId), database: "mysql", usingDatabase: true };
   } catch (error) {
     const store = await readLocalStore();
     return {
       content: store.content,
-      products: store.products.filter((product) => product.status === "published"),
+      products: store.products.filter((product) => product.status === "published").map(publicProduct),
       blogs: store.blogs.filter((blog) => blog.status === "published"),
       database: "local", usingDatabase: false,
       error: error.message,
@@ -323,7 +324,7 @@ app.get("/api/products/:slug", async (req, res) => {
       product = store.products.find(item => item.slug === req.params.slug && item.status === "published");
     }
     if (!product) return res.status(404).json({ error: "Product not found" });
-    res.json({ product });
+    res.json({ product: publicProduct(product) });
   } catch {
     res.status(503).json({ error: "Product could not be loaded. Please try again." });
   }

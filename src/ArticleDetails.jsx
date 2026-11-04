@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { formatPKR, priceAmount } from "../shared/money.js";
-import { availableStock, colourPalette, descriptionSections, matchingVariant, splitSizes } from "../shared/article-options.js";
+import { colourPalette, descriptionSections, matchingVariant, splitSizes } from "../shared/article-options.js";
 
 export function ColourSwatches({ value }) {
   const palette = colourPalette(value);
@@ -20,7 +20,7 @@ function DetailText({ text }) {
 
 export default function ArticleDetails({ product, onAddToCart }) {
   const variants = Array.isArray(product.variants) ? product.variants : [];
-  const first = variants.find(variant => availableStock(product, variant) > 0) || variants[0];
+  const first = variants[0];
   const initialColor = String(first?.color || "").trim();
   const initialSizes = [...new Set(variants.filter(variant => !initialColor || String(variant.color || "").trim() === initialColor).flatMap(variant => splitSizes(variant.size)))];
   const [selection, setSelection] = useState(() => ({ color: initialColor, size: initialSizes.length === 1 ? initialSizes[0] : "" }));
@@ -30,10 +30,8 @@ export default function ArticleDetails({ product, onAddToCart }) {
   const dialog = useRef(null);
   const colors = [...new Set(variants.map(variant => String(variant.color || "").trim()).filter(Boolean))];
   const sizes = [...new Set(variants.flatMap(variant => splitSizes(variant.size)))];
-  const availableIndex = matchingVariant(variants, selection.color, selection.size, product, true);
-  const index = availableIndex >= 0 ? availableIndex : matchingVariant(variants, selection.color, selection.size, product);
+  const index = matchingVariant(variants, selection.color, selection.size, product);
   const variant = variants[index];
-  const stock = availableStock(product, variant);
   const price = variant?.price || product[3];
   const oldPrice = priceAmount(product[4]);
   const discount = oldPrice > priceAmount(price) ? Math.round((1 - priceAmount(price) / oldPrice) * 100) : 0;
@@ -43,7 +41,7 @@ export default function ArticleDetails({ product, onAddToCart }) {
   const gallery = [...new Set([product[5], product[6], ...(product.media || []), ...variants.map(variant => variant.image)].filter(Boolean))];
   const activeImage = gallery[imageIndex] || gallery[0];
   const needsSize = sizes.length > 0 && !selection.size;
-  const canAdd = stock > 0 && !needsSize && (!variants.length || index >= 0);
+  const canAdd = !needsSize && (!variants.length || index >= 0);
 
   useEffect(() => {
     if (!zoomOpen) return undefined;
@@ -63,22 +61,22 @@ export default function ArticleDetails({ product, onAddToCart }) {
     if (nextImage >= 0) setImageIndex(nextImage);
   };
   const selectColor = color => {
-    const keepSize = selection.size && matchingVariant(variants, color, selection.size, product, true) >= 0;
+    const keepSize = selection.size && matchingVariant(variants, color, selection.size, product) >= 0;
     const nextSize = keepSize ? selection.size : "";
     setSelection({ color, size: nextSize });
     setQuantity(1);
-    showVariantImage(variants[matchingVariant(variants, color, nextSize, product, true)]);
+    showVariantImage(variants[matchingVariant(variants, color, nextSize, product)]);
   };
   const selectSize = size => {
     setSelection(current => ({ ...current, size }));
     setQuantity(1);
-    showVariantImage(variants[matchingVariant(variants, selection.color, size, product, true)]);
+    showVariantImage(variants[matchingVariant(variants, selection.color, size, product)]);
   };
   const nextPhoto = direction => setImageIndex(current => (current + direction + gallery.length) % gallery.length);
   const addToCart = () => {
     if (!canAdd) return;
     const chosen = variant ? { ...variant, size: selection.size || variant.size } : undefined;
-    onAddToCart(product, Math.min(quantity, stock), chosen, index + ":" + selection.size);
+    onAddToCart(product, quantity, chosen, index + ":" + selection.size);
   };
 
   return <section className="section product-detail-page">
@@ -92,7 +90,7 @@ export default function ArticleDetails({ product, onAddToCart }) {
         {gallery.length > 1 && <div className="pdp-thumbnails" aria-label="Product photos">{gallery.map((src, photoIndex) => <button type="button" key={src} className={photoIndex === imageIndex ? "is-active" : ""} aria-pressed={photoIndex === imageIndex} onClick={() => setImageIndex(photoIndex)} aria-label={"View photo " + (photoIndex + 1)}><img src={src} alt="" loading="lazy" /></button>)}</div>}
       </div>
       <div className="pdp-information">
-        <div className="pdp-heading-row"><p className="pdp-category">{product.category || "Eastern Western"}</p><span className={"pdp-stock-badge" + (stock > 0 ? "" : " is-unavailable")}>{stock > 0 ? "In stock" : "Out of stock"}</span></div>
+        <div className="pdp-heading-row"><p className="pdp-category">{product.category || "Eastern Western"}</p></div>
         <h1 className="pdp-title">{product[1]}</h1>
         {(variant?.sku || product.sku) && <p className="pdp-code">Article code: {variant?.sku || product.sku}</p>}
         <div className="pdp-price"><strong>{formatPKR(price)}</strong>{oldPrice > priceAmount(price) && <s>{formatPKR(product[4])}</s>}{discount > 0 && <span>Save {discount}%</span>}</div>
@@ -101,19 +99,18 @@ export default function ArticleDetails({ product, onAddToCart }) {
         {colors.length > 0 && <fieldset className="pdp-option"><legend>Colour</legend><div className="pdp-color-options">{colors.map((color, colorIndex) => {
           const palette = colourPalette(color);
           const label = palette.length ? palette.map(item => item.name).join(", ") : color;
-          const available = matchingVariant(variants, color, "", product, true) >= 0;
+          const available = matchingVariant(variants, color, "", product) >= 0;
           return <button type="button" className="pdp-color-choice" key={color} aria-label={"Colour option " + (colorIndex + 1) + ": " + label} title={label} aria-pressed={selection.color === color} disabled={!available} onClick={() => selectColor(color)}><ColourSwatches value={color} />{selection.color === color && <span className="pdp-color-check" aria-hidden="true">✓</span>}</button>;
         })}</div></fieldset>}
 
         {sizes.length > 0 && <fieldset className="pdp-option"><legend>Size {selection.size && <span>— {selection.size}</span>}</legend><div className="pdp-sizes">{sizes.map(size => {
-          const available = matchingVariant(variants, selection.color, size, product, true) >= 0;
+          const available = matchingVariant(variants, selection.color, size, product) >= 0;
           return <button type="button" key={size} aria-pressed={selection.size === size} disabled={!available} onClick={() => selectSize(size)}>{size}</button>;
         })}</div><div className="pdp-size-help"><span>{needsSize ? "Choose your size" : "Selected size: " + selection.size}</span><a href="/contact">Need help with size?</a></div></fieldset>}
 
         <div className="pdp-purchase">
           <div className="pdp-quantity-label">Quantity</div>
-          <div className="pdp-purchase-controls"><div className="pdp-quantity"><button type="button" disabled={quantity <= 1 || stock <= 0} onClick={() => setQuantity(current => Math.max(1, current - 1))} aria-label="Decrease quantity">−</button><output aria-label="Quantity" aria-live="polite">{quantity}</output><button type="button" disabled={quantity >= stock || stock <= 0} onClick={() => setQuantity(current => Math.min(stock, current + 1))} aria-label="Increase quantity">+</button></div><button type="button" className="pdp-add" disabled={!canAdd} onClick={addToCart}>{stock <= 0 ? "Out of stock" : needsSize ? "Select a size" : "Add to cart"}</button></div>
-          <p className="pdp-stock-note">{stock > 0 ? stock + " pieces available" + (variant && splitSizes(variant.size).length > 1 ? " in total" : "") : "This option is currently unavailable."}</p>
+          <div className="pdp-purchase-controls"><div className="pdp-quantity"><button type="button" disabled={quantity <= 1} onClick={() => setQuantity(current => Math.max(1, current - 1))} aria-label="Decrease quantity">−</button><output aria-label="Quantity" aria-live="polite">{quantity}</output><button type="button" onClick={() => setQuantity(current => current + 1)} aria-label="Increase quantity">+</button></div><button type="button" className="pdp-add" disabled={!canAdd} onClick={addToCart}>{needsSize ? "Select a size" : "Add to cart"}</button></div>
           <p className="pdp-payment">Prices in PKR <span aria-hidden="true">·</span> Cash on Delivery</p>
         </div>
 

@@ -80,7 +80,6 @@ function productDocToItem(product) {
   item.id = product.id;
   item.category = product.category;
   item.sku = product.sku;
-  item.stock = product.stock;
   item.status = product.status;
   item.media = media.length ? media : [image, hoverImage].filter(Boolean);
   item.tags = product.tags || [];
@@ -851,8 +850,6 @@ function ShopPage({ products, content }) {
         <aside className="catalog-sidebar">
           <h3>Categories</h3>
           {Object.keys(groups).map((label) => <button className={selectedFilter === label ? "active" : ""} disabled={!groups[label].length} onClick={() => setFilter(label)} key={label}>{label}</button>)}
-          <h3>Availability</h3>
-          <label><input type="checkbox" /> In stock only</label>
           <h3>By Price</h3>
           <label><input type="checkbox" /> PKR 0 to PKR 3,000</label>
           <label><input type="checkbox" /> PKR 3,000 to PKR 6,000</label>
