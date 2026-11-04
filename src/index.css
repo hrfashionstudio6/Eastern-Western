@@ -4798,11 +4798,11 @@ main:has(> #offer-bar) #home-hero { margin-top: 29px; }
 
 .pick-marquees {
   display: grid;
-  gap: 12px;
+  gap: 0;
 }
 
 .pick-marquee {
-  --pick-gap: 12px;
+  --pick-gap: 0px;
   container-type: inline-size;
   overflow: hidden;
   min-width: 0;
@@ -4860,8 +4860,6 @@ main:has(> #offer-bar) #home-hero { margin-top: 29px; }
 }
 
 @media (max-width: 760px) {
-  .pick-marquees { gap: 10px; }
-  .pick-marquee { --pick-gap: 10px; }
   .pick-marquee .pick-tile {
     flex-basis: calc((100cqw - var(--pick-gap)) / 2);
     width: calc((100cqw - var(--pick-gap)) / 2);
