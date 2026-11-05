@@ -5130,3 +5130,14 @@ main:has(> #offer-bar) #home-hero { margin-top: 29px; }
 
 .checkout-v2 .co-form { display: block; width: 100%; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; }
 .checkout-v2 .co-payment > input { flex: 0 0 17px; min-width: 17px; max-width: 17px; width: 17px; min-height: 0; height: 17px; }
+
+/* Hero art direction: the browser selects the mobile asset without a desktop-image flash. */
+.responsive-hero-media { display: block; }
+.responsive-hero-media > img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.page-hero > .responsive-hero-media { position: absolute; inset: 0; width: 100%; height: 100%; }
+#home-hero > .responsive-hero-media { position: static; display: block; flex: none; width: 100%; height: auto; }
+#home-hero > .responsive-hero-media > img { position: static; display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: contain; object-position: center top; animation: none; }
+#home-hero .thumbs .responsive-hero-media { width: 100%; height: 100%; }
+@media (max-width: 760px) {
+  #home-hero > .responsive-hero-media.has-mobile-banner > img { aspect-ratio: auto; }
+}

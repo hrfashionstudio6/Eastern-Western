@@ -900,3 +900,6 @@
 .import-actions { display:flex; gap:10px; margin-top:12px; }
 .listing-form .image-preview-box img, .admin-row-thumb { object-fit:contain; }
 
+
+.hero-upload-label { display: block; margin-bottom: 8px; color: #222; font-size: 13px; font-weight: 600; line-height: 1.5; }
+.hero-upload-hint { grid-column: 1 / -1; margin: 4px 0 12px; color: #777; font-size: 12px; line-height: 1.6; }

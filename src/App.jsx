@@ -1,3 +1,5 @@
+import HeroImage from "./HeroImage.jsx";
+import { compactHeroSlides } from "../shared/hero-images.js";
 import { useEffect, useState } from "react";
 import useSiteRoute from "./useSiteRoute.js";
 import { withLoading } from "./loading-state.js";
@@ -742,7 +744,7 @@ function PopularPicks({ products = [], active = "UNSTITCHED", onSelect }) {
 
 function HomePage({ data }) {
   const sourceSlides = data.content?.heroSlides?.length ? data.content.heroSlides : fallbackSiteData.content.heroSlides;
-  const slides = sourceSlides.map((slide) => [slide.label, slide.image]).filter((slide) => slide[1]);
+  const slides = compactHeroSlides(sourceSlides).filter(slide => slide.image || slide.mobileImage);
   const homeArrivals = data.products.filter((item) => item[0] === "New").slice(0, 9);
   const homeSellers = data.products.filter((item) => item[0] === "Best seller").slice(0, 6);
   const [activeSlide, setActiveSlide] = useState(Math.min(3, Math.max(slides.length - 1, 0)));
@@ -757,15 +759,15 @@ function HomePage({ data }) {
   }, [activeSlide, slides.length]);
 
   const slideIndex = Math.min(activeSlide, slides.length - 1);
-  const activeHero = slides[slideIndex] || ["Arctic", hero];
+  const activeHero = slides[slideIndex] || { label: "Arctic", image: hero };
   const about = { ...fallbackSiteData.content.sections.about, ...(data.content?.sections?.about || {}) };
 
   return (
     <>
       <section id="home-hero" className="hero">
-        <img key={activeHero[1]} src={activeHero[1]} alt="Eastern Western clothing collection" />
+        <HeroImage key={activeHero.image + "|" + (activeHero.mobileImage || "")} image={activeHero.image} mobileImage={activeHero.mobileImage} alt="Eastern Western clothing collection" />
         <div className="hero-overlay" />
-        <div className="thumbs">{slides.map(([label, src], i) => <button className={i === slideIndex ? "active" : ""} onClick={() => setActiveSlide(i)} key={label} aria-label={`Show ${label} collection`}><img src={src} alt="" /><span>{label}</span></button>)}</div>
+        <div className="thumbs">{slides.map((slide, i) => <button className={i === slideIndex ? "active" : ""} onClick={() => setActiveSlide(i)} key={i} aria-label={`Show ${slide.label} collection`}><HeroImage image={slide.image} mobileImage={slide.mobileImage} /><span>{slide.label}</span></button>)}</div>
       </section>
       <PopularPicks products={data.products} />
       <Products id="new-arrivals" title="New Arrivals" subtitle="Discover our latest articles" items={homeArrivals} />
@@ -783,10 +785,10 @@ function HomePage({ data }) {
   );
 }
 
-function PageHero({ kicker, companion, title, text, image = hero, id = "page-hero" }) {
+function PageHero({ kicker, companion, title, text, image = hero, mobileImage = "", id = "page-hero" }) {
   return (
     <section id={id} className="page-hero">
-      <img src={image} alt="" />
+      <HeroImage image={image} mobileImage={mobileImage} />
       <div className="hero-overlay" />
       <div className="page-hero-copy reveal visible">
         <div className="hero-tag"><span>{kicker}</span><b>{companion}</b></div>

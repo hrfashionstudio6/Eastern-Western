@@ -1,3 +1,4 @@
+import { compactHeroSlides } from "../shared/hero-images.js";
 import { uploadVideoFile } from "./video-upload.js";
 import { useEffect, useState } from "react";
 import { withLoading, updateLoadingMessage } from "./loading-state.js";
@@ -179,13 +180,6 @@ function appendTextLine(value, line) {
 
 function compactImages(images = []) {
   return images.map((image) => String(image || "").trim()).filter(Boolean);
-}
-
-function compactHeroSlides(slides = []) {
-  return slides.map((slide) => ({
-    label: String(slide.label || "").trim(),
-    image: String(slide.image || "").trim(),
-  })).filter((slide) => slide.label || slide.image);
 }
 
 function compactCollections(collections = []) {
@@ -485,17 +479,13 @@ export default function AdminDashboard() {
 
   function heroFields(key) {
     const hero = pageHeroes[key] || {};
-    return (
-      <>
-        {["kicker", "companion", "title", "text", "image"].map((field) => (
-          field === "image"
-            ? <ImageInput key={field} label={field} value={hero[field] || ""} uploading={uploadingField === `hero-${key}-${field}`} onChange={(value) => updatePageHero(key, field, value)} onUpload={(file) => uploadImage(file, `hero-${key}-${field}`, (url) => updatePageHero(key, field, url))} />
-            : field === "text"
-            ? <textarea key={field} value={hero[field] || ""} onChange={(event) => updatePageHero(key, field, event.target.value)} placeholder={field} />
-            : <input key={field} value={hero[field] || ""} onChange={(event) => updatePageHero(key, field, event.target.value)} placeholder={field} />
-        ))}
-      </>
-    );
+    return <>
+      {["kicker", "companion", "title", "text"].map(field => field === "text"
+        ? <textarea key={field} value={hero[field] || ""} onChange={event => updatePageHero(key, field, event.target.value)} placeholder={field} />
+        : <input key={field} value={hero[field] || ""} onChange={event => updatePageHero(key, field, event.target.value)} placeholder={field} />)}
+      <p className="hero-upload-hint">Upload separate desktop and mobile banners. Mobile uses the desktop banner until you add a mobile image.</p>
+      {["image", "mobileImage"].map(field => <ImageInput key={field} showLabel label={field === "image" ? "Desktop banner" : "Mobile banner"} value={hero[field] || ""} uploading={uploadingField === `hero-${key}-${field}`} onChange={value => updatePageHero(key, field, value)} onUpload={file => uploadImage(file, `hero-${key}-${field}`, url => updatePageHero(key, field, url))} />)}
+    </>;
   }
 
   function sectionFields(key, fields) {
@@ -542,10 +532,10 @@ export default function AdminDashboard() {
           <SlideEditor
             slides={heroSlides}
             uploadingField={uploadingField}
-            onAdd={() => addListItem(setHeroSlides, { label: "Slide", image: "" })}
+            onAdd={() => addListItem(setHeroSlides, { label: "Slide", image: "", mobileImage: "" })}
             onRemove={(index) => removeListItem(setHeroSlides, index)}
             onChange={(index, field, value) => updateListItem(setHeroSlides, index, field, value)}
-            onUpload={(index, file) => uploadImage(file, `hero-slide-${index}`, (url) => updateListItem(setHeroSlides, index, "image", url))}
+            onUpload={(index, field, file) => uploadImage(file, `hero-slide-${index}-${field}`, (url) => updateListItem(setHeroSlides, index, field, url))}
           />
         </>
       );
@@ -961,11 +951,11 @@ function StructuredHead({ title, onAdd, addLabel = "Add item" }) {
 function SlideEditor({ slides, uploadingField, onAdd, onRemove, onChange, onUpload }) {
   return (
     <div className="structured-editor wide">
-      <StructuredHead title="Hero slides" onAdd={onAdd} addLabel="Add slide" />
+      <StructuredHead title="Hero slides" onAdd={onAdd} addLabel="Add slide" /><p className="hero-upload-hint">Each slide has separate desktop and mobile banners. A blank mobile banner uses its desktop image.</p>
       {slides.length ? slides.map((slide, index) => (
         <article className="structured-card" key={`slide-${index}`}>
           <input value={slide.label || ""} onChange={(event) => onChange(index, "label", event.target.value)} placeholder="Slide label" />
-          <ImageInput label={`Slide ${index + 1} image`} value={slide.image || ""} uploading={uploadingField === `hero-slide-${index}`} onChange={(value) => onChange(index, "image", value)} onUpload={(file) => onUpload(index, file)} />
+          {["image", "mobileImage"].map(field => <ImageInput key={field} showLabel label={`Slide ${index + 1} ${field === "image" ? "desktop" : "mobile"} banner`} value={slide[field] || ""} uploading={uploadingField === `hero-slide-${index}-${field}`} onChange={value => onChange(index, field, value)} onUpload={file => onUpload(index, field, file)} />)}
           <button className="admin-secondary" type="button" onClick={() => onRemove(index)}>Remove</button>
         </article>
       )) : <p className="admin-empty">No slides yet.</p>}
@@ -1074,15 +1064,16 @@ function ListingField({ label, children, wide = false }) {
   return <label className={`listing-field${wide ? " listing-wide" : ""}`}><span>{label}</span>{children}</label>;
 }
 
-function ImageInput({ label, value, onChange, onUpload, uploading }) {
+function ImageInput({ label, value, onChange, onUpload, uploading, showLabel = false }) {
   return (
     <div className="admin-image-field">
+      {showLabel && <strong className="hero-upload-label">{label}</strong>}
       <div className="image-preview-box">
         {value ? <img src={value} alt="" /> : <span>{label}</span>}
       </div>
       <div className="image-actions">
         <label className="upload-picker">
-          <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => { onUpload(event.target.files?.[0]); event.target.value = ""; }} />
+          <input aria-label={`Upload ${label}`} type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => { onUpload(event.target.files?.[0]); event.target.value = ""; }} />
           {uploading ? "Uploading..." : "Upload"}
         </label>
         {value && <button className="admin-secondary" type="button" onClick={() => onChange("")}>Remove</button>}
