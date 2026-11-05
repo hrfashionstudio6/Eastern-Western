@@ -5259,3 +5259,8 @@ main:has(> #offer-bar.launch-offer) #home-hero { margin-top: var(--launch-offer-
   .lh-categories { gap: 11px; }
   .lh-categories a { font-size: 9.5px; }
 }
+
+/* On mobile, each collection article starts with its photo. */
+@media (max-width: 760px) {
+  #collections .collection > .collection-img { order: -1; }
+}
