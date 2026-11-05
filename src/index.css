@@ -5239,3 +5239,8 @@ main:has(> #offer-bar.launch-offer) #home-hero { margin-top: var(--launch-offer-
   .lh-brand img { position: absolute; top: 0; left: 0; width: 66px; height: 66px; }
   .lh-categories { margin-left: 76px; }
 }
+
+/* Keep hero previews on desktop; mobile uses the automatic slideshow. */
+@media (max-width: 760px) {
+  #home-hero > .thumbs { display: none; }
+}
