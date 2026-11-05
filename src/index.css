@@ -5224,3 +5224,10 @@ main:has(> #offer-bar.launch-offer) #home-hero { margin-top: var(--launch-offer-
   .store-placeholder { min-height: 73vh; padding-top: 185px; padding-bottom: 80px; }
 }
 @media (prefers-reduced-motion: reduce) { .launch-header { transition: none; } .launch-offer-track { animation: none; } }
+
+@media (max-width: 350px) {
+  .lh-brand { gap: 6px; }
+  .lh-brand img { width: 24px; }
+  .lh-brand > span { font-size: 12px; letter-spacing: .01em; }
+  .lh-categories { margin-left: 30px; gap: 15px; }
+}
