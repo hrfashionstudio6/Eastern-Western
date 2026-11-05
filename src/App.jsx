@@ -640,7 +640,6 @@ function Footer({ settings = fallbackSiteData.content.settings }) {
     <div className="footer-grid">
       <div><a className="brand-logo footer-logo" href="/" aria-label="Eastern Western home"><img src={footerSettings.logoUrl || "/assets/easternwestern-logo.png"} alt="Eastern Western" /></a><p>{footerSettings.footerText}</p></div>
       <div><h4>Explore</h4><a href="/">Home</a><a href="/shop">Shop Women</a><a href="/bags">Bags — Coming soon</a><a href="/fragrance">Fragrance — Coming soon</a></div>
-      <div><h4>Shopping help</h4>{["Article enquiries", "Order support", "Delivery questions", "Exchange enquiries"].map(label => <a key={label} href={chat} target="_blank" rel="noopener noreferrer">{label}</a>)}</div>
       <div><h4>Get in touch</h4><a href={chat} target="_blank" rel="noopener noreferrer">WhatsApp</a><a href={`mailto:${footerSettings.contactEmail}`}>{footerSettings.contactEmail}</a><a href={`tel:${footerSettings.contactPhone}`}>{footerSettings.contactPhone}</a><p>{footerSettings.contactAddress}</p></div>
     </div>
     <div className="footer-word">{footerSettings.brandName || "Eastern Western"}</div>

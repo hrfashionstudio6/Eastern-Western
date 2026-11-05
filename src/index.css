@@ -1332,7 +1332,7 @@ button {
 
 .footer-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
+  grid-template-columns: 2fr 1fr 1fr;
   gap: 70px;
   padding: 54px 0;
 }
