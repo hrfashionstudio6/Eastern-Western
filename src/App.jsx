@@ -523,7 +523,7 @@ function ProductCard({ item, listing = false }) {
           </>
         )}
       </div>
-      {colors.length > 0 && <div className="swatches">{colors.map((color) => <span className="listing-color" key={color.toLowerCase()}>{CSS.supports("color", color) && <i style={{ backgroundColor: color }} aria-hidden="true" />}{color}</span>)}</div>}
+      {colors.length > 0 && <div className="swatches"><ColourSwatches value={colors.join("; ")} /></div>}
     </a>
   );
 }
