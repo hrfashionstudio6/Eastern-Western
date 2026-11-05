@@ -986,7 +986,7 @@ function SiteLoadState({ error, onRetry }) {
 function App() {
   const route = useSiteRoute();
   const pathname = route.split(/[?#]/)[0];
-  const darkHeader = pathname.startsWith("/shop/");
+  const darkHeader = pathname.startsWith("/shop/") || pathname === "/checkout";
   const isAdmin = pathname.startsWith("/admin");
   const [siteData, setSiteData] = useState(null);
   const [siteLoadError, setSiteLoadError] = useState(false);
@@ -1086,7 +1086,7 @@ function App() {
   return (
     <main>
       <SaleBar settings={siteData.content?.settings || fallbackSiteData.content.settings} />
-      <Header dark={darkHeader} scrolled={scrolled} productDetail={pathname.startsWith("/shop/")} cartCount={cartCount} customer={customerAccount} onSearch={() => setSearchOpen(true)} onCart={() => setCartOpen(true)} onAccount={() => setCustomerOpen(true)} />
+      <Header dark={darkHeader} scrolled={scrolled} productDetail={darkHeader} cartCount={cartCount} customer={customerAccount} onSearch={() => setSearchOpen(true)} onCart={() => setCartOpen(true)} onAccount={() => setCustomerOpen(true)} />
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
       <CustomerPanel open={customerOpen} token={customerToken} customer={customerAccount} onClose={() => setCustomerOpen(false)} onAuth={saveCustomerAuth} onLogout={logoutCustomer} />
       <CartDrawer open={cartOpen} items={cartItems} onClose={() => setCartOpen(false)} onQty={updateCartQty} onRemove={removeFromCart} />

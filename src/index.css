@@ -5127,3 +5127,6 @@ main:has(> #offer-bar) #home-hero { margin-top: 29px; }
   .co-photo img { height: 94px; }
   .co-line-title strong { font-size: 11px; }
 }
+
+.checkout-v2 .co-form { display: block; width: 100%; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; }
+.checkout-v2 .co-payment > input { flex: 0 0 17px; min-width: 17px; max-width: 17px; width: 17px; min-height: 0; height: 17px; }
