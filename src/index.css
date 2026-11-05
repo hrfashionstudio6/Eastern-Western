@@ -5231,3 +5231,11 @@ main:has(> #offer-bar.launch-offer) #home-hero { margin-top: var(--launch-offer-
   .lh-brand > span { font-size: 12px; letter-spacing: .01em; }
   .lh-categories { margin-left: 30px; gap: 15px; }
 }
+
+/* The desktop mark spans the brand name and collection links. */
+@media (min-width: 601px) {
+  .lh-brand-group { position: relative; }
+  .lh-brand { min-height: 36px; padding-left: 76px; }
+  .lh-brand img { position: absolute; top: 0; left: 0; width: 66px; height: 66px; }
+  .lh-categories { margin-left: 76px; }
+}
