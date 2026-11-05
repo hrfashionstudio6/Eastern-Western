@@ -11,7 +11,7 @@ const templateContent = {
     heroTitle: "Premium wear\nfor modern living",
     heroText: "Discover our new range of soft clothes made for your daily look and your best days with the finest fabrics.",
     offerEnabled: true,
-    offerText: "Black friday sale 50% off",
+    offerText: "Grand Launch Offer — Flat 10% OFF",
     footerText: "A sophisticated e-commerce template designed for modern and minimalist brands.",
     contactEmail: "test@gmail.com",
     contactPhone: "+001 234 567 890",

@@ -1,3 +1,6 @@
+import Header from "./StoreHeader.jsx";
+import WhatsAppButton from "./WhatsAppButton.jsx";
+import { LAUNCH_OFFER_TEXT, whatsappLink, removedStorePath } from "../shared/storefront.js";
 import HeroImage from "./HeroImage.jsx";
 import { compactHeroSlides } from "../shared/hero-images.js";
 import { useEffect, useState } from "react";
@@ -210,29 +213,6 @@ function Kicker({ children }) {
   return <div className="kicker"><span />{children}</div>;
 }
 
-function Header({ dark = false, scrolled = false, productDetail = false, cartCount = 0, customer, onSearch, onCart, onAccount }) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const links = [["Home", "/"], ["About", "/about"], ["Shop", "/shop"], ["Blog", "/blog"], ["Contact", "/contact"]];
-
-  useEffect(() => {
-    document.body.classList.toggle("menu-active", menuOpen);
-    return () => document.body.classList.remove("menu-active");
-  }, [menuOpen]);
-
-  return (
-    <nav className={`nav ${dark ? "nav-dark" : ""} ${scrolled ? "nav-scrolled" : ""} ${productDetail ? "nav-product-detail" : ""} ${menuOpen ? "menu-open" : ""}`}>
-      <a className="brand-logo nav-logo" href="/" aria-label="EasternWestern home"><img className="nav-logo-mark" src="/assets/easternwestern-logo.png" alt="" /><span className="nav-logo-word">EasternWestern</span></a>
-      <div className="nav-links">{links.map(([label, href]) => <a href={href} key={label}><span>{label}</span><span>{label}</span></a>)}</div>
-      <div className="nav-actions">
-        <button className="search-button" aria-label="Search Icon" onClick={onSearch}><span /></button>
-        <button className="account-button" aria-label="Open account" onClick={onAccount}>{customer ? "Account" : "Login"}</button>
-        <button className="cart-button" aria-label={`Open cart, ${cartCount} items`} onClick={onCart}><i /><b>{cartCount}</b></button>
-        <Button dark={dark} href="/shop">Shop all items</Button>
-        <button className="menu-button" aria-label={menuOpen ? "Close menu" : "Open menu"} aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)}><i /><i /></button>
-      </div>
-    </nav>
-  );
-}
 
 function CartDrawer({ open, items, onClose, onQty, onRemove }) {
   const totalItems = items.reduce((sum, item) => sum + item.qty, 0);
@@ -272,7 +252,7 @@ function CartDrawer({ open, items, onClose, onQty, onRemove }) {
   );
 }
 
-function CheckoutPage({ items, customerAccount, customerToken, onQty, onRemove, onOrderSuccess, onNeedLogin }) {
+function CheckoutPage({ items, customerAccount, customerToken, onQty, onRemove, onOrderSuccess, onNeedLogin, contactUrl }) {
   const totalItems = items.reduce((sum, item) => sum + item.qty, 0);
   const subtotal = cartSubtotal(items);
   const [customer, setCustomer] = useState({ name: "", email: "", phone: "", address: "" });
@@ -382,7 +362,7 @@ function CheckoutPage({ items, customerAccount, customerToken, onQty, onRemove, 
             {paymentMethod !== "Cash on Delivery" && <div className="co-proof"><label>Payment proof<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => uploadProof(event.target.files?.[0])} /></label>{proofUploading && <p role="status">Uploading proof…</p>}{paymentProofUrl && <img src={paymentProofUrl} alt="Payment proof" />}</div>}
             {orderMessage && <p className="co-message" role={orderMessage === "Saving order..." ? "status" : "alert"}>{orderMessage}</p>}
             <button className="co-submit" type="submit">Place order <span aria-hidden="true">→</span></button>
-            <p className="co-help">Need a hand? <a href="/contact">Contact our team</a></p>
+            <p className="co-help">Need a hand? <a href={contactUrl} target="_blank" rel="noopener noreferrer">Chat on WhatsApp</a></p>
           </form>
         </div>
         <aside className="co-summary" aria-labelledby="co-summary-title">
@@ -511,9 +491,10 @@ function CustomerPanel({ open, token, customer, onClose, onAuth, onLogout }) {
 }
 
 function SaleBar({ settings }) {
-  const text = String(settings?.offerText || "").trim();
-  if (settings?.offerEnabled === false || !text) return null;
-  return <div id="offer-bar" className="sale"><div>{Array(12).fill(text).map((x, i) => <span key={i}>{x}</span>)}</div></div>;
+  const configured = String(settings?.offerText || "").trim();
+  const text = !configured || /^Eastern\s?Western$/i.test(configured) ? LAUNCH_OFFER_TEXT : configured;
+  if (settings?.offerEnabled === false) return null;
+  return <div id="offer-bar" className="launch-offer"><div>{Array.from({ length: 4 }, (_, index) => <span key={index} aria-hidden={index ? "true" : undefined}>{text}</span>)}</div></div>;
 }
 
 function ProductCard({ item, listing = false }) {
@@ -653,18 +634,17 @@ function BlogList({ compact = false, posts: suppliedPosts, allPosts = blogs, con
 
 function Footer({ settings = fallbackSiteData.content.settings }) {
   const footerSettings = { ...fallbackSiteData.content.settings, ...settings };
-  return (
-    <footer id="footer">
-      <div className="newsletter"><h3>Need help with<br />an article or order?</h3><Button href="/contact">Contact our team</Button></div>
-      <div className="footer-grid">
-        <div><a className="brand-logo footer-logo" href="/" aria-label="EasternWestern home"><img src={footerSettings.logoUrl || "/assets/easternwestern-logo.png"} alt="EasternWestern" /></a><p>{footerSettings.footerText}</p><Button href="/contact">Contact EasternWestern</Button></div>
-        <div><h4>Explore</h4>{[["Home", "/"], ["Our story", "/about"], ["Style journal", "/blog"], ["Shop articles", "/shop"]].map(([label, href]) => <a href={href} key={label}>{label}</a>)}</div>
-        <div><h4>Shopping help</h4><a href="/contact">Article enquiries</a><a href="/contact">Order support</a><a href="/contact">Delivery questions</a><a href="/contact">Exchange enquiries</a></div>
-        <div><h4>Get in touch</h4><a href={`mailto:${footerSettings.contactEmail}`}>{footerSettings.contactEmail}</a><a href={`tel:${footerSettings.contactPhone}`}>{footerSettings.contactPhone}</a><a href={`https://maps.google.com/?q=${encodeURIComponent(footerSettings.contactAddress || "")}`} target="_blank" rel="noreferrer">{footerSettings.contactAddress}</a></div>
-      </div>
-      <div className="footer-word">{footerSettings.brandName || "EasternWestern"}</div>
-    </footer>
-  );
+  const chat = whatsappLink(footerSettings.contactPhone);
+  return <footer id="footer">
+    <div className="newsletter"><h3>Need help with<br />an article or order?</h3><a className="btn" href={chat} target="_blank" rel="noopener noreferrer">Chat on WhatsApp</a></div>
+    <div className="footer-grid">
+      <div><a className="brand-logo footer-logo" href="/" aria-label="Eastern Western home"><img src={footerSettings.logoUrl || "/assets/easternwestern-logo.png"} alt="Eastern Western" /></a><p>{footerSettings.footerText}</p></div>
+      <div><h4>Explore</h4><a href="/">Home</a><a href="/shop">Shop Women</a><a href="/bags">Bags — Coming soon</a><a href="/fragrance">Fragrance — Coming soon</a></div>
+      <div><h4>Shopping help</h4>{["Article enquiries", "Order support", "Delivery questions", "Exchange enquiries"].map(label => <a key={label} href={chat} target="_blank" rel="noopener noreferrer">{label}</a>)}</div>
+      <div><h4>Get in touch</h4><a href={chat} target="_blank" rel="noopener noreferrer">WhatsApp</a><a href={`mailto:${footerSettings.contactEmail}`}>{footerSettings.contactEmail}</a><a href={`tel:${footerSettings.contactPhone}`}>{footerSettings.contactPhone}</a><p>{footerSettings.contactAddress}</p></div>
+    </div>
+    <div className="footer-word">{footerSettings.brandName || "Eastern Western"}</div>
+  </footer>;
 }
 
 function pageHero(content, key) {
@@ -774,18 +754,17 @@ function HomePage({ data }) {
       <section id="about" className="about-hero">
         <video key={about.video || "default"} autoPlay muted loop playsInline preload="metadata" poster={about.video ? undefined : (about.poster || "/assets/story-poster.png")}><source src={about.video || "/assets/story.mp4"} type="video/mp4" /></video>
         <div className="hero-overlay" />
-        <div className="about-copy reveal"><img src={about.logo || logo} alt="" /><p>{about.year}</p><h2>{about.title}</h2><p>{about.text}</p><div className="row"><Button href="/about">More about us</Button><Button ghost href="/contact">Contact us</Button></div></div>
+        <div className="about-copy reveal"><img src={about.logo || logo} alt="" /><p>{about.year}</p><h2>{about.title}</h2><p>{about.text}</p><div className="row"><Button href="/shop">Shop Women</Button><a className="btn btn-ghost" href={whatsappLink(data.content?.settings?.contactPhone)} target="_blank" rel="noopener noreferrer">WhatsApp</a></div></div>
       </section>
       <Products id="best-sellers" title="Best sellers" subtitle="Explore more from Eastern Western" items={homeSellers} />
       <CollectionsSection content={data.content} products={data.products} />
       <ReviewSection content={data.content} />
       <FeaturesSection content={data.content} />
-      <BlogList allPosts={data.blogs} content={data.content} />
     </>
   );
 }
 
-function PageHero({ kicker, companion, title, text, image = hero, mobileImage = "", id = "page-hero" }) {
+function PageHero({ kicker, companion, title, text, image = hero, mobileImage = "", id = "page-hero", contactUrl = whatsappLink() }) {
   return (
     <section id={id} className="page-hero">
       <HeroImage image={image} mobileImage={mobileImage} />
@@ -793,7 +772,7 @@ function PageHero({ kicker, companion, title, text, image = hero, mobileImage = 
       <div className="page-hero-copy reveal visible">
         <div className="hero-tag"><span>{kicker}</span><b>{companion}</b></div>
         <h1>{title}</h1><p>{text}</p>
-        <div className="row"><Button href="/shop">Browse collections</Button><Button ghost href="/about">About us</Button></div>
+        <div className="row"><Button href="/shop">Browse collections</Button><a className="btn btn-ghost" href={contactUrl} target="_blank" rel="noopener noreferrer">WhatsApp</a></div>
       </div>
     </section>
   );
@@ -819,7 +798,7 @@ function AboutPage({ content }) {
   );
 }
 
-function ShopPage({ products, content }) {
+function ShopPage({ products, content, contactUrl }) {
   const [filter, setFilter] = useState("UNSTITCHED");
   const heroContent = pageHero(content, "shop");
   const listings = products;
@@ -828,7 +807,7 @@ function ShopPage({ products, content }) {
   const currentProducts = groups[selectedFilter];
   return (
     <>
-      <PageHero {...heroContent} id="shop-hero" />
+      <PageHero {...heroContent} id="shop-hero" contactUrl={contactUrl} />
       <PopularPicks products={listings} active={selectedFilter} onSelect={setFilter} />
       <section id="shop-listings" className="section catalog-section">
         <aside className="catalog-sidebar">
@@ -859,7 +838,7 @@ function ShopPage({ products, content }) {
   );
 }
 
-function ProductPage({ slug, products, onAddToCart }) {
+function ProductPage({ slug, products, onAddToCart, contactUrl }) {
   const sourceProducts = products;
   const existingProduct = sourceProducts.find((p) => p[2] === slug);
   const [loaded, setLoaded] = useState(null);
@@ -884,7 +863,7 @@ function ProductPage({ slug, products, onAddToCart }) {
   const relatedProducts = sourceProducts.filter((item) => item[2] !== product[2]).slice(0, 3);
   return (
     <>
-      <ArticleDetails product={product} onAddToCart={onAddToCart} />
+      <ArticleDetails product={product} onAddToCart={onAddToCart} contactUrl={contactUrl} />
       <section className="section related-products">
         <div className="section-head reveal">
           <div><Kicker>More styles</Kicker><h2>You may also like</h2></div>
@@ -955,20 +934,28 @@ function ContactPage({ content }) {
 }
 
 function NotFoundPage() {
-  return <PageHero kicker="404" title="Page not found" text="We could not find this page. Visit the shop to explore our available articles." image={hero} />;
+  return <section className="store-placeholder"><p>Eastern Western</p><h1>Page not found</h1><a className="store-placeholder-link" href="/shop">Shop Women</a></section>;
+}
+
+function ComingSoonPage({ category }) {
+  return <section className="store-placeholder"><p className="store-placeholder-eyebrow">Eastern Western</p><h1>{category}</h1><span className="store-coming-label">Coming soon</span><p>A new collection is on its way. Stay close for the launch.</p><a className="store-placeholder-link" href="/shop">Shop Women <span aria-hidden="true">→</span></a></section>;
+}
+
+function RemovedPageRedirect() {
+  useEffect(() => { window.location.replace("/shop"); }, []);
+  return <section className="store-placeholder"><a href="/shop">Continue to Shop Women</a></section>;
 }
 
 function Router({ data, onAddToCart, cartItems, customerAccount, customerToken, onQty, onRemove, onOrderSuccess, onNeedLogin }) {
   const pathname = window.location.pathname;
+  const contactUrl = whatsappLink(data.content?.settings?.contactPhone);
+  if (removedStorePath.test(pathname)) return <RemovedPageRedirect />;
+  if (pathname === "/bags" || pathname === "/fragrance") return <ComingSoonPage category={pathname === "/bags" ? "Bags" : "Fragrance"} />;
   if (pathname.startsWith("/admin")) return <AdminDashboard />;
   if (pathname === "/") return <HomePage data={data} />;
-  if (pathname === "/about") return <AboutPage content={data.content} />;
-  if (pathname === "/shop") return <ShopPage products={data.products} content={data.content} />;
-  if (pathname === "/checkout") return <CheckoutPage items={cartItems} customerAccount={customerAccount} customerToken={customerToken} onQty={onQty} onRemove={onRemove} onOrderSuccess={onOrderSuccess} onNeedLogin={onNeedLogin} />;
-  if (pathname === "/blog") return <BlogPage posts={data.blogs} content={data.content} />;
-  if (pathname === "/contact") return <ContactPage content={data.content} />;
-  if (pathname.startsWith("/shop/")) return <ProductPage slug={routeSlug(pathname)} products={data.products} onAddToCart={onAddToCart} />;
-  if (pathname.startsWith("/blog/")) return <BlogDetailPage slug={routeSlug(pathname)} posts={data.blogs} />;
+  if (pathname === "/shop") return <ShopPage products={data.products} content={data.content} contactUrl={contactUrl} />;
+  if (pathname === "/checkout") return <CheckoutPage items={cartItems} customerAccount={customerAccount} customerToken={customerToken} onQty={onQty} onRemove={onRemove} onOrderSuccess={onOrderSuccess} onNeedLogin={onNeedLogin} contactUrl={contactUrl} />;
+  if (pathname.startsWith("/shop/")) return <ProductPage slug={routeSlug(pathname)} products={data.products} onAddToCart={onAddToCart} contactUrl={contactUrl} />;
   return <NotFoundPage />;
 }
 
@@ -1073,7 +1060,7 @@ function App() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
   useEffect(() => {
-    const pageTitle = pathname.startsWith("/shop/") ? "Article" : ({ "/about": "Our story", "/shop": "Shop", "/blog": "Style journal", "/contact": "Contact", "/checkout": "Checkout" })[pathname];
+    const pageTitle = pathname.startsWith("/shop/") ? "Article" : ({ "/shop": "Shop Women", "/bags": "Bags — Coming soon", "/fragrance": "Fragrance — Coming soon", "/checkout": "Checkout" })[pathname];
     document.title = pageTitle ? `${pageTitle} | Eastern Western` : "Eastern Western | Pakistani Clothing";
     const io = new IntersectionObserver((entries) => {
       entries.forEach((entry) => entry.isIntersecting && entry.target.classList.add("visible"));
@@ -1088,12 +1075,13 @@ function App() {
   return (
     <main>
       <SaleBar settings={siteData.content?.settings || fallbackSiteData.content.settings} />
-      <Header dark={darkHeader} scrolled={scrolled} productDetail={darkHeader} cartCount={cartCount} customer={customerAccount} onSearch={() => setSearchOpen(true)} onCart={() => setCartOpen(true)} onAccount={() => setCustomerOpen(true)} />
+      <Header hasOffer={siteData.content?.settings?.offerEnabled !== false} scrolled={scrolled} cartCount={cartCount} customer={customerAccount} onSearch={() => setSearchOpen(true)} onCart={() => setCartOpen(true)} onAccount={() => setCustomerOpen(true)} />
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
       <CustomerPanel open={customerOpen} token={customerToken} customer={customerAccount} onClose={() => setCustomerOpen(false)} onAuth={saveCustomerAuth} onLogout={logoutCustomer} />
       <CartDrawer open={cartOpen} items={cartItems} onClose={() => setCartOpen(false)} onQty={updateCartQty} onRemove={removeFromCart} />
       <Router key={pathname} data={siteData} onAddToCart={addToCart} cartItems={cartItems} customerAccount={customerAccount} customerToken={customerToken} onQty={updateCartQty} onRemove={removeFromCart} onOrderSuccess={() => setCartItems([])} onNeedLogin={() => setCustomerOpen(true)} />
       <Footer settings={siteData.content?.settings || fallbackSiteData.content.settings} />
+      <WhatsAppButton href={whatsappLink(siteData.content?.settings?.contactPhone)} />
     </main>
   );
 }

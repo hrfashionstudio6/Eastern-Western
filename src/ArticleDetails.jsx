@@ -1,3 +1,4 @@
+import { whatsappLink } from "../shared/storefront.js";
 import { useEffect, useRef, useState } from "react";
 import { formatPKR, priceAmount } from "../shared/money.js";
 import { colourPalette, descriptionSections, matchingVariant, splitSizes } from "../shared/article-options.js";
@@ -18,7 +19,7 @@ function DetailText({ text }) {
   })}</div>;
 }
 
-export default function ArticleDetails({ product, onAddToCart }) {
+export default function ArticleDetails({ product, onAddToCart, contactUrl = whatsappLink() }) {
   const variants = Array.isArray(product.variants) ? product.variants : [];
   const first = variants[0];
   const initialColor = String(first?.color || "").trim();
@@ -106,7 +107,7 @@ export default function ArticleDetails({ product, onAddToCart }) {
         {sizes.length > 0 && <fieldset className="pdp-option"><legend>Size {selection.size && <span>— {selection.size}</span>}</legend><div className="pdp-sizes">{sizes.map(size => {
           const available = matchingVariant(variants, selection.color, size, product) >= 0;
           return <button type="button" key={size} aria-pressed={selection.size === size} disabled={!available} onClick={() => selectSize(size)}>{size}</button>;
-        })}</div><div className="pdp-size-help"><span>{needsSize ? "Choose your size" : "Selected size: " + selection.size}</span><a href="/contact">Need help with size?</a></div></fieldset>}
+        })}</div><div className="pdp-size-help"><span>{needsSize ? "Choose your size" : "Selected size: " + selection.size}</span><a href={contactUrl} target="_blank" rel="noopener noreferrer">Need help with size?</a></div></fieldset>}
 
         <div className="pdp-purchase">
           <div className="pdp-quantity-label">Quantity</div>

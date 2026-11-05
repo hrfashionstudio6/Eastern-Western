@@ -1,3 +1,4 @@
+import { removedStorePath } from "../shared/storefront.js";
 import { videoHandlers } from "./video-storage.js";
 import { publicProduct } from "../shared/public-product.js";
 import "dotenv/config";
@@ -715,6 +716,7 @@ app.get("/api/media/:name", async (req, res) => {
   } catch { res.status(503).end(); }
 });
 app.use("/uploads", express.static(uploadDir));
+app.get(removedStorePath, (_req, res) => res.redirect(301, "/shop"));
 app.use(express.static(distPath));
 app.get(/.*/, (_req, res) => res.sendFile(path.join(distPath, "index.html")));
 

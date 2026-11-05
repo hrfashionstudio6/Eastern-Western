@@ -7,7 +7,7 @@ import "./admin.css";
 import { prepareProductImport } from "../shared/product-import.js";
 import { formatPKR } from "../shared/money.js";
 
-const tabs = ["Overview", "Listings", "Orders", "Site Editor", "Blogs", "Settings"];
+const tabs = ["Overview", "Listings", "Orders", "Site Editor", "Settings"];
 const tabIcons = {
   Overview: "M3 13h8V3H3v10Zm10 8h8V11h-8v10ZM3 21h8v-6H3v6Zm10-12h8V3h-8v6Z",
   Listings: "M4 5h16v4H4V5Zm0 6h16v8H4v-8Zm3 2v4m10-4v4",
@@ -52,17 +52,9 @@ const siteEditorSections = [
   { id: "collections", label: "Collections", page: "/", hash: "collections" },
   { id: "review", label: "Reviews", page: "/", hash: "reviews" },
   { id: "features", label: "Features", page: "/", hash: "features" },
-  { id: "homeBlog", label: "Home blog", page: "/", hash: "home-blog" },
   { id: "social", label: "Social", page: "/", hash: "social" },
-  { id: "aboutHero", label: "About hero", page: "/about", hash: "about-hero" },
-  { id: "aboutTrust", label: "About trust", page: "/about", hash: "about-trust" },
-  { id: "aboutStats", label: "About stats", page: "/about", hash: "about-stats" },
   { id: "shopHero", label: "Shop hero", page: "/shop", hash: "shop-hero" },
   { id: "shopListings", label: "Shop listings", page: "/shop", hash: "shop-listings" },
-  { id: "blogHero", label: "Blog hero", page: "/blog", hash: "blog-hero" },
-  { id: "blogList", label: "Blog list", page: "/blog", hash: "blog-list" },
-  { id: "contactHero", label: "Contact hero", page: "/contact", hash: "contact-hero" },
-  { id: "contactInfo", label: "Contact info", page: "/contact", hash: "contact-info" },
   { id: "footer", label: "Footer", page: "/", hash: "footer" },
 ];
 
