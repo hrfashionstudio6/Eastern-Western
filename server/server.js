@@ -1,3 +1,4 @@
+import { videoHandlers } from "./video-storage.js";
 import { publicProduct } from "../shared/public-product.js";
 import "dotenv/config";
 import express from "express";
@@ -451,6 +452,12 @@ app.post("/api/admin/login", (req, res) => {
   if (req.body.password !== adminPassword) return res.status(401).json({ error: "Wrong password" });
   res.json({ token: adminToken });
 });
+
+const videos = videoHandlers(getDb);
+app.post("/api/admin/videos/start", requireAdmin, videos.start);
+app.post("/api/admin/videos/:name/chunks/:index", requireAdmin, videos.chunk);
+app.post("/api/admin/videos/:name/complete", requireAdmin, videos.complete);
+app.get("/api/videos/:name", videos.serve);
 
 app.post("/api/admin/uploads", requireAdmin, async (req, res) => {
   try {

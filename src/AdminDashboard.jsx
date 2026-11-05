@@ -1,3 +1,4 @@
+import { uploadVideoFile } from "./video-upload.js";
 import { useEffect, useState } from "react";
 import { withLoading, updateLoadingMessage } from "./loading-state.js";
 import { prepareUpload, sendPreparedImage } from "./image-upload.js";
@@ -508,6 +509,19 @@ export default function AdminDashboard() {
     ));
   }
 
+  function uploadAboutVideo(file) {
+    if (!file) return;
+    return withLoading("Uploading video…", async () => {
+      setUploadingField("about-video");
+      try {
+        const result = await uploadVideoFile(file, token, progress => updateLoadingMessage("Uploading video — " + progress + "%"));
+        updateSection("about", "video", result.url);
+        setMessage("Video uploaded. Choose Save changes to publish it.");
+      } catch (error) { setMessage(error.message || "Video upload failed. Please try again."); }
+      finally { setUploadingField(""); }
+    });
+  }
+
   function renderSiteEditor() {
     if (editorSection === "offerBar") {
       return (
@@ -536,7 +550,16 @@ export default function AdminDashboard() {
         </>
       );
     }
-    if (editorSection === "homeAbout") return sectionFields("about", ["logo", "poster", "year", "title", "text"]);
+    if (editorSection === "homeAbout") return <>
+      <div className="about-video-editor" style={{ display: "grid", gap: 10 }}>
+        <strong>Background video</strong>
+        {sections.about?.video && <video src={sections.about.video} controls muted playsInline preload="metadata" style={{ width: "100%", maxHeight: 180, background: "#111" }} />}
+        <label className="upload-picker"><input aria-label="Upload Home about video" type="file" accept="video/mp4,.mp4" disabled={Boolean(uploadingField)} onChange={event => { uploadAboutVideo(event.target.files?.[0]); event.target.value = ""; }} />{uploadingField === "about-video" ? "Uploading video…" : "Upload MP4 video"}</label>
+        <small>MP4, up to 64 MB. Plays silently on the homepage. Save changes after upload.</small>
+        {sections.about?.video && <button type="button" className="admin-secondary" onClick={() => updateSection("about", "video", "")}>Remove video</button>}
+      </div>
+      {sectionFields("about", ["logo", "poster", "year", "title", "text"])}
+    </>;
     if (editorSection === "newArrivals") return <EditorNote title="New arrivals" text="Products with tag New appear here. Edit them from Listings." />;
     if (editorSection === "bestSellers") return <EditorNote title="Best sellers" text="Products with tag Best seller appear here. Edit them from Listings." />;
     if (editorSection === "aboutHero") return heroFields("about");
