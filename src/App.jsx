@@ -349,78 +349,60 @@ function CheckoutPage({ items, customerAccount, customerToken, onQty, onRemove, 
   };
 
   if (orderComplete) {
-    return (
-      <section className="section checkout-page checkout-success">
-        <Kicker>Order placed</Kicker>
-        <h1>Your order is saved</h1>
-        <p>Order number: <b>{orderComplete}</b>. You can view order updates in your account.</p>
-        <Button dark href="/shop">Continue shopping</Button>
-      </section>
-    );
+    return <section className="section checkout-v2"><div className="co-state"><span className="co-state-mark" aria-hidden="true">✓</span><p className="co-eyebrow">Order placed</p><h1>Thank you for your order</h1><p>Your order number is <strong>{orderComplete}</strong>. View its updates in your account.</p><a className="co-submit" href="/shop">Continue shopping <span aria-hidden="true">→</span></a></div></section>;
   }
 
   if (!items.length) {
-    return (
-      <section className="section checkout-page checkout-success">
-        <Kicker>Checkout</Kicker>
-        <h1>Your cart is empty</h1>
-        <p>Add an article to your cart to continue to checkout.</p>
-        <Button dark href="/shop">Shop all items</Button>
-      </section>
-    );
+    return <section className="section checkout-v2"><div className="co-state"><p className="co-eyebrow">Checkout</p><h1>Your cart is empty</h1><p>Find your next Eastern Western look and add it to your cart.</p><a className="co-submit" href="/shop">Explore the collection <span aria-hidden="true">→</span></a></div></section>;
   }
 
   return (
-    <section className="section checkout-page">
-      <div className="checkout-form-panel reveal visible">
-        <Kicker>Checkout</Kicker>
-        <h1>Complete your order</h1>
-        {!customerAccount && <button className="login-to-track" type="button" onClick={onNeedLogin}>Login / create account for tracking</button>}
-        <form className="checkout-form checkout-page-form" onSubmit={submitOrder}>
-          <input required value={customer.name} onChange={(event) => updateCustomer("name", event.target.value)} placeholder="Full name" />
-          <input required type="email" value={customer.email} onChange={(event) => updateCustomer("email", event.target.value)} placeholder="Email" />
-          <input required value={customer.phone} onChange={(event) => updateCustomer("phone", event.target.value)} placeholder="Phone" />
-          <textarea required value={customer.address} onChange={(event) => updateCustomer("address", event.target.value)} placeholder="Delivery address" />
-          <div className="payment-options">
-            {["Cash on Delivery"].map((method) => (
-              <label key={method}><input type="radio" checked={paymentMethod === method} onChange={() => setPaymentMethod(method)} />{method}</label>
+    <section className="section checkout-v2">
+      <header className="co-page-head">
+        <div><p className="co-eyebrow">Eastern Western / Checkout</p><h1>Complete your order</h1><p>A few details, and your next look is on its way.</p></div>
+        <a className="co-back" href="/shop"><span aria-hidden="true">←</span> Continue shopping</a>
+      </header>
+      <div className="co-layout">
+        <div className="co-form-card">
+          {!customerAccount && <div className="co-account"><div><strong>Have an account?</strong><p>Sign in to place your order and track updates.</p></div><button type="button" onClick={onNeedLogin}>Sign in</button></div>}
+          <form className="co-form" onSubmit={submitOrder}>
+            <div className="co-section-heading"><span aria-hidden="true">01</span><div><h2>Delivery details</h2><p>Where should we send your order?</p></div></div>
+            <div className="co-fields">
+              <label htmlFor="co-name">Full name<input id="co-name" name="name" autoComplete="name" required value={customer.name} onChange={(event) => updateCustomer("name", event.target.value)} placeholder="Your full name" /></label>
+              <label htmlFor="co-phone">Mobile number<input id="co-phone" name="phone" type="tel" autoComplete="tel" required value={customer.phone} onChange={(event) => updateCustomer("phone", event.target.value)} placeholder="03XX XXXXXXX" /></label>
+              <label className="co-wide" htmlFor="co-email">Email address<input id="co-email" name="email" type="email" autoComplete="email" required value={customer.email} onChange={(event) => updateCustomer("email", event.target.value)} placeholder="you@example.com" /></label>
+              <label className="co-wide" htmlFor="co-address">Delivery address<textarea id="co-address" name="address" autoComplete="street-address" rows={3} required value={customer.address} onChange={(event) => updateCustomer("address", event.target.value)} placeholder="House / flat, street, area and city" /><small>Please include your city and a nearby landmark.</small></label>
+            </div>
+            <fieldset className="co-payment-group">
+              <legend><span aria-hidden="true">02</span> Payment method</legend>
+              <label className="co-payment"><input type="radio" name="paymentMethod" value="Cash on Delivery" checked={paymentMethod === "Cash on Delivery"} onChange={() => setPaymentMethod("Cash on Delivery")} /><span><strong>Cash on Delivery</strong><small>Pay when your order arrives.</small></span><svg aria-hidden="true" width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="3" y="7" width="22" height="15" rx="3" stroke="currentColor" strokeWidth="1.4"/><path d="M7 7V5h14v2M7 14h2m10 0h2" stroke="currentColor" strokeWidth="1.4"/><circle cx="14" cy="14.5" r="3" stroke="currentColor" strokeWidth="1.4"/></svg></label>
+            </fieldset>
+            {paymentMethod !== "Cash on Delivery" && <div className="co-proof"><label>Payment proof<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => uploadProof(event.target.files?.[0])} /></label>{proofUploading && <p role="status">Uploading proof…</p>}{paymentProofUrl && <img src={paymentProofUrl} alt="Payment proof" />}</div>}
+            {orderMessage && <p className="co-message" role={orderMessage === "Saving order..." ? "status" : "alert"}>{orderMessage}</p>}
+            <button className="co-submit" type="submit">Place order <span aria-hidden="true">→</span></button>
+            <p className="co-help">Need a hand? <a href="/contact">Contact our team</a></p>
+          </form>
+        </div>
+        <aside className="co-summary" aria-labelledby="co-summary-title">
+          <div className="co-summary-head"><h2 id="co-summary-title">Your order</h2><span>{totalItems} {totalItems === 1 ? "item" : "items"}</span></div>
+          <div className="co-items">
+            {items.map((item) => (
+              <article className="co-line" key={item.cartKey || item.slug}>
+                <a className="co-photo" href={"/shop/" + encodeURIComponent(item.slug)} aria-label={"View " + item.name}><img src={item.image} alt={item.name} /></a>
+                <div className="co-line-body">
+                  <div className="co-line-title"><a href={"/shop/" + encodeURIComponent(item.slug)}>{item.name}</a><strong>{formatPKR(priceValue(item.price) * item.qty)}</strong></div>
+                  {item.size && <p className="co-size">Size: {item.size}</p>}
+                  {item.color && <div className="co-colour"><span>Colour</span><ColourSwatches value={item.color} /></div>}
+                  <p className="co-unit-price">{formatPKR(item.price)} each</p>
+                  <div className="co-line-actions"><div className="co-quantity"><button type="button" aria-label={"Decrease " + item.name} disabled={item.qty <= 1} onClick={() => onQty(item.cartKey || item.slug, item.qty - 1)}>−</button><output aria-label={"Quantity for " + item.name} aria-live="polite">{item.qty}</output><button type="button" aria-label={"Increase " + item.name} onClick={() => onQty(item.cartKey || item.slug, item.qty + 1)}>+</button></div><button type="button" className="co-remove" aria-label={"Remove " + item.name} onClick={() => onRemove(item.cartKey || item.slug)}>Remove</button></div>
+                </div>
+              </article>
             ))}
           </div>
-          {paymentMethod !== "Cash on Delivery" && (
-            <div className="proof-upload">
-              <label>
-                <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => uploadProof(event.target.files?.[0])} />
-                {proofUploading ? "Uploading proof..." : paymentProofUrl ? "Change proof" : "Upload payment proof"}
-              </label>
-              {paymentProofUrl && <img src={paymentProofUrl} alt="Payment proof" />}
-            </div>
-          )}
-          <button className="cart-checkout" type="submit">Place order</button>
-          {orderMessage && <p>{orderMessage}</p>}
-        </form>
+          <dl className="co-costs"><div><dt>Subtotal</dt><dd>{cartMoney(subtotal, items)}</dd></div><div><dt>Payment</dt><dd>Cash on Delivery</dd></div><div className="co-total"><dt>Total <small>PKR</small></dt><dd>{cartMoney(subtotal, items)}</dd></div></dl>
+          <div className="co-summary-foot"><span aria-hidden="true">✓</span><p>Review your articles and delivery details before placing your order.</p></div>
+        </aside>
       </div>
-      <aside className="checkout-summary reveal visible">
-        <span>Order summary</span>
-        <h2>{totalItems} items</h2>
-        <div className="checkout-items">
-          {items.map((item) => (
-            <article className="checkout-line" key={item.cartKey || item.slug}>
-              <img src={item.image} alt="" />
-              <div>
-                <h3>{item.name}</h3>{(item.size || item.color) && <div className="cart-option-summary">{item.size && <small>Size: {item.size}</small>}{item.color && <ColourSwatches value={item.color} />}</div>}
-                <p>{formatPKR(item.price)}</p>
-                <div className="qty-row">
-                  <button aria-label={`Decrease ${item.name}`} onClick={() => onQty(item.cartKey || item.slug, item.qty - 1)}>-</button>
-                  <span>{item.qty}</span>
-                  <button aria-label={`Increase ${item.name}`} onClick={() => onQty(item.cartKey || item.slug, item.qty + 1)}>+</button>
-                </div>
-              </div>
-              <button className="remove-line" aria-label={`Remove ${item.name}`} onClick={() => onRemove(item.cartKey || item.slug)}>Remove</button>
-            </article>
-          ))}
-        </div>
-        <div className="checkout-total-row"><span>Subtotal</span><b>{cartMoney(subtotal, items)}</b></div>
-      </aside>
     </section>
   );
 }
