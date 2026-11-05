@@ -1,3 +1,4 @@
+import AboutVideo from "./AboutVideo.jsx";
 import { useEffect, useState } from "react";
 import useSiteRoute from "./useSiteRoute.js";
 import { withLoading } from "./loading-state.js";
@@ -769,9 +770,9 @@ function HomePage({ data }) {
       </section>
       <PopularPicks products={data.products} />
       <Products id="new-arrivals" title="New Arrivals" subtitle="Discover our latest articles" items={homeArrivals} />
-      <section id="about" className="about-hero">
-        <video key={about.video || "default"} autoPlay muted loop playsInline preload="metadata" poster={about.video ? undefined : (about.poster || "/assets/story-poster.png")}><source src={about.video || "/assets/story.mp4"} type="video/mp4" /></video>
-        <div className="hero-overlay" />
+      <section id="about" className={"about-hero" + (about.video ? " about-video-section" : "")}>
+        {about.video ? <AboutVideo src={about.video} /> : <video autoPlay muted loop playsInline poster={about.poster || "/assets/story-poster.png"}><source src="/assets/story.mp4" type="video/mp4" /></video>}
+        {!about.video && <div className="hero-overlay" />}
         <div className="about-copy reveal"><img src={about.logo || logo} alt="" /><p>{about.year}</p><h2>{about.title}</h2><p>{about.text}</p><div className="row"><Button href="/about">More about us</Button><Button ghost href="/contact">Contact us</Button></div></div>
       </section>
       <Products id="best-sellers" title="Best sellers" subtitle="Explore more from Eastern Western" items={homeSellers} />

@@ -5130,3 +5130,29 @@ main:has(> #offer-bar) #home-hero { margin-top: 29px; }
 
 .checkout-v2 .co-form { display: block; width: 100%; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; }
 .checkout-v2 .co-payment > input { flex: 0 0 17px; min-width: 17px; max-width: 17px; width: 17px; min-height: 0; height: 17px; }
+
+/* Keep the complete video frame visible; copy sits beside it instead of over it. */
+.about-hero.about-video-section { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); align-items: center; gap: 48px; width: 100%; max-width: 1280px; height: auto; min-height: 0; margin: 30px auto; padding: 54px 24px; overflow: visible; background: transparent; }
+.about-video-frame { position: relative; width: 100%; min-width: 0; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 8px; background: #eae6df; }
+.about-video-frame > video { position: static; display: block; width: 100%; height: 100%; object-fit: contain; }
+.about-video-toggle { position: absolute; right: 12px; bottom: 12px; display: inline-flex; align-items: center; gap: 7px; min-height: 36px; height: auto; padding: 8px 12px; border: 1px solid rgb(255 255 255 / 35%); border-radius: 5px; background: rgb(0 0 0 / 55%); color: #fff; font-family: "Inter", Arial, sans-serif; font-size: 11px; font-weight: 400; cursor: pointer; }
+.about-video-toggle:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.about-video-section .about-copy { position: static; width: 100%; max-width: none; margin: 0; transform: none; color: #222; text-align: left; }
+.about-video-section .about-copy img { width: 65px; height: auto; margin: 0 0 20px; filter: brightness(0); }
+.about-video-section .about-copy h2 { margin: 10px 0 18px; color: #222; font-size: clamp(28px, 2.8vw, 40px); line-height: 1.15; }
+.about-video-section .about-copy p { margin: 0; max-width: none; color: #6a675e; font-size: 14px; line-height: 1.75; }
+.about-video-section .about-copy > p:first-of-type { color: #777269; font-size: 12px; letter-spacing: .04em; }
+.about-video-section .about-copy .row { justify-content: flex-start; margin-top: 24px; }
+.about-video-section .about-copy .btn { background: #20201c; color: #fff; }
+.about-video-section .about-copy .btn-ghost { background: transparent; color: #222; border: 1px solid #d2cec3; }
+@media (max-width: 900px) {
+  .about-hero.about-video-section { grid-template-columns: minmax(0, 1fr); gap: 30px; max-width: 760px; margin: 0 auto; padding: 40px 20px; }
+  .about-video-section .about-copy { text-align: center; max-width: 560px; margin: 0 auto; }
+  .about-video-section .about-copy img { margin: 0 auto 18px; width: 58px; }
+  .about-video-section .about-copy .row { justify-content: center; }
+}
+@media (max-width: 480px) {
+  .about-hero.about-video-section { padding: 24px 16px 38px; gap: 26px; }
+  .about-video-section .about-copy p { font-size: 13px; }
+  .about-video-toggle { min-height: 40px; right: 8px; bottom: 8px; }
+}
