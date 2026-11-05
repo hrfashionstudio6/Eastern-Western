@@ -494,7 +494,7 @@ function SaleBar({ settings }) {
   const configured = String(settings?.offerText || "").trim();
   const text = !configured || /^Eastern\s?Western$/i.test(configured) ? LAUNCH_OFFER_TEXT : configured;
   if (settings?.offerEnabled === false) return null;
-  return <div id="offer-bar" className="launch-offer"><div>{Array.from({ length: 4 }, (_, index) => <span key={index} aria-hidden={index ? "true" : undefined}>{text}</span>)}</div></div>;
+  return <div id="offer-bar" className="launch-offer"><div className="launch-offer-track">{[0, 1].map(group => <div className="launch-offer-group" key={group} aria-hidden={group ? "true" : undefined}>{Array.from({ length: 4 }, (_, index) => <span key={index} aria-hidden={!group && index ? "true" : undefined}>{text}</span>)}</div>)}</div></div>;
 }
 
 function ProductCard({ item, listing = false }) {
