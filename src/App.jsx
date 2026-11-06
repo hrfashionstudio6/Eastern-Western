@@ -1,4 +1,6 @@
 import Header from "./StoreHeader.jsx";
+import CustomerCarePage from "./CustomerCarePage.jsx";
+import { customerCareLinks, customerCarePages } from "../shared/customer-care.js";
 import WhatsAppButton from "./WhatsAppButton.jsx";
 import { LAUNCH_OFFER_TEXT, whatsappLink, removedStorePath } from "../shared/storefront.js";
 import HeroImage from "./HeroImage.jsx";
@@ -640,6 +642,7 @@ function Footer({ settings = fallbackSiteData.content.settings }) {
     <div className="footer-grid">
       <div><a className="brand-logo footer-logo" href="/" aria-label="Eastern Western home"><img src={footerSettings.logoUrl || "/assets/easternwestern-logo.png"} alt="Eastern Western" /></a><p>{footerSettings.footerText}</p></div>
       <div><h4>Explore</h4><a href="/">Home</a><a href="/shop">Shop Women</a><a href="/bags">Bags — Coming soon</a><a href="/fragrance">Fragrance — Coming soon</a></div>
+      <div className="footer-care"><h4>Customer Care</h4>{customerCareLinks.map(link => <a key={link.href} href={link.href}>{link.label}</a>)}</div>
       <div><h4>Get in touch</h4><a href={chat} target="_blank" rel="noopener noreferrer">WhatsApp</a><a href={`mailto:${footerSettings.contactEmail}`}>{footerSettings.contactEmail}</a><a href={`tel:${footerSettings.contactPhone}`}>{footerSettings.contactPhone}</a><p>{footerSettings.contactAddress}</p></div>
     </div>
     <div className="footer-word">{footerSettings.brandName || "Eastern Western"}</div>
@@ -948,6 +951,8 @@ function RemovedPageRedirect() {
 function Router({ data, onAddToCart, cartItems, customerAccount, customerToken, onQty, onRemove, onOrderSuccess, onNeedLogin }) {
   const pathname = window.location.pathname;
   const contactUrl = whatsappLink(data.content?.settings?.contactPhone);
+  const carePath = pathname.replace(/\/+$/, "") || "/";
+  if (customerCarePages[carePath]) return <CustomerCarePage page={customerCarePages[carePath]} path={carePath} settings={data.content?.settings} contactUrl={contactUrl} onOpenAccount={onNeedLogin} customerAccount={customerAccount} />;
   if (removedStorePath.test(pathname)) return <RemovedPageRedirect />;
   if (pathname === "/bags" || pathname === "/fragrance") return <ComingSoonPage category={pathname === "/bags" ? "Bags" : "Fragrance"} />;
   if (pathname.startsWith("/admin")) return <AdminDashboard />;
@@ -1059,7 +1064,7 @@ function App() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
   useEffect(() => {
-    const pageTitle = pathname.startsWith("/shop/") ? "Article" : ({ "/shop": "Shop Women", "/bags": "Bags — Coming soon", "/fragrance": "Fragrance — Coming soon", "/checkout": "Checkout" })[pathname];
+    const pageTitle = customerCarePages[pathname.replace(/\/+$/, "")]?.title || (pathname.startsWith("/shop/") ? "Article" : ({ "/shop": "Shop Women", "/bags": "Bags — Coming soon", "/fragrance": "Fragrance — Coming soon", "/checkout": "Checkout" })[pathname]);
     document.title = pageTitle ? `${pageTitle} | Eastern Western` : "Eastern Western | Pakistani Clothing";
     const io = new IntersectionObserver((entries) => {
       entries.forEach((entry) => entry.isIntersecting && entry.target.classList.add("visible"));
