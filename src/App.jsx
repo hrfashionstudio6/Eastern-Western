@@ -98,6 +98,7 @@ function productDocToItem(product) {
   Object.assign(item, productLabels(product));
   item.subcategory = productSubcategory(product);
   for (const field of ["fabric", "care", "shippingTime", "sizeChart", "sizeChartImage"]) item[field] = product[field] || "";
+  item.sizeChartTable = product.sizeChartTable || null;
   return item;
 }
 

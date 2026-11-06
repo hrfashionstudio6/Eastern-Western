@@ -26,6 +26,8 @@ export default function ArticleDetails({ product, onAddToCart, contactUrl = what
   const [zoomOpen, setZoomOpen] = useState(false);
   const dialog = useRef(null);
   const sizeDialog = useRef(null);
+  const chartSections = product.sizeChartTable?.sections || [];
+  const hasSizeChart = chartSections.length > 0 || Boolean(product.sizeChartImage);
   const colors = [...new Set(variants.map(variant => String(variant.color || "").trim()).filter(Boolean))];
   const sizes = [...new Set(variants.flatMap(variant => splitSizes(variant.size)))];
   const index = matchingVariant(variants, selection.color, selection.size, product);
@@ -35,6 +37,8 @@ export default function ArticleDetails({ product, onAddToCart, contactUrl = what
   const discount = oldPrice > priceAmount(price) ? Math.round((1 - priceAmount(price) / oldPrice) * 100) : 0;
   const fabric = variant?.material || product.fabric || "";
   const sections = descriptionSections(product[7]);
+  // The article's colours lead its details, as listed in the product sheet.
+  const productDetails = [colors.length && "Colour: " + colors.join(", "), sections.details].filter(Boolean).join("\n\n");
   const care = product.care || sections.care;
   const gallery = [...new Set([product[5], product[6], ...(product.media || []), ...variants.map(variant => variant.image)].filter(Boolean))];
   const activeImage = gallery[imageIndex] || gallery[0];
@@ -102,7 +106,7 @@ export default function ArticleDetails({ product, onAddToCart, contactUrl = what
         {sizes.length > 0 && <fieldset className="pdp-option"><legend>Size {selection.size && <span>— {selection.size}</span>}</legend><div className="pdp-sizes">{sizes.map(size => {
           const available = matchingVariant(variants, selection.color, size, product) >= 0;
           return <button type="button" key={size} aria-pressed={selection.size === size} disabled={!available} onClick={() => selectSize(size)}>{size}</button>;
-        })}</div><div className="pdp-size-help"><span>{needsSize ? "Choose your size" : "Selected size: " + selection.size}</span><span className="pdp-size-links">{product.sizeChartImage && <button type="button" className="pdp-size-chart-link" onClick={() => sizeDialog.current?.showModal()}>Size chart</button>}<a href={contactUrl} target="_blank" rel="noopener noreferrer">Need help with size?</a></span></div></fieldset>}
+        })}</div><div className="pdp-size-help"><span>{needsSize ? "Choose your size" : "Selected size: " + selection.size}</span><span className="pdp-size-links">{hasSizeChart && <button type="button" className="pdp-size-chart-link" onClick={() => sizeDialog.current?.showModal()}>Size chart</button>}<a href={contactUrl} target="_blank" rel="noopener noreferrer">Need help with size?</a></span></div></fieldset>}
 
         <div className="pdp-purchase" data-float-clear>
           <div className="pdp-quantity-label">Quantity</div>
@@ -111,7 +115,7 @@ export default function ArticleDetails({ product, onAddToCart, contactUrl = what
         </div>
 
         <div className="pdp-details">
-          {sections.details && <details open><summary>Product details<span aria-hidden="true">+</span></summary><DetailText text={sections.details} /></details>}
+          {productDetails && <details open><summary>Product details<span aria-hidden="true">+</span></summary><DetailText text={productDetails} /></details>}
           {(fabric || care) && <details><summary>Fabric & care<span aria-hidden="true">+</span></summary>{fabric && <p className="pdp-care-fabric">{fabric}</p>}{care && <DetailText text={care} />}</details>}
           {sections.styling && <details><summary>Styling notes<span aria-hidden="true">+</span></summary><DetailText text={sections.styling} /></details>}
           {product.sizeChart && <details><summary>Size guide<span aria-hidden="true">+</span></summary><DetailText text={product.sizeChart} /></details>}
@@ -119,8 +123,16 @@ export default function ArticleDetails({ product, onAddToCart, contactUrl = what
         </div>
       </div>
     </div>
-    {product.sizeChartImage && <dialog ref={sizeDialog} className="pdp-size-chart" aria-label={"Size chart for " + product[1]} onClick={event => { if (event.target === event.currentTarget) sizeDialog.current.close(); }}>
-      <div className="pdp-size-chart-content"><div className="pdp-zoom-toolbar"><span>Size chart · {product[1]}</span><button type="button" onClick={() => sizeDialog.current.close()} aria-label="Close size chart">✕</button></div><img src={product.sizeChartImage} alt={"Size chart for " + product[1]} /></div>
+    {hasSizeChart && <dialog ref={sizeDialog} className="pdp-size-chart" aria-label={"Size chart for " + product[1]} onClick={event => { if (event.target === event.currentTarget) sizeDialog.current.close(); }}>
+      <div className="pdp-size-chart-content">
+        <div className="pdp-zoom-toolbar"><span>Size chart · {product[1]}</span><button type="button" onClick={() => sizeDialog.current.close()} aria-label="Close size chart">✕</button></div>
+        {chartSections.map((section) => <table className="size-chart-table" key={section.title}>
+          <caption>{section.title}</caption>
+          <thead><tr><th scope="col">Measurement</th>{section.sizes.map((size) => <th scope="col" key={size}>{size}</th>)}</tr></thead>
+          <tbody>{section.rows.map(([label, ...values]) => <tr key={label}><th scope="row">{label}</th>{values.map((value, index) => <td key={index}>{value}</td>)}</tr>)}</tbody>
+        </table>)}
+        {product.sizeChartImage && <img src={product.sizeChartImage} alt={"Size chart for " + product[1]} />}
+      </div>
     </dialog>}
     <dialog ref={dialog} className="pdp-zoom" onCancel={() => setZoomOpen(false)} aria-label={"Photos of " + product[1]} onClick={event => { if (event.target === event.currentTarget) setZoomOpen(false); }}>
       <div className="pdp-zoom-content"><div className="pdp-zoom-toolbar"><span>{product[1]} · {imageIndex + 1} / {gallery.length}</span><button type="button" autoFocus onClick={() => setZoomOpen(false)} aria-label="Close larger photo">✕</button></div><img src={activeImage} alt={product[1] + " — photo " + (imageIndex + 1)} />{gallery.length > 1 && <div className="pdp-zoom-controls"><button type="button" onClick={() => nextPhoto(-1)} aria-label="Previous enlarged photo">‹ Previous</button><button type="button" onClick={() => nextPhoto(1)} aria-label="Next enlarged photo">Next ›</button></div>}</div>

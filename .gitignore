@@ -26,3 +26,6 @@ data
 *.njsproj
 *.sln
 *.sw?
+
+# Client source files (photos, sheets) — kept locally, not deployed
+colors+pages/

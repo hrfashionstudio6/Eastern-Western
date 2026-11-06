@@ -18,6 +18,7 @@ import { localizeBrandContent } from "../shared/brand-copy.js";
 import { storeImage } from "./image-storage.js";
 import { createCustomerMailer, statusEmails } from "./customer-email.js";
 import { priceOrderItems } from "./order-pricing.js";
+import { cleanSizeChart } from "../shared/size-chart.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -581,6 +582,7 @@ function productPayload(body) {
     variants: cleanVariants(body.variants),
     description: body.description || "",
     ...Object.fromEntries(["fabric", "care", "shippingTime", "sizeChart", "sizeChartImage"].map(field => [field, String(body[field] || "").trim()])),
+    sizeChartTable: cleanSizeChart(body.sizeChartTable),
     stock: Number(body.stock) || 0,
     status: body.status || "published",
     featured: Boolean(body.featured),

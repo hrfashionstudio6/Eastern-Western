@@ -5413,3 +5413,15 @@ main:has(> #offer-bar.launch-offer) #home-hero { margin-top: var(--launch-offer-
   .catalog-clear { margin: 0; align-self: flex-start; }
 }
 .catalog-results .empty-state h3 { overflow-wrap: anywhere; white-space: normal; }
+
+/* Size chart tables (from the article's size chart sheet). */
+.size-chart-table { width: 100%; margin: 4px 0 18px; border-collapse: collapse; table-layout: fixed; font-family: Georgia, "Times New Roman", serif; font-size: 14px; color: #111; }
+.size-chart-table caption { padding: 10px; border: 1px solid #222; border-bottom: 0; background: #d9d9d9; font-weight: 700; font-size: 15px; letter-spacing: .02em; }
+.size-chart-table th, .size-chart-table td { padding: 8px 10px; border: 1px solid #222; text-align: center; }
+.size-chart-table thead th { background: #e6e6e6; font-weight: 700; }
+.size-chart-table tbody th { font-weight: 400; text-align: left; }
+@media (max-width: 760px) {
+  .size-chart-table { font-size: 12px; }
+  .size-chart-table th, .size-chart-table td { padding: 6px 5px; }
+}
+.size-chart-table thead th:first-child { width: 36%; }

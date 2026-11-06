@@ -7,6 +7,7 @@ import "./admin.css";
 import { prepareProductImport } from "../shared/product-import.js";
 import { formatPKR } from "../shared/money.js";
 import { productLabels, productSubcategories, productSubcategory } from "../shared/product-labels.js";
+import { parseSizeChart } from "../shared/size-chart.js";
 
 const tabs = ["Overview", "Listings", "Orders", "Site Editor", "Settings"];
 const tabIcons = {
@@ -41,7 +42,7 @@ const sectionIcons = {
   footer: "M4 17h16M4 7h16M6 7v10m12-10v10",
 };
 const productCategories = ["UNSTITCHED NEW IN", "READY TO WEAR", "FABRIC NEW IN", "Men's Wear", "Women's Wear", "Children's Wear"];
-const blankProduct = { tag: "New", isNew: true, bestSeller: false, name: "", slug: "", category: "READY TO WEAR", subcategory: "EW Prints", sku: "", price: "", oldPrice: "", image: "", hoverImage: "", mediaText: "", tagsText: "", variants: [], description: "", fabric: "", care: "", shippingTime: "", sizeChart: "", sizeChartImage: "", stock: 0, status: "published", featured: false, sortOrder: 0 };
+const blankProduct = { tag: "New", isNew: true, bestSeller: false, name: "", slug: "", category: "READY TO WEAR", subcategory: "EW Prints", sku: "", price: "", oldPrice: "", image: "", hoverImage: "", mediaText: "", tagsText: "", variants: [], description: "", fabric: "", care: "", shippingTime: "", sizeChart: "", sizeChartImage: "", sizeChartTable: null, stock: 0, status: "published", featured: false, sortOrder: 0 };
 const blankBlog = { category: "Style Guide", title: "", slug: "", excerpt: "", readTime: "5 min read", date: "", image: "", body: "", status: "published", sortOrder: 0 };
 const siteEditorSections = [
   { id: "offerBar", label: "Offer bar", page: "/", hash: "offer-bar" },
@@ -312,6 +313,19 @@ export default function AdminDashboard() {
       setMessage(error.message);
     } finally {
       setUploadingField("");
+    }
+  }
+
+  async function readSizeChartFile(file) {
+    if (!file) return;
+    try {
+      if (!/\.xlsx$/i.test(file.name)) throw new Error("Choose the size chart as an Excel .xlsx file.");
+      const { readSheet } = await import("read-excel-file/universal");
+      const sizeChartTable = parseSizeChart(await readSheet(await file.arrayBuffer()));
+      setProductForm((current) => ({ ...current, sizeChartTable }));
+      setMessage("Size chart loaded — save the listing to publish it.");
+    } catch (error) {
+      setMessage(error.message);
     }
   }
 
@@ -779,6 +793,10 @@ export default function AdminDashboard() {
               </fieldset>
               <fieldset className="listing-section">
                 <legend>Product photos</legend>
+                <div className="listing-photo listing-size-chart"><span>Size chart (Excel)<small>Upload the Eastern Western size chart .xlsx — shown as a table from the "Size chart" button</small></span>
+                  {productForm.sizeChartTable?.sections?.length ? <p>{productForm.sizeChartTable.sections.map((section) => `${section.title} (${section.rows.length} rows)`).join(" · ")} <button type="button" onClick={() => setProductForm({ ...productForm, sizeChartTable: null })}>Remove</button></p> : <p>No size chart table yet.</p>}
+                  <input type="file" accept=".xlsx" aria-label="Upload size chart Excel file" onChange={(event) => { readSizeChartFile(event.target.files?.[0]); event.target.value = ""; }} />
+                </div>
                 <div className="listing-photo"><span>Size chart image<small>Shown from the "Size chart" button on the product page</small></span><ImageInput label="Size chart image" value={productForm.sizeChartImage || ""} uploading={uploadingField === "product-size-chart"} onChange={(value) => setProductForm({ ...productForm, sizeChartImage: value })} onUpload={(file) => uploadImage(file, "product-size-chart", (url) => setProductForm((current) => ({ ...current, sizeChartImage: url })))} /></div>
                 <div className="listing-photo"><span>Main photo</span><ImageInput label="Main photo" value={productForm.image || ""} uploading={uploadingField === "product-image"} onChange={(value) => setProductForm({ ...productForm, image: value })} onUpload={(file) => uploadImage(file, "product-image", (url) => setProductForm((current) => ({ ...current, image: url })))} /></div>
                 <div className="listing-photo"><span>Second photo <small>Shown when the mouse moves over the product</small></span><ImageInput label="Second photo" value={productForm.hoverImage || ""} uploading={uploadingField === "product-hover"} onChange={(value) => setProductForm({ ...productForm, hoverImage: value })} onUpload={(file) => uploadImage(file, "product-hover", (url) => setProductForm((current) => ({ ...current, hoverImage: url })))} /></div>
