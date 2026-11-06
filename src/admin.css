@@ -907,3 +907,5 @@
 
 .hero-upload-label { display: block; margin-bottom: 8px; color: #222; font-size: 13px; font-weight: 600; line-height: 1.5; }
 .hero-upload-hint { grid-column: 1 / -1; margin: 4px 0 12px; color: #777; font-size: 12px; line-height: 1.6; }
+.listing-form .listing-size-chart p { margin: 6px 0; font-size: 12px; }
+.listing-form .listing-size-chart input[type="file"] { min-width: 0; font-size: 12px; }
