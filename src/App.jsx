@@ -5,15 +5,18 @@ import WhatsAppButton from "./WhatsAppButton.jsx";
 import { LAUNCH_OFFER_TEXT, whatsappLink, removedStorePath } from "../shared/storefront.js";
 import HeroImage from "./HeroImage.jsx";
 import { compactHeroSlides } from "../shared/hero-images.js";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import useSiteRoute from "./useSiteRoute.js";
 import { withLoading } from "./loading-state.js";
 import AdminDashboard from "./AdminDashboard.jsx";
-import ArticleDetails, { ColourSwatches } from "./ArticleDetails.jsx";
+import ArticleDetails, { ColourName } from "./ArticleDetails.jsx";
 import ContactForm from "./ContactForm.jsx";
 import { routeSlug } from "../shared/route-slug.js";
 import { loadProduct } from "../shared/load-product.js";
 import { loadSiteData } from "../shared/load-site-data.js";
+import { productLabels, productSubcategories, productSubcategory } from "../shared/product-labels.js";
+import { searchProducts } from "../shared/product-search.js";
+import { filterProducts, pieceOptions, priceRanges, shopQuery, sortOptions, sortProducts } from "../shared/shop-filters.js";
 import { formatPKR, priceAmount } from "../shared/money.js";
 import { defaultContent } from "../server/defaultData.js";
 import "./index.css";
@@ -92,7 +95,9 @@ function productDocToItem(product) {
   item.tags = product.tags || [];
   item.variants = product.variants || [];
   item.featured = product.featured;
-  for (const field of ["fabric", "care", "shippingTime", "sizeChart"]) item[field] = product[field] || "";
+  Object.assign(item, productLabels(product));
+  item.subcategory = productSubcategory(product);
+  for (const field of ["fabric", "care", "shippingTime", "sizeChart", "sizeChartImage"]) item[field] = product[field] || "";
   return item;
 }
 
@@ -233,7 +238,7 @@ function CartDrawer({ open, items, onClose, onQty, onRemove }) {
                 <article className="cart-line" key={item.cartKey || item.slug}>
                   <img src={item.image} alt="" />
                   <div>
-                    <h3>{item.name}</h3>{(item.size || item.color) && <div className="cart-option-summary">{item.size && <small>Size: {item.size}</small>}{item.color && <ColourSwatches value={item.color} />}</div>}
+                    <h3>{item.name}</h3>{(item.size || item.color) && <div className="cart-option-summary">{item.size && <small>Size: {item.size}</small>}{item.color && <ColourName value={item.color} />}</div>}
                     <p>{formatPKR(item.price)}</p>
                     <div className="qty-row">
                       <button aria-label={`Decrease ${item.name}`} onClick={() => onQty(item.cartKey || item.slug, item.qty - 1)}>-</button>
@@ -363,7 +368,7 @@ function CheckoutPage({ items, customerAccount, customerToken, onQty, onRemove, 
             </fieldset>
             {paymentMethod !== "Cash on Delivery" && <div className="co-proof"><label>Payment proof<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => uploadProof(event.target.files?.[0])} /></label>{proofUploading && <p role="status">Uploading proof…</p>}{paymentProofUrl && <img src={paymentProofUrl} alt="Payment proof" />}</div>}
             {orderMessage && <p className="co-message" role={orderMessage === "Saving order..." ? "status" : "alert"}>{orderMessage}</p>}
-            <button className="co-submit" type="submit">Place order <span aria-hidden="true">→</span></button>
+            <button className="co-submit" type="submit" data-float-clear>Place order <span aria-hidden="true">→</span></button>
             <p className="co-help">Need a hand? <a href={contactUrl} target="_blank" rel="noopener noreferrer">Chat on WhatsApp</a></p>
           </form>
         </div>
@@ -376,7 +381,7 @@ function CheckoutPage({ items, customerAccount, customerToken, onQty, onRemove, 
                 <div className="co-line-body">
                   <div className="co-line-title"><a href={"/shop/" + encodeURIComponent(item.slug)}>{item.name}</a><strong>{formatPKR(priceValue(item.price) * item.qty)}</strong></div>
                   {item.size && <p className="co-size">Size: {item.size}</p>}
-                  {item.color && <div className="co-colour"><span>Colour</span><ColourSwatches value={item.color} /></div>}
+                  {item.color && <div className="co-colour"><span>Colour</span><ColourName value={item.color} /></div>}
                   <p className="co-unit-price">{formatPKR(item.price)} each</p>
                   <div className="co-line-actions"><div className="co-quantity"><button type="button" aria-label={"Decrease " + item.name} disabled={item.qty <= 1} onClick={() => onQty(item.cartKey || item.slug, item.qty - 1)}>−</button><output aria-label={"Quantity for " + item.name} aria-live="polite">{item.qty}</output><button type="button" aria-label={"Increase " + item.name} onClick={() => onQty(item.cartKey || item.slug, item.qty + 1)}>+</button></div><button type="button" className="co-remove" aria-label={"Remove " + item.name} onClick={() => onRemove(item.cartKey || item.slug)}>Remove</button></div>
                 </div>
@@ -391,11 +396,32 @@ function CheckoutPage({ items, customerAccount, customerToken, onQty, onRemove, 
   );
 }
 
-function SearchOverlay({ open, onClose }) {
+function SearchOverlay({ open, onClose, products = [] }) {
+  const [query, setQuery] = useState("");
+  useEffect(() => {
+    if (!open) { setQuery(""); return undefined; }
+    const escape = (event) => event.key === "Escape" && onClose();
+    document.addEventListener("keydown", escape);
+    return () => document.removeEventListener("keydown", escape);
+  }, [open, onClose]);
   if (!open) return null;
+  const searchable = products.map((item) => ({ item, name: item[1], sku: item.sku, category: item.category, subcategory: item.subcategory, tags: item.tags, variants: item.variants }));
+  const results = searchProducts(searchable, query).map((match) => match.item);
   return (
-    <div className="search-overlay" role="dialog" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <div className="search-box"><span /><input autoFocus placeholder="Search..." aria-label="Search products" /><button aria-label="Close search" onClick={onClose}>X</button></div>
+    <div className="search-overlay" role="dialog" aria-label="Search articles" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+      <div className="search-panel">
+        <div className="search-box"><span /><input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search by name, code or colour" aria-label="Search products" aria-controls="search-results" /><button type="button" aria-label="Close search" onClick={onClose}>X</button></div>
+        {query.trim() && <div id="search-results" className="search-results" role="region" aria-live="polite" aria-label="Search results">
+          {results.length ? results.slice(0, 8).map((item) => (
+            <a className="search-result" href={slugPath("shop", item[2])} key={item.id || item[2]}>
+              {item[5] ? <img src={item[5]} alt="" /> : <span className="search-result-noimg" />}
+              <span><b>{item[1]}</b><small>{[item.category, item.variants?.[0]?.color].filter(Boolean).join(" · ")}</small></span>
+              <strong>{formatPKR(item[3])}</strong>
+            </a>
+          )) : <p className="search-empty">No articles match “{query.trim()}”. Try a name, article code or colour.</p>}
+          {results.length > 8 && <a className="search-all" href="/shop">See all {results.length} results in the shop</a>}
+        </div>}
+      </div>
     </div>
   );
 }
@@ -500,15 +526,15 @@ function SaleBar({ settings }) {
 }
 
 function ProductCard({ item, listing = false }) {
-  const [tag, name, slug, price, old, image, hover] = item;
+  const [, name, slug, price, old, image, hover] = item;
   const colors = [...new Map((item.variants || []).map((variant) => String(variant.color || "").trim()).filter(Boolean).map((color) => [color.toLowerCase(), color])).values()];
-  const displayTag = listing ? (item.tags || []).find((label) => /^(save|new in|fabric)/i.test(label)) || tag : tag;
   return (
     <a className={`product-card reveal ${listing ? "catalog-card" : ""}`} href={slugPath("shop", slug)}>
       <div className="product-media">
         {image ? <img src={image} alt={name} /> : <div className="media-placeholder">No image</div>}
         {hover && hover !== image && <img src={hover} alt={name} />}
-        <div className="tag">{displayTag}</div>
+        {item.isNew && <div className="tag tag-new">New</div>}
+        {item.bestSeller && <div className="tag tag-best">Best seller</div>}
         {listing && <span className="quick-add">Choose options</span>}
       </div>
       <div className="product-info">
@@ -525,7 +551,7 @@ function ProductCard({ item, listing = false }) {
           </>
         )}
       </div>
-      {colors.length > 0 && <div className="swatches"><ColourSwatches value={colors.join("; ")} /></div>}
+      {colors.length > 0 && <p className="card-colours"><span>Colour:</span> {colors.join(", ")}</p>}
     </a>
   );
 }
@@ -545,44 +571,6 @@ function Products({ title, subtitle, items = [], id = "shop" }) {
 
 function EmptyState({ title, text }) {
   return <div className="empty-state reveal visible"><h3>{title}</h3><p>{text}</p></div>;
-}
-
-function ReviewSection({ content }) {
-  const review = { ...fallbackSiteData.content.sections.review, ...(content?.sections?.review || {}) };
-  const reviews = Array.isArray(content?.reviewItems) && content.reviewItems.length ? content.reviewItems : fallbackSiteData.content.reviewItems;
-  const [activeReview, setActiveReview] = useState(0);
-  useEffect(() => {
-    if (activeReview >= reviews.length) setActiveReview(0);
-  }, [activeReview, reviews.length]);
-  useEffect(() => {
-    if (reviews.length <= 1) return undefined;
-    const timer = window.setInterval(() => setActiveReview((index) => (index + 1) % reviews.length), 4200);
-    return () => window.clearInterval(timer);
-  }, [reviews.length]);
-  const goReview = (direction) => setActiveReview((index) => (index + direction + reviews.length) % reviews.length);
-  return (
-    <section id="reviews" className="section review">
-      <div className="center-head reveal"><Kicker>{review.kicker}</Kicker><h2>{review.title}</h2><p>{review.text}</p></div>
-      <div className="review-slider reveal">
-        <button type="button" onClick={() => goReview(-1)} aria-label="Previous shopping tip">&lt;</button>
-        <div className="review-window">
-          <div className="review-track" style={{ transform: `translateX(-${activeReview * 100}%)` }}>
-            {reviews.map((item, index) => (
-              <article className="review-card" key={`${item.name}-${index}`}>
-                <div className="stars">{item.rating} <span>{item.summary}</span></div>
-                <p>{item.quote}</p>
-                <div className="person"><img src={item.image} alt="" /><div><b>{item.name}</b><span>{item.role}</span></div></div>
-              </article>
-            ))}
-          </div>
-        </div>
-        <button type="button" onClick={() => goReview(1)} aria-label="Next shopping tip">&gt;</button>
-      </div>
-      <div className="review-dots">
-        {reviews.map((item, index) => <button type="button" className={activeReview === index ? "active" : ""} onClick={() => setActiveReview(index)} key={`${item.name}-${index}`} aria-label={`Show shopping tip ${index + 1}`} />)}
-      </div>
-    </section>
-  );
 }
 
 function FeaturesSection({ content }) {
@@ -607,7 +595,7 @@ function CollectionsSection({ products = [] }) {
       {articles.map((item, i) => (
         <div className={`collection reveal ${i % 2 ? "flip" : ""}`} key={item.id || item[2]}>
           <div className="collection-copy">
-            {item[0] && <div className="tag">{item[0]}</div>}
+            {(item.isNew || item.bestSeller) && <div className="tag">{item.bestSeller ? "Best seller" : "New"}</div>}
             <h4>{item.category}</h4><h3>{item[1]}</h3><p>{item[7]}</p>
             <strong>{formatPKR(item[3])}</strong>
             {priceAmount(item[4]) > priceAmount(item[3]) && <del>{formatPKR(item[4])}</del>}
@@ -727,8 +715,8 @@ function PopularPicks({ products = [], active = "UNSTITCHED", onSelect }) {
 function HomePage({ data }) {
   const sourceSlides = data.content?.heroSlides?.length ? data.content.heroSlides : fallbackSiteData.content.heroSlides;
   const slides = compactHeroSlides(sourceSlides).filter(slide => slide.image || slide.mobileImage);
-  const homeArrivals = data.products.filter((item) => item[0] === "New").slice(0, 9);
-  const homeSellers = data.products.filter((item) => item[0] === "Best seller").slice(0, 6);
+  const homeArrivals = data.products.filter((item) => item.isNew).slice(0, 9);
+  const homeSellers = data.products.filter((item) => item.bestSeller).slice(0, 6);
   const [activeSlide, setActiveSlide] = useState(Math.min(3, Math.max(slides.length - 1, 0)));
 
   useEffect(() => {
@@ -760,7 +748,6 @@ function HomePage({ data }) {
       </section>
       <Products id="best-sellers" title="Best sellers" subtitle="Explore more from Eastern Western" items={homeSellers} />
       <CollectionsSection content={data.content} products={data.products} />
-      <ReviewSection content={data.content} />
       <FeaturesSection content={data.content} />
     </>
   );
@@ -800,40 +787,45 @@ function AboutPage({ content }) {
   );
 }
 
-function ShopPage({ products, content, contactUrl }) {
-  const [filter, setFilter] = useState("UNSTITCHED");
+function ShopPage({ products, content, contactUrl, search }) {
+  const query = shopQuery(search);
+  const [filter, setFilter] = useState(query.category || "UNSTITCHED");
+  const [selected, setSelected] = useState({ prices: [], pieces: [], types: query.type ? [query.type] : [] });
+  const [sort, setSort] = useState("featured");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  useEffect(() => {
+    if (query.category) setFilter(query.category);
+    setSelected((current) => ({ ...current, types: query.type ? [query.type] : [] }));
+  }, [query.category, query.type]);
   const heroContent = pageHero(content, "shop");
-  const listings = products;
-  const groups = productGroups(listings);
+  const groups = productGroups(products);
   const selectedFilter = groups[filter]?.length ? filter : shopPickTabs.find((label) => groups[label].length) || "All Products";
-  const currentProducts = groups[selectedFilter];
+  const view = (item) => ({ item, name: item[1], price: item[3], sku: item.sku, subcategory: item.subcategory, bestSeller: item.bestSeller });
+  const currentProducts = sortProducts(filterProducts(groups[selectedFilter].map(view), selected), sort).map((entry) => entry.item);
+  const toggle = (key, value) => setSelected((current) => ({ ...current, [key]: current[key].includes(value) ? current[key].filter((item) => item !== value) : [...current[key], value] }));
+  const check = (key, value, label) => <label key={value}><input type="checkbox" checked={selected[key].includes(value)} onChange={() => toggle(key, value)} /> {label}</label>;
+  const activeFilters = selected.prices.length + selected.pieces.length + selected.types.length;
+  const filtered = activeFilters > 0;
   return (
     <>
       <PageHero {...heroContent} id="shop-hero" contactUrl={contactUrl} />
-      <PopularPicks products={listings} active={selectedFilter} onSelect={setFilter} />
+      <PopularPicks products={products} active={selectedFilter} onSelect={setFilter} />
       <section id="shop-listings" className="section catalog-section">
-        <aside className="catalog-sidebar">
-          <h3>Categories</h3>
-          {Object.keys(groups).map((label) => <button className={selectedFilter === label ? "active" : ""} disabled={!groups[label].length} onClick={() => setFilter(label)} key={label}>{label}</button>)}
-          <h3>By Price</h3>
-          <label><input type="checkbox" /> PKR 0 to PKR 3,000</label>
-          <label><input type="checkbox" /> PKR 3,000 to PKR 6,000</label>
-          <label><input type="checkbox" /> PKR 6,000 to PKR 15,000</label>
-          <h3>By Pieces</h3>
-          <label><input type="checkbox" /> 1 Piece</label>
-          <label><input type="checkbox" /> 2 Pieces</label>
-          <label><input type="checkbox" /> 3 Pieces</label>
-          <h3>By Type</h3>
-          <label><input type="checkbox" /> Embroidered</label>
-          <label><input type="checkbox" /> Printed</label>
-          <span>{currentProducts.length} products</span>
-        </aside>
         <div className="catalog-results">
           <div className="catalog-toolbar">
             <div><b>{selectedFilter}</b><span>{currentProducts.length} products</span></div>
-            <select aria-label="Sort products"><option>Featured</option><option>Best selling</option><option>Price, low to high</option><option>Price, high to low</option></select>
+            <div className="catalog-controls">
+              <button type="button" className="catalog-filter-toggle" aria-expanded={filtersOpen} aria-controls="catalog-filters" onClick={() => setFiltersOpen((open) => !open)}>Filters{activeFilters ? ` (${activeFilters})` : ""}</button>
+              <select aria-label="Sort products" value={sort} onChange={(event) => setSort(event.target.value)}>{sortOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
+            </div>
           </div>
-          {currentProducts.length ? <div className="product-grid listing-grid">{currentProducts.map((item) => <ProductCard key={item[1]} item={item} listing />)}</div> : <EmptyState title="New styles coming soon" text="Our available articles will appear here. Check back for new arrivals." />}
+          {filtersOpen && <div id="catalog-filters" className="catalog-filters">
+            <fieldset><legend>By Price</legend>{priceRanges.map((range) => check("prices", range.id, range.label))}</fieldset>
+            <fieldset><legend>By Pieces</legend>{pieceOptions.map((count) => check("pieces", count, count === "1" ? "1 Piece" : count + " Pieces"))}</fieldset>
+            <fieldset><legend>By Type</legend>{productSubcategories.map((type) => check("types", type, type))}</fieldset>
+            {activeFilters ? <button type="button" className="catalog-clear" onClick={() => setSelected({ prices: [], pieces: [], types: [] })}>Clear filters</button> : null}
+          </div>}
+          {currentProducts.length ? <div className="product-grid listing-grid">{currentProducts.map((item) => <ProductCard key={item[1]} item={item} listing />)}</div> : <EmptyState title={filtered ? "No matching articles" : "New styles coming soon"} text={filtered ? "Try removing a filter to see more articles." : "Our available articles will appear here. Check back for new arrivals."} />}
         </div>
       </section>
     </>
@@ -957,7 +949,7 @@ function Router({ data, onAddToCart, cartItems, customerAccount, customerToken, 
   if (pathname === "/bags" || pathname === "/fragrance") return <ComingSoonPage category={pathname === "/bags" ? "Bags" : "Fragrance"} />;
   if (pathname.startsWith("/admin")) return <AdminDashboard />;
   if (pathname === "/") return <HomePage data={data} />;
-  if (pathname === "/shop") return <ShopPage products={data.products} content={data.content} contactUrl={contactUrl} />;
+  if (pathname === "/shop") return <ShopPage products={data.products} content={data.content} contactUrl={contactUrl} search={window.location.search} />;
   if (pathname === "/checkout") return <CheckoutPage items={cartItems} customerAccount={customerAccount} customerToken={customerToken} onQty={onQty} onRemove={onRemove} onOrderSuccess={onOrderSuccess} onNeedLogin={onNeedLogin} contactUrl={contactUrl} />;
   if (pathname.startsWith("/shop/")) return <ProductPage slug={routeSlug(pathname)} products={data.products} onAddToCart={onAddToCart} contactUrl={contactUrl} />;
   return <NotFoundPage />;
@@ -985,6 +977,7 @@ function App() {
   const [siteLoadError, setSiteLoadError] = useState(false);
   const [siteLoadAttempt, setSiteLoadAttempt] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
+  const closeSearch = useCallback(() => setSearchOpen(false), []);
   const [cartOpen, setCartOpen] = useState(false);
   const [customerOpen, setCustomerOpen] = useState(false);
   const [customerToken, setCustomerToken] = useState(() => localStorage.getItem("ew-customer-token") || "");
@@ -1080,12 +1073,12 @@ function App() {
     <main>
       <SaleBar settings={siteData.content?.settings || fallbackSiteData.content.settings} />
       <Header hasOffer={siteData.content?.settings?.offerEnabled !== false} scrolled={scrolled} cartCount={cartCount} customer={customerAccount} onSearch={() => setSearchOpen(true)} onCart={() => setCartOpen(true)} onAccount={() => setCustomerOpen(true)} />
-      <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
+      <SearchOverlay open={searchOpen} onClose={closeSearch} products={siteData.products} />
       <CustomerPanel open={customerOpen} token={customerToken} customer={customerAccount} onClose={() => setCustomerOpen(false)} onAuth={saveCustomerAuth} onLogout={logoutCustomer} />
       <CartDrawer open={cartOpen} items={cartItems} onClose={() => setCartOpen(false)} onQty={updateCartQty} onRemove={removeFromCart} />
       <Router key={pathname} data={siteData} onAddToCart={addToCart} cartItems={cartItems} customerAccount={customerAccount} customerToken={customerToken} onQty={updateCartQty} onRemove={removeFromCart} onOrderSuccess={() => setCartItems([])} onNeedLogin={() => setCustomerOpen(true)} />
       <Footer settings={siteData.content?.settings || fallbackSiteData.content.settings} />
-      <WhatsAppButton href={whatsappLink(siteData.content?.settings?.contactPhone)} />
+      <WhatsAppButton href={whatsappLink(siteData.content?.settings?.contactPhone)} route={route} />
     </main>
   );
 }

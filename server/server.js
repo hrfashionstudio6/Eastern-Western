@@ -1,6 +1,7 @@
 import { removedStorePath } from "../shared/storefront.js";
 import { videoHandlers } from "./video-storage.js";
 import { publicProduct } from "../shared/public-product.js";
+import { productLabels, productSubcategory } from "../shared/product-labels.js";
 import "dotenv/config";
 import express from "express";
 import nodemailer from "nodemailer";
@@ -15,6 +16,8 @@ import { prepareProductImport } from "../shared/product-import.js";
 import { priceAmount } from "../shared/money.js";
 import { localizeBrandContent } from "../shared/brand-copy.js";
 import { storeImage } from "./image-storage.js";
+import { createCustomerMailer, statusEmails } from "./customer-email.js";
+import { priceOrderItems } from "./order-pricing.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -36,6 +39,12 @@ app.post("/api/contact", express.json({ limit: "24kb" }), createContactHandler({
   fromAddress, toAddress,
   onError: error => console.error("Contact email delivery failed:", error.code || error.name),
 }));
+
+const customerMailer = createCustomerMailer({
+  sendMail: contactTransport ? message => contactTransport.sendMail(message) : null,
+  fromAddress,
+  onError: error => console.error("Customer email delivery failed:", error.code || error.name),
+});
 
 app.use(express.json({ limit: "16mb" }));
 
@@ -292,6 +301,21 @@ async function getPublicData() {
   }
 }
 
+async function publishedProducts() {
+  if (databaseConfigured()) {
+    const db = await getDb();
+    return (await db.list("products", { status: "published" })).map(cleanId);
+  }
+  return (await readLocalStore()).products.filter((product) => product.status === "published");
+}
+
+// Sends the customer's status email once per status, then records that it went out.
+async function sendStatusEmail(db, id, order, status) {
+  const copy = statusEmails[status];
+  if (!copy || order?.[copy.flag]) return;
+  if (await customerMailer.orderStatus(order, status)) await db.update("orders", { _id: id }, { [copy.flag]: new Date() });
+}
+
 function requireAdmin(req, res, next) {
   if (!adminToken) return res.status(503).json({ error: "Admin token is not configured" });
   const token = req.headers.authorization?.replace(/^Bearer\s+/i, "") || req.headers["x-admin-token"];
@@ -355,6 +379,7 @@ app.post("/api/customers/register", async (req, res) => {
     const result = await db.insert("customers", customer);
     const saved = cleanCustomer({ _id: result.insertedId, ...customer });
     res.status(201).json({ customer: saved, token: customerToken(saved) });
+    void customerMailer.welcome(saved);
   } catch (error) {
     if (error.code === "ER_DUP_ENTRY") return res.status(409).json({ error: "Email already registered" });
     const store = await readLocalStore();
@@ -363,6 +388,7 @@ app.post("/api/customers/register", async (req, res) => {
     store.customers.push(saved);
     await writeLocalStore(store);
     res.status(201).json({ customer: cleanCustomer(saved), token: customerToken(saved), database: "local", usingDatabase: false, error: error.message });
+    void customerMailer.welcome(saved);
   }
 });
 
@@ -415,7 +441,13 @@ app.post("/api/orders", async (req, res) => {
   if (paymentMethod !== "Cash on Delivery") return res.status(400).json({ error: "Only Cash on Delivery is available right now" });
   const paymentProofUrl = String(req.body.paymentProofUrl || "").trim();
   if (paymentMethod !== "Cash on Delivery" && !paymentProofUrl) return res.status(400).json({ error: "Payment proof required" });
-  const orderItems = items.map((item) => ({ slug: item.slug, size: String(item.size || ""), color: String(item.color || ""), sku: String(item.sku || ""), name: item.name, image: item.image, price: item.price, qty: Math.max(1, Number(item.qty) || 1) }));
+  let orderItems;
+  try {
+    const products = await publishedProducts();
+    orderItems = priceOrderItems(items, (slug) => products.find((product) => product.slug === slug));
+  } catch (error) {
+    return res.status(error.status || 503).json({ error: error.status ? error.message : "Your order could not be placed. Please try again." });
+  }
   const subtotal = orderItems.reduce((sum, item) => sum + priceValue(item.price) * item.qty, 0);
   const order = {
     orderNo: `EW-${Date.now()}`,
@@ -439,12 +471,14 @@ app.post("/api/orders", async (req, res) => {
     await ensureContent(db);
     const result = await db.insert("orders", order);
     res.status(201).json({ order: cleanId({ _id: result.insertedId, ...order }) });
+    void customerMailer.orderPlaced(order);
   } catch (error) {
     const store = await readLocalStore();
     const localOrder = { id: localId(), ...order };
     store.orders.unshift(localOrder);
     await writeLocalStore(store);
     res.status(201).json({ order: localOrder, database: "local", usingDatabase: false, error: error.message });
+    void customerMailer.orderPlaced(localOrder);
   }
 });
 
@@ -526,11 +560,16 @@ function productPayload(body) {
   const image = body.image || media[0] || "";
   const hoverImage = body.hoverImage || media[1] || image;
   const compareAtPrice = body.compareAtPrice || body.oldPrice || "";
+  const { isNew, bestSeller } = productLabels(body);
   return {
-    tag: body.tag || "New",
+    // `tag` stays in sync for older readers of the single-label field.
+    tag: bestSeller ? "Best seller" : isNew ? "New" : String(body.tag || "").trim(),
+    isNew,
+    bestSeller,
     name: body.name || "Untitled product",
     slug: body.slug || String(body.name || "product").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
     category: body.category || "UNSTITCHED NEW IN",
+    subcategory: productSubcategory(body),
     sku: String(body.sku || "").trim(),
     price: body.price || "PKR 0",
     compareAtPrice,
@@ -541,7 +580,7 @@ function productPayload(body) {
     tags: cleanStringArray(body.tags),
     variants: cleanVariants(body.variants),
     description: body.description || "",
-    ...Object.fromEntries(["fabric", "care", "shippingTime", "sizeChart"].map(field => [field, String(body[field] || "").trim()])),
+    ...Object.fromEntries(["fabric", "care", "shippingTime", "sizeChart", "sizeChartImage"].map(field => [field, String(body[field] || "").trim()])),
     stock: Number(body.stock) || 0,
     status: body.status || "published",
     featured: Boolean(body.featured),
@@ -689,7 +728,9 @@ app.patch("/api/admin/orders/:id", requireAdmin, async (req, res) => {
     if (!id) throw new Error("Local id");
     const db = await getDb();
     await db.update("orders", { _id: id }, next);
-    res.json({ order: cleanId(await db.get("orders", { _id: id })) });
+    const order = await db.get("orders", { _id: id });
+    res.json({ order: cleanId(order) });
+    if (next.status) void sendStatusEmail(db, id, order, next.status).catch(error => console.error("Order status email failed:", error.code || error.name));
   } catch (error) {
     const store = await readLocalStore();
     store.orders = store.orders.map((order) => order.id === req.params.id ? { ...order, ...next } : order);

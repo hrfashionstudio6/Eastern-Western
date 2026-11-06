@@ -6,6 +6,7 @@ import { prepareUpload, sendPreparedImage } from "./image-upload.js";
 import "./admin.css";
 import { prepareProductImport } from "../shared/product-import.js";
 import { formatPKR } from "../shared/money.js";
+import { productLabels, productSubcategories, productSubcategory } from "../shared/product-labels.js";
 
 const tabs = ["Overview", "Listings", "Orders", "Site Editor", "Settings"];
 const tabIcons = {
@@ -40,8 +41,7 @@ const sectionIcons = {
   footer: "M4 17h16M4 7h16M6 7v10m12-10v10",
 };
 const productCategories = ["UNSTITCHED NEW IN", "READY TO WEAR", "FABRIC NEW IN", "Men's Wear", "Women's Wear", "Children's Wear"];
-const productTags = ["New", "Best seller", "Save 25%", "New In", "Fabric"];
-const blankProduct = { tag: "New", name: "", slug: "", category: "UNSTITCHED NEW IN", sku: "", price: "", oldPrice: "", image: "", hoverImage: "", mediaText: "", tagsText: "", variants: [], description: "", fabric: "", care: "", shippingTime: "", sizeChart: "", stock: 0, status: "published", featured: false, sortOrder: 0 };
+const blankProduct = { tag: "New", isNew: true, bestSeller: false, name: "", slug: "", category: "READY TO WEAR", subcategory: "EW Prints", sku: "", price: "", oldPrice: "", image: "", hoverImage: "", mediaText: "", tagsText: "", variants: [], description: "", fabric: "", care: "", shippingTime: "", sizeChart: "", sizeChartImage: "", stock: 0, status: "published", featured: false, sortOrder: 0 };
 const blankBlog = { category: "Style Guide", title: "", slug: "", excerpt: "", readTime: "5 min read", date: "", image: "", body: "", status: "published", sortOrder: 0 };
 const siteEditorSections = [
   { id: "offerBar", label: "Offer bar", page: "/", hash: "offer-bar" },
@@ -50,7 +50,6 @@ const siteEditorSections = [
   { id: "newArrivals", label: "New arrivals", page: "/", hash: "new-arrivals" },
   { id: "bestSellers", label: "Best sellers", page: "/", hash: "best-sellers" },
   { id: "collections", label: "Collections", page: "/", hash: "collections" },
-  { id: "review", label: "Reviews", page: "/", hash: "reviews" },
   { id: "features", label: "Features", page: "/", hash: "features" },
   { id: "social", label: "Social", page: "/", hash: "social" },
   { id: "shopHero", label: "Shop hero", page: "/shop", hash: "shop-hero" },
@@ -86,6 +85,8 @@ function productToForm(product) {
   return {
     ...blankProduct,
     ...product,
+    ...productLabels(product),
+    subcategory: productSubcategory(product),
     mediaText: (product.media || []).filter((image) => image !== product.image && image !== product.hoverImage).join("\n"),
     tagsText: (product.tags || []).join(", "),
     variants: (product.variants || []).map((variant) => ({ ...variant })),
@@ -766,6 +767,7 @@ export default function AdminDashboard() {
                 <ListingField label="Product name / Naam"><input required value={productForm.name} onChange={(e) => setProductForm({ ...productForm, name: e.target.value })} placeholder="e.g. Embroidered 3-Piece Suit" /></ListingField>
                 <ListingField label="Product code (optional)"><input value={productForm.sku || ""} onChange={(e) => setProductForm({ ...productForm, sku: e.target.value })} placeholder="e.g. EW-001" /></ListingField>
                 <ListingField label="Category / Kis qisam ka product?"><select value={productForm.category} onChange={(e) => setProductForm({ ...productForm, category: e.target.value })}>{productCategories.map((x) => <option key={x} value={x}>{({ "UNSTITCHED NEW IN": "Unstitched", "READY TO WEAR": "Ready to Wear", "FABRIC NEW IN": "Fabric" })[x] || x}</option>)}</select></ListingField>
+                <ListingField label="Type / Print ya Embroidered?"><select value={productSubcategory(productForm)} onChange={(e) => setProductForm({ ...productForm, subcategory: e.target.value })}>{productSubcategories.map((x) => <option key={x}>{x}</option>)}</select></ListingField>
                 <ListingField label="Selling price / Qeemat"><input required value={productForm.price} onChange={(e) => setProductForm({ ...productForm, price: e.target.value })} placeholder="e.g. PKR 5,500" /></ListingField>
                 <ListingField label="Old price (only for discount)"><input value={productForm.oldPrice || ""} onChange={(e) => setProductForm({ ...productForm, oldPrice: e.target.value })} placeholder="e.g. PKR 6,500 — otherwise leave blank" /></ListingField>
                 <ListingField label="Available pieces / Kitne pieces hain?"><input type="number" min="0" value={productForm.stock} onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })} /></ListingField>
@@ -777,6 +779,7 @@ export default function AdminDashboard() {
               </fieldset>
               <fieldset className="listing-section">
                 <legend>Product photos</legend>
+                <div className="listing-photo"><span>Size chart image<small>Shown from the "Size chart" button on the product page</small></span><ImageInput label="Size chart image" value={productForm.sizeChartImage || ""} uploading={uploadingField === "product-size-chart"} onChange={(value) => setProductForm({ ...productForm, sizeChartImage: value })} onUpload={(file) => uploadImage(file, "product-size-chart", (url) => setProductForm((current) => ({ ...current, sizeChartImage: url })))} /></div>
                 <div className="listing-photo"><span>Main photo</span><ImageInput label="Main photo" value={productForm.image || ""} uploading={uploadingField === "product-image"} onChange={(value) => setProductForm({ ...productForm, image: value })} onUpload={(file) => uploadImage(file, "product-image", (url) => setProductForm((current) => ({ ...current, image: url })))} /></div>
                 <div className="listing-photo"><span>Second photo <small>Shown when the mouse moves over the product</small></span><ImageInput label="Second photo" value={productForm.hoverImage || ""} uploading={uploadingField === "product-hover"} onChange={(value) => setProductForm({ ...productForm, hoverImage: value })} onUpload={(file) => uploadImage(file, "product-hover", (url) => setProductForm((current) => ({ ...current, hoverImage: url })))} /></div>
                 {[0, 1, 2, 3].map((index) => (
@@ -799,7 +802,7 @@ export default function AdminDashboard() {
               </fieldset>
               <fieldset className="listing-section">
                 <legend>Website display</legend>
-                <ListingField label="Product label"><select value={productForm.tag} onChange={(e) => setProductForm({ ...productForm, tag: e.target.value })}>{productTags.map((x) => <option key={x}>{x}</option>)}</select></ListingField>
+                <div className="listing-labels"><span>Labels on the product photo</span><label><input type="checkbox" checked={Boolean(productForm.isNew)} onChange={(e) => setProductForm({ ...productForm, isNew: e.target.checked })} /> New</label><label><input type="checkbox" checked={Boolean(productForm.bestSeller)} onChange={(e) => setProductForm({ ...productForm, bestSeller: e.target.checked })} /> Best seller</label></div>
                 <ListingField label="Show on website?"><select value={productForm.status} onChange={(e) => setProductForm({ ...productForm, status: e.target.value })}><option value="published">Yes — show now</option><option value="draft">Not yet — save as draft</option></select></ListingField>
                 <label className="listing-featured"><input type="checkbox" checked={Boolean(productForm.featured)} onChange={(e) => setProductForm({ ...productForm, featured: e.target.checked })} /> Highlight on homepage</label>
               </fieldset>
@@ -878,7 +881,7 @@ export default function AdminDashboard() {
                     {order.paymentProofUrl && <a href={order.paymentProofUrl} target="_blank" rel="noreferrer"><img src={order.paymentProofUrl} alt="Payment proof" /></a>}
                   </div>
                   <div className="order-controls">
-                    <select value={order.status || "pending"} onChange={(event) => updateOrder(order, { status: event.target.value })}>{["pending", "confirmed", "shipped", "delivered", "cancelled"].map((x) => <option key={x}>{x}</option>)}</select>
+                    <select value={order.status || "pending"} onChange={(event) => updateOrder(order, { status: event.target.value })}>{["pending", "confirmed", "shipped", "out for delivery", "delivered", "cancelled"].map((x) => <option key={x}>{x}</option>)}</select>
                     <select value={order.paymentStatus || "pending"} onChange={(event) => updateOrder(order, { paymentStatus: event.target.value })}>{["cod", "pending", "verified", "rejected", "paid", "unpaid"].map((x) => <option key={x}>{x}</option>)}</select>
                     <input type="number" min="0" defaultValue={order.deliveryDays || ""} onBlur={(event) => updateOrder(order, { deliveryDays: event.target.value })} placeholder="Delivery days" />
                     <textarea defaultValue={order.trackingNote || ""} onBlur={(event) => updateOrder(order, { trackingNote: event.target.value })} placeholder="Tracking note" />
