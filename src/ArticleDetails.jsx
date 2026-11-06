@@ -1,14 +1,10 @@
 import { whatsappLink } from "../shared/storefront.js";
 import { useEffect, useRef, useState } from "react";
 import { formatPKR, priceAmount } from "../shared/money.js";
-import { colourPalette, descriptionSections, matchingVariant, splitSizes } from "../shared/article-options.js";
+import { descriptionSections, matchingVariant, splitSizes } from "../shared/article-options.js";
 
-export function ColourSwatches({ value }) {
-  const palette = colourPalette(value);
-  const label = palette.length ? palette.map(color => color.name).join(", ") : String(value || "Colour as pictured");
-  return <span className="pdp-palette" role="img" aria-label={label}>
-    {palette.length ? palette.map(color => <span className="pdp-palette-dot" key={color.hex} style={{ backgroundColor: color.hex }} aria-hidden="true" />) : <span className="pdp-palette-dot pdp-palette-unknown" aria-hidden="true">?</span>}
-  </span>;
+export function ColourName({ value }) {
+  return <span className="colour-name">{String(value || "").trim() || "Colour as pictured"}</span>;
 }
 
 function DetailText({ text }) {
@@ -29,6 +25,7 @@ export default function ArticleDetails({ product, onAddToCart, contactUrl = what
   const [imageIndex, setImageIndex] = useState(0);
   const [zoomOpen, setZoomOpen] = useState(false);
   const dialog = useRef(null);
+  const sizeDialog = useRef(null);
   const colors = [...new Set(variants.map(variant => String(variant.color || "").trim()).filter(Boolean))];
   const sizes = [...new Set(variants.flatMap(variant => splitSizes(variant.size)))];
   const index = matchingVariant(variants, selection.color, selection.size, product);
@@ -98,18 +95,16 @@ export default function ArticleDetails({ product, onAddToCart, contactUrl = what
         {fabric && <p className="pdp-fabric"><span>Fabric</span>{fabric}</p>}
 
         {colors.length > 0 && <fieldset className="pdp-option"><legend>Colour</legend><div className="pdp-color-options">{colors.map((color, colorIndex) => {
-          const palette = colourPalette(color);
-          const label = palette.length ? palette.map(item => item.name).join(", ") : color;
           const available = matchingVariant(variants, color, "", product) >= 0;
-          return <button type="button" className="pdp-color-choice" key={color} aria-label={"Colour option " + (colorIndex + 1) + ": " + label} title={label} aria-pressed={selection.color === color} disabled={!available} onClick={() => selectColor(color)}><ColourSwatches value={color} />{selection.color === color && <span className="pdp-color-check" aria-hidden="true">✓</span>}</button>;
+          return <button type="button" className="pdp-color-choice" key={color} aria-label={"Colour option " + (colorIndex + 1) + ": " + color} aria-pressed={selection.color === color} disabled={!available} onClick={() => selectColor(color)}><ColourName value={color} />{selection.color === color && <span className="pdp-color-check" aria-hidden="true">✓</span>}</button>;
         })}</div></fieldset>}
 
         {sizes.length > 0 && <fieldset className="pdp-option"><legend>Size {selection.size && <span>— {selection.size}</span>}</legend><div className="pdp-sizes">{sizes.map(size => {
           const available = matchingVariant(variants, selection.color, size, product) >= 0;
           return <button type="button" key={size} aria-pressed={selection.size === size} disabled={!available} onClick={() => selectSize(size)}>{size}</button>;
-        })}</div><div className="pdp-size-help"><span>{needsSize ? "Choose your size" : "Selected size: " + selection.size}</span><a href={contactUrl} target="_blank" rel="noopener noreferrer">Need help with size?</a></div></fieldset>}
+        })}</div><div className="pdp-size-help"><span>{needsSize ? "Choose your size" : "Selected size: " + selection.size}</span><span className="pdp-size-links">{product.sizeChartImage && <button type="button" className="pdp-size-chart-link" onClick={() => sizeDialog.current?.showModal()}>Size chart</button>}<a href={contactUrl} target="_blank" rel="noopener noreferrer">Need help with size?</a></span></div></fieldset>}
 
-        <div className="pdp-purchase">
+        <div className="pdp-purchase" data-float-clear>
           <div className="pdp-quantity-label">Quantity</div>
           <div className="pdp-purchase-controls"><div className="pdp-quantity"><button type="button" disabled={quantity <= 1} onClick={() => setQuantity(current => Math.max(1, current - 1))} aria-label="Decrease quantity">−</button><output aria-label="Quantity" aria-live="polite">{quantity}</output><button type="button" onClick={() => setQuantity(current => current + 1)} aria-label="Increase quantity">+</button></div><button type="button" className="pdp-add" disabled={!canAdd} onClick={addToCart}>{needsSize ? "Select a size" : "Add to cart"}</button></div>
           <p className="pdp-payment">Prices in PKR <span aria-hidden="true">·</span> Cash on Delivery</p>
@@ -124,6 +119,9 @@ export default function ArticleDetails({ product, onAddToCart, contactUrl = what
         </div>
       </div>
     </div>
+    {product.sizeChartImage && <dialog ref={sizeDialog} className="pdp-size-chart" aria-label={"Size chart for " + product[1]} onClick={event => { if (event.target === event.currentTarget) sizeDialog.current.close(); }}>
+      <div className="pdp-size-chart-content"><div className="pdp-zoom-toolbar"><span>Size chart · {product[1]}</span><button type="button" onClick={() => sizeDialog.current.close()} aria-label="Close size chart">✕</button></div><img src={product.sizeChartImage} alt={"Size chart for " + product[1]} /></div>
+    </dialog>}
     <dialog ref={dialog} className="pdp-zoom" onCancel={() => setZoomOpen(false)} aria-label={"Photos of " + product[1]} onClick={event => { if (event.target === event.currentTarget) setZoomOpen(false); }}>
       <div className="pdp-zoom-content"><div className="pdp-zoom-toolbar"><span>{product[1]} · {imageIndex + 1} / {gallery.length}</span><button type="button" autoFocus onClick={() => setZoomOpen(false)} aria-label="Close larger photo">✕</button></div><img src={activeImage} alt={product[1] + " — photo " + (imageIndex + 1)} />{gallery.length > 1 && <div className="pdp-zoom-controls"><button type="button" onClick={() => nextPhoto(-1)} aria-label="Previous enlarged photo">‹ Previous</button><button type="button" onClick={() => nextPhoto(1)} aria-label="Next enlarged photo">Next ›</button></div>}</div>
     </dialog>

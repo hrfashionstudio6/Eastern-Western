@@ -1,8 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 
+const menuGroups = [
+  { label: "Ready To Wear", items: [["EW Prints", "/shop?category=ready-to-wear&type=ew-prints#shop-listings"], ["Embroidered", ""]] },
+  { label: "Unstitched", items: [["EW Prints", ""], ["Embroidered", ""]] },
+];
+
 export default function StoreHeader({ scrolled, cartCount = 0, customer, onSearch, onCart, onAccount, hasOffer = true }) {
   const pathname = window.location.pathname;
   const [menuOpen, setMenuOpen] = useState(false);
+  const [openGroup, setOpenGroup] = useState("Ready To Wear");
   const toggle = useRef(null);
   const solid = scrolled || pathname !== "/" || menuOpen;
   const links = [["Women", "/shop"], ["Bags", "/bags"], ["Fragrance", "/fragrance"]];
@@ -30,7 +36,19 @@ export default function StoreHeader({ scrolled, cartCount = 0, customer, onSearc
           <button className="lh-icon lh-cart" type="button" aria-label={"Open cart, " + cartCount + " items"} onClick={onCart}><svg viewBox="0 0 24 24" aria-hidden="true">{icon("cart")}</svg><b>{cartCount}</b></button>
         </div>
       </div>
-      {menuOpen && <nav id="store-menu" className="lh-menu-panel" aria-label="Main navigation"><a href="/" onClick={() => setMenuOpen(false)}>Home</a>{links.map(([label, href]) => <a key={href} href={href} onClick={() => setMenuOpen(false)}>{label === "Women" ? "Shop Women" : label}{href !== "/shop" && <small>Coming soon</small>}</a>)}<button type="button" onClick={() => { setMenuOpen(false); onSearch(); }}>Search articles</button></nav>}
+      {menuOpen && <nav id="store-menu" className="lh-menu-panel lh-drawer" aria-label="Main navigation">
+        <div className="lh-drawer-head"><span>Menu</span><button type="button" onClick={() => setMenuOpen(false)} aria-label="Close menu">✕</button></div>
+        <a href="/" onClick={() => setMenuOpen(false)}>Home</a>
+        {menuGroups.map((group) => <div className="lh-menu-group" key={group.label}>
+          <button type="button" className="lh-menu-heading" aria-expanded={openGroup === group.label} onClick={() => setOpenGroup((current) => current === group.label ? "" : group.label)}>{group.label}<span aria-hidden="true">{openGroup === group.label ? "−" : "+"}</span></button>
+          {openGroup === group.label && <div className="lh-submenu">{group.items.map(([label, href]) => href
+            ? <a key={label} href={href} onClick={() => setMenuOpen(false)}>{label}</a>
+            : <span key={label} className="lh-menu-soon" aria-disabled="true">{label}<small>Coming soon</small></span>)}</div>}
+        </div>)}
+        <a href="/shop#shop-listings" onClick={() => setMenuOpen(false)}>View All</a>
+        {links.filter(([, href]) => href !== "/shop").map(([label, href]) => <a key={href} href={href} onClick={() => setMenuOpen(false)}>{label}<small>Coming soon</small></a>)}
+        <button type="button" onClick={() => { setMenuOpen(false); onSearch(); }}>Search articles</button>
+      </nav>}
     </header>
   </>;
 }

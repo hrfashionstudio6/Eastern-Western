@@ -875,7 +875,11 @@
 .listing-form .listing-variant { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; border: 1px solid #e1e1d9; border-radius: 8px; padding: 12px; }
 .listing-form .listing-variant-head { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .listing-form .listing-featured { display: flex; align-items: center; gap: 7px; margin-top: 24px; font-size: 12px; }
-.listing-form .listing-featured input { width: 16px; min-height: 16px; height: 16px; }
+.listing-form .listing-featured input { width: 16px; min-width: 0; min-height: 16px; height: 16px; }
+.listing-form .listing-labels { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; font-size: 12px; }
+.listing-form .listing-labels > span { flex-basis: 100%; }
+.listing-form .listing-labels label { display: flex; align-items: center; gap: 7px; }
+.listing-form .listing-labels input { width: 16px; min-width: 0; min-height: 16px; height: 16px; }
 .listing-form .listing-advanced { min-width: 0; }
 .listing-form summary { cursor: pointer; color: #55554d; font-size: 12px; }
 .listing-form .listing-advanced .listing-section { border: 0; padding-top: 12px; }
