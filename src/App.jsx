@@ -1,3 +1,4 @@
+import { checkoutCustomer } from "../shared/checkout-customer.js";
 import { trackPageView, trackViewContent, trackAddToCart, trackCheckout, trackPurchase } from "./meta-pixel.js";
 import Header from "./StoreHeader.jsx";
 import CustomerCarePage from "./CustomerCarePage.jsx";
@@ -253,7 +254,7 @@ function CartDrawer({ open, items, onClose, onQty, onRemove }) {
               ))}
             </div>
             <div className="cart-total"><span>Subtotal</span><b>{cartMoney(subtotal, items)}</b></div>
-            <a className="cart-checkout" href="/checkout" onClick={onClose}>Checkout details</a>
+            <a className="cart-checkout" href="/checkout" onClick={onClose}>Checkout</a>
           </>
         )}
       </aside>
@@ -270,6 +271,8 @@ function CheckoutPage({ items, customerAccount, customerToken, onQty, onRemove, 
   const [proofUploading, setProofUploading] = useState(false);
   const [orderMessage, setOrderMessage] = useState("");
   const [orderComplete, setOrderComplete] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const submittingOrder = useRef(false);
   const checkoutTracked = useRef(false);
   useEffect(() => {
     if (!checkoutTracked.current && items.length) {
@@ -317,21 +320,22 @@ function CheckoutPage({ items, customerAccount, customerToken, onQty, onRemove, 
   };
   const submitOrderAction = async (event) => {
     event.preventDefault();
-    if (!customerAccount) {
-      setOrderMessage("Please log in to place your order and view its updates.");
-      onNeedLogin?.();
-      return;
-    }
+    if (submittingOrder.current) return;
+    let delivery;
+    try { delivery = checkoutCustomer(customer, customerAccount); }
+    catch (error) { setOrderMessage(error.message); return; }
     if (paymentMethod !== "Cash on Delivery" && !paymentProofUrl) {
       setOrderMessage("Upload payment proof first");
       return;
     }
+    submittingOrder.current = true;
+    setSubmitting(true);
     setOrderMessage("Saving order...");
     try {
       const response = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(customerToken ? { Authorization: `Bearer ${customerToken}` } : {}) },
-        body: JSON.stringify({ customer, items, paymentMethod, paymentProofUrl }),
+        body: JSON.stringify({ customer: delivery, items, paymentMethod, paymentProofUrl }),
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "Order failed");
@@ -344,11 +348,14 @@ function CheckoutPage({ items, customerAccount, customerToken, onQty, onRemove, 
       onOrderSuccess?.();
     } catch (error) {
       setOrderMessage(error.message);
+    } finally {
+      submittingOrder.current = false;
+      setSubmitting(false);
     }
   };
 
   if (orderComplete) {
-    return <section className="section checkout-v2"><div className="co-state"><span className="co-state-mark" aria-hidden="true">✓</span><p className="co-eyebrow">Order placed</p><h1>Thank you for your order</h1><p>Your order number is <strong>{orderComplete}</strong>. View its updates in your account.</p><a className="co-submit" href="/shop">Continue shopping <span aria-hidden="true">→</span></a></div></section>;
+    return <section className="section checkout-v2"><div className="co-state"><span className="co-state-mark" aria-hidden="true">✓</span><p className="co-eyebrow">Order placed</p><h1>Thank you for your order</h1><p>Your order number is <strong>{orderComplete}</strong>. Please save this number. We will contact you on your mobile to confirm delivery.</p><a className="co-submit" href="/shop">Continue shopping <span aria-hidden="true">→</span></a></div></section>;
   }
 
   if (!items.length) {
@@ -361,16 +368,18 @@ function CheckoutPage({ items, customerAccount, customerToken, onQty, onRemove, 
         <div><p className="co-eyebrow">Eastern Western / Checkout</p><h1>Complete your order</h1><p>A few details, and your next look is on its way.</p></div>
         <a className="co-back" href="/shop"><span aria-hidden="true">←</span> Continue shopping</a>
       </header>
+      <a className="co-mobile-total" href="#co-summary-title"><span>{totalItems} {totalItems === 1 ? "item" : "items"} · Review order</span><strong>{cartMoney(subtotal, items)}</strong></a>
       <div className="co-layout">
         <div className="co-form-card">
-          {!customerAccount && <div className="co-account"><div><strong>Have an account?</strong><p>Sign in to place your order and track updates.</p></div><button type="button" onClick={onNeedLogin}>Sign in</button></div>}
-          <form className="co-form" onSubmit={submitOrder}>
+          {!customerAccount && <div className="co-account"><div><strong>Guest checkout</strong><p>No account needed. Sign in only if you prefer.</p></div><button type="button" onClick={onNeedLogin}>Sign in</button></div>}
+          <form className="co-form" onSubmit={submitOrder} aria-busy={submitting}>
             <div className="co-section-heading"><span aria-hidden="true">01</span><div><h2>Delivery details</h2><p>Where should we send your order?</p></div></div>
             <div className="co-fields">
-              <label htmlFor="co-name">Full name<input id="co-name" name="name" autoComplete="name" required value={customer.name} onChange={(event) => updateCustomer("name", event.target.value)} placeholder="Your full name" /></label>
-              <label htmlFor="co-phone">Mobile number<input id="co-phone" name="phone" type="tel" autoComplete="tel" required value={customer.phone} onChange={(event) => updateCustomer("phone", event.target.value)} placeholder="03XX XXXXXXX" /></label>
-              <label className="co-wide" htmlFor="co-email">Email address<input id="co-email" name="email" type="email" autoComplete="email" required value={customer.email} onChange={(event) => updateCustomer("email", event.target.value)} placeholder="you@example.com" /></label>
-              <label className="co-wide" htmlFor="co-address">Delivery address<textarea id="co-address" name="address" autoComplete="street-address" rows={3} required value={customer.address} onChange={(event) => updateCustomer("address", event.target.value)} placeholder="House / flat, street, area and city" /><small>Please include your city and a nearby landmark.</small></label>
+              <label htmlFor="co-name">Full name<input id="co-name" name="name" autoComplete="name" maxLength={120} required value={customer.name} onChange={(event) => updateCustomer("name", event.target.value)} placeholder="Your full name" /></label>
+              <label htmlFor="co-phone">Mobile number<input id="co-phone" name="phone" type="tel" inputMode="tel" autoComplete="tel" maxLength={25} title="Enter your mobile number, e.g. 0300 1234567" required value={customer.phone} onChange={(event) => updateCustomer("phone", event.target.value)} placeholder="03XX XXXXXXX" /></label>
+
+              <label className="co-wide" htmlFor="co-address">Delivery address<textarea id="co-address" name="address" autoComplete="street-address" rows={3} maxLength={1000} required value={customer.address} onChange={(event) => updateCustomer("address", event.target.value)} placeholder="House / flat, street, area and city" /><small>Please include your city and a nearby landmark.</small></label>
+              <label className="co-wide" htmlFor="co-email">Email address (optional)<input id="co-email" name="email" type="email" autoComplete="email" maxLength={254} value={customer.email} onChange={(event) => updateCustomer("email", event.target.value)} placeholder="you@example.com" /><small>For order emails, if you would like them.</small></label>
             </div>
             <fieldset className="co-payment-group">
               <legend><span aria-hidden="true">02</span> Payment method</legend>
@@ -378,7 +387,7 @@ function CheckoutPage({ items, customerAccount, customerToken, onQty, onRemove, 
             </fieldset>
             {paymentMethod !== "Cash on Delivery" && <div className="co-proof"><label>Payment proof<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => uploadProof(event.target.files?.[0])} /></label>{proofUploading && <p role="status">Uploading proof…</p>}{paymentProofUrl && <img src={paymentProofUrl} alt="Payment proof" />}</div>}
             {orderMessage && <p className="co-message" role={orderMessage === "Saving order..." ? "status" : "alert"}>{orderMessage}</p>}
-            <button className="co-submit" type="submit" data-float-clear>Place order <span aria-hidden="true">→</span></button>
+            <button className="co-submit" type="submit" disabled={submitting} data-float-clear>{submitting ? "Placing order…" : "Place order"}<span>{cartMoney(subtotal, items)}</span></button>
             <p className="co-help">Need a hand? <a href={contactUrl} target="_blank" rel="noopener noreferrer">Chat on WhatsApp</a></p>
           </form>
         </div>
@@ -698,7 +707,7 @@ function PopularPicks({ products = [], active = "UNSTITCHED", onSelect }) {
     else setLocalActive(label);
   };
   return (
-    <section className="popular-picks">
+    <section className={"popular-picks" + (onSelect ? " shop-picks" : "")}>
       <p>EXPLORE THE EASTERN WESTERN COLLECTION</p>
       <div className="pick-tabs">
         {shopPickTabs.map((label) => <button className={selected === label ? "active" : ""} disabled={!groups[label].length} onClick={() => choose(label)} key={label}>{label}{!groups[label].length && <small>Upcoming</small>}</button>)}
@@ -1009,7 +1018,7 @@ function App() {
     if (!window.location.hash) window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, [route]);
   const cartCount = cartItems.reduce((sum, item) => sum + item.qty, 0);
-  const addToCart = (product, quantity = 1, variant, option = 0) => {
+  const addToCart = (product, quantity = 1, variant, option = 0, buyNow = false) => {
     const nextItem = { ...cartProduct(product), ...(variant ? { price: variant.price || product[3], image: variant.image || product[5], size: variant.size, color: variant.color, sku: variant.sku || product.sku } : {}), cartKey: variant ? `${product[2]}::${option}` : product[2] };
     setCartItems((items) => {
       const exists = items.find((item) => (item.cartKey || item.slug) === nextItem.cartKey);
@@ -1017,7 +1026,11 @@ function App() {
       return [...items, { ...nextItem, qty: quantity }];
     });
     trackAddToCart(nextItem, quantity);
-    setCartOpen(true);
+    if (buyNow) {
+      setCartOpen(false);
+      window.history.pushState(null, "", "/checkout");
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    } else setCartOpen(true);
   };
   const saveCustomerAuth = (customer, token) => {
     setCustomerAccount(customer);

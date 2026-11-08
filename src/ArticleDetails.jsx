@@ -75,10 +75,10 @@ export default function ArticleDetails({ product, onAddToCart, contactUrl = what
     showVariantImage(variants[matchingVariant(variants, selection.color, size, product)]);
   };
   const nextPhoto = direction => setImageIndex(current => (current + direction + gallery.length) % gallery.length);
-  const addToCart = () => {
+  const addToCart = (buyNow = false) => {
     if (!canAdd) return;
     const chosen = variant ? { ...variant, size: selection.size || variant.size } : undefined;
-    onAddToCart(product, quantity, chosen, index + ":" + selection.size);
+    onAddToCart(product, quantity, chosen, index + ":" + selection.size, buyNow);
   };
 
   return <section className="section product-detail-page">
@@ -110,7 +110,8 @@ export default function ArticleDetails({ product, onAddToCart, contactUrl = what
 
         <div className="pdp-purchase" data-float-clear>
           <div className="pdp-quantity-label">Quantity</div>
-          <div className="pdp-purchase-controls"><div className="pdp-quantity"><button type="button" disabled={quantity <= 1} onClick={() => setQuantity(current => Math.max(1, current - 1))} aria-label="Decrease quantity">−</button><output aria-label="Quantity" aria-live="polite">{quantity}</output><button type="button" onClick={() => setQuantity(current => current + 1)} aria-label="Increase quantity">+</button></div><button type="button" className="pdp-add" disabled={!canAdd} onClick={addToCart}>{needsSize ? "Select a size" : "Add to cart"}</button></div>
+          <div className="pdp-purchase-controls"><div className="pdp-quantity"><button type="button" disabled={quantity <= 1} onClick={() => setQuantity(current => Math.max(1, current - 1))} aria-label="Decrease quantity">−</button><output aria-label="Quantity" aria-live="polite">{quantity}</output><button type="button" onClick={() => setQuantity(current => current + 1)} aria-label="Increase quantity">+</button></div><button type="button" className="pdp-add" disabled={!canAdd} onClick={() => addToCart()}>{needsSize ? "Select a size" : "Add to cart"}</button></div>
+          <button type="button" className="pdp-buy-now" disabled={!canAdd} onClick={() => addToCart(true)}>{needsSize ? "Choose a size to buy" : "Buy now"}</button>
           <p className="pdp-payment">Prices in PKR <span aria-hidden="true">·</span> Cash on Delivery</p>
         </div>
 
