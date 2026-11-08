@@ -1,3 +1,4 @@
+import { trackPageView, trackViewContent, trackAddToCart, trackCheckout, trackPurchase } from "./meta-pixel.js";
 import Header from "./StoreHeader.jsx";
 import CustomerCarePage from "./CustomerCarePage.jsx";
 import { customerCareLinks, customerCarePages } from "../shared/customer-care.js";
@@ -5,7 +6,7 @@ import WhatsAppButton from "./WhatsAppButton.jsx";
 import { LAUNCH_OFFER_TEXT, whatsappLink, removedStorePath } from "../shared/storefront.js";
 import HeroImage from "./HeroImage.jsx";
 import { compactHeroSlides } from "../shared/hero-images.js";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import useSiteRoute from "./useSiteRoute.js";
 import { withLoading } from "./loading-state.js";
 import AdminDashboard from "./AdminDashboard.jsx";
@@ -269,6 +270,13 @@ function CheckoutPage({ items, customerAccount, customerToken, onQty, onRemove, 
   const [proofUploading, setProofUploading] = useState(false);
   const [orderMessage, setOrderMessage] = useState("");
   const [orderComplete, setOrderComplete] = useState("");
+  const checkoutTracked = useRef(false);
+  useEffect(() => {
+    if (!checkoutTracked.current && items.length) {
+      checkoutTracked.current = true;
+      trackCheckout(items);
+    }
+  }, [items]);
   const updateCustomer = (field, value) => setCustomer((current) => ({ ...current, [field]: value }));
 
   useEffect(() => {
@@ -327,6 +335,7 @@ function CheckoutPage({ items, customerAccount, customerToken, onQty, onRemove, 
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "Order failed");
+      trackPurchase(payload.order);
       setOrderComplete(payload.order.orderNo);
       setOrderMessage("");
       setCustomer({ name: "", email: "", phone: "", address: "" });
@@ -852,6 +861,7 @@ function ProductPage({ slug, products, onAddToCart, contactUrl }) {
     return () => controller.abort();
   }, [slug, existingProduct, retry]);
   const product = existingProduct || loaded;
+  useEffect(() => { trackViewContent(product); }, [product]);
   if (!product && loading) return <section className="section article-load" role="status"><span className="work-loading-spinner" /><p>Loading article…</p></section>;
   if (!product && error) return <section className="section article-load" role="alert"><p>{error}</p><button className="btn btn-dark" onClick={() => setRetry(value => value + 1)}>Try again</button></section>;
   if (!product) return <><PageHero kicker="Shop" companion="No product" title="Product not found" text="Our available articles will appear here. Check back for new arrivals." image={hero} /></>;
@@ -974,6 +984,7 @@ function App() {
   const pathname = route.split(/[?#]/)[0];
   const darkHeader = pathname.startsWith("/shop/") || pathname === "/checkout";
   const isAdmin = pathname.startsWith("/admin");
+  useEffect(() => { if (!isAdmin) trackPageView(route); }, [route, isAdmin]);
   const [siteData, setSiteData] = useState(null);
   const [siteLoadError, setSiteLoadError] = useState(false);
   const [siteLoadAttempt, setSiteLoadAttempt] = useState(0);
@@ -1005,6 +1016,7 @@ function App() {
       if (exists) return items.map((item) => (item.cartKey || item.slug) === nextItem.cartKey ? { ...item, qty: item.qty + quantity } : item);
       return [...items, { ...nextItem, qty: quantity }];
     });
+    trackAddToCart(nextItem, quantity);
     setCartOpen(true);
   };
   const saveCustomerAuth = (customer, token) => {
