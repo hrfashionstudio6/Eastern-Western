@@ -78,7 +78,7 @@ test("migration and customer/admin APIs on real MySQL/MariaDB", { skip: !process
       assert.equal((await request("/api/customer/me", "GET", undefined, token)).data.customer.id, customer.id);
     });
     await t.test("orders and admin CRUD use MySQL and keep ownership boundaries", async () => {
-      const created = await request("/api/orders", "POST", { items: [{ slug: "test-suit", name: "Suit", price: "Rs 2,000", qty: 2 }], customer: { name: "Buyer", email: "new@example.test", phone: "000", address: "Test address" } }, token);
+      const created = await request("/api/orders", "POST", { items: [{ slug: "test-suit", name: "Suit", price: "Rs 2,000", qty: 2 }], customer: { name: "Buyer", email: "new@example.test", phone: "03001234567", address: "Test address" } }, token);
       assert.equal(created.status, 201);
       assert.equal(created.data.order.subtotal, 4000);
       const mine = (await request("/api/customer/orders", "GET", undefined, token)).data.orders;

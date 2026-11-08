@@ -1,3 +1,4 @@
+import { checkoutCustomer } from "../shared/checkout-customer.js";
 import { removedStorePath } from "../shared/storefront.js";
 import { videoHandlers } from "./video-storage.js";
 import { publicProduct } from "../shared/public-product.js";
@@ -431,13 +432,9 @@ app.post("/api/orders", async (req, res) => {
   const items = Array.isArray(req.body.items) ? req.body.items : [];
   if (!items.length) return res.status(400).json({ error: "Cart is empty" });
   const account = await customerFromRequest(req);
-  const customer = {
-    name: String(req.body.customer?.name || account?.name || "").trim(),
-    email: String(req.body.customer?.email || account?.email || "").trim().toLowerCase(),
-    phone: String(req.body.customer?.phone || account?.phone || "").trim(),
-    address: String(req.body.customer?.address || "").trim(),
-  };
-  if (!customer.name || !customer.email || !customer.phone || !customer.address) return res.status(400).json({ error: "Customer details required" });
+  let customer;
+  try { customer = checkoutCustomer(req.body.customer, account); }
+  catch (error) { return res.status(400).json({ error: error.message }); }
   const paymentMethod = String(req.body.paymentMethod || "Cash on Delivery").trim();
   if (paymentMethod !== "Cash on Delivery") return res.status(400).json({ error: "Only Cash on Delivery is available right now" });
   const paymentProofUrl = String(req.body.paymentProofUrl || "").trim();
