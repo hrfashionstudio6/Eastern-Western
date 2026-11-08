@@ -614,7 +614,7 @@ function CollectionsSection({ products = [] }) {
       {articles.map((item, i) => (
         <div className={`collection reveal ${i % 2 ? "flip" : ""}`} key={item.id || item[2]}>
           <div className="collection-copy">
-            {(item.isNew || item.bestSeller) && <div className="tag">{item.bestSeller ? "Best seller" : "New"}</div>}
+            {(item.isNew || item.bestSeller) && <div className={"tag" + (item.bestSeller ? " collection-bestseller" : "")}>{item.bestSeller ? "Best seller" : "New"}</div>}
             <h4>{item.category}</h4><h3>{item[1]}</h3><p>{item[7]}</p>
             <strong>{formatPKR(item[3])}</strong>
             {priceAmount(item[4]) > priceAmount(item[3]) && <del>{formatPKR(item[4])}</del>}
