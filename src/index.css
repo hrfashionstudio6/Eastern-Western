@@ -5452,3 +5452,17 @@ main:has(> #offer-bar.launch-offer) #home-hero { margin-top: var(--launch-offer-
   .shop-picks .pick-marquees, .shop-picks .pick-slider-controls, .shop-picks .pick-tabs button:disabled { display: none; }
   .shop-picks .pick-tabs button { min-height: 44px; }
 }
+
+/* Prominent Best seller label in homepage article features. */
+.collection-copy > .collection-bestseller {
+  align-self: flex-start;
+  height: auto;
+  min-height: 36px;
+  padding: 6px 14px;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+@media (max-width: 760px) {
+  .collection-copy > .collection-bestseller { font-size: 18px; }
+}
