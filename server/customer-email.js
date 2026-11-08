@@ -1,4 +1,4 @@
-import { formatPKR } from "../shared/money.js";
+import { formatPKR, priceAmount } from "../shared/money.js";
 
 const siteUrl = "https://easternwestern.net";
 const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
@@ -23,13 +23,13 @@ function layout(heading, bodyHtml) {
 function itemsTable(order) {
   const rows = (order.items || []).map((item) => {
     const options = [item.size && "Size: " + item.size, item.color && "Colour: " + item.color].filter(Boolean).join(" · ");
-    return `<tr><td style="padding:8px 0;border-bottom:1px solid #f0f0f0">${escapeHtml(item.name)} × ${Number(item.qty) || 1}${options ? `<br><span style="color:#888;font-size:12px">${escapeHtml(options)}</span>` : ""}</td><td align="right" style="padding:8px 0;border-bottom:1px solid #f0f0f0;white-space:nowrap">${escapeHtml(formatPKR(item.price))}</td></tr>`;
+    return `<tr><td style="padding:8px 0;border-bottom:1px solid #f0f0f0">${escapeHtml(item.name)} × ${Number(item.qty) || 1}${options ? `<br><span style="color:#888;font-size:12px">${escapeHtml(options)}</span>` : ""}</td><td align="right" style="padding:8px 0;border-bottom:1px solid #f0f0f0;white-space:nowrap">${escapeHtml(formatPKR(Number(item.qty || 1) * priceAmount(item.price)))}</td></tr>`;
   }).join("");
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:14px 0;font-size:13px">${rows}<tr><td style="padding:10px 0;font-weight:bold">Total (Cash on Delivery)</td><td align="right" style="padding:10px 0;font-weight:bold">${escapeHtml(formatPKR(order.subtotal))}</td></tr></table>`;
 }
 
 function itemsText(order) {
-  return (order.items || []).map((item) => `- ${item.name} x ${Number(item.qty) || 1}${item.size ? ", size " + item.size : ""}${item.color ? ", " + item.color : ""}: ${formatPKR(item.price)}`).concat("Total (Cash on Delivery): " + formatPKR(order.subtotal)).join("\n");
+  return (order.items || []).map((item) => `- ${item.name} x ${Number(item.qty) || 1}${item.size ? ", size " + item.size : ""}${item.color ? ", " + item.color : ""}: ${formatPKR(Number(item.qty || 1) * priceAmount(item.price))}`).concat("Total (Cash on Delivery): " + formatPKR(order.subtotal)).join("\n");
 }
 
 function message(fromAddress, to, subject, heading, text, html) {
@@ -54,6 +54,19 @@ export function orderPlacedEmail(order, fromAddress) {
   return message(fromAddress, order.customer?.email, `Order ${order.orderNo} received`, "Thank you for your order", text, html);
 }
 
+export function ownerOrderEmail(order, fromAddress, ownerAddress) {
+  const customer = order.customer || {};
+  const contact = [
+    "Name: " + (customer.name || "Not provided"),
+    "Mobile: " + (customer.phone || "Not provided"),
+    "Email: " + (customer.email || "Not provided"),
+    "Delivery address: " + (customer.address || "Not provided"),
+  ];
+  const text = `New website order ${order.orderNo}\n\n${contact.join("\n")}\n\n${itemsText(order)}\n\nPayment: ${order.paymentMethod || "Cash on Delivery"}\nStatus: ${order.status || "pending"}\n\nReview the order in your admin dashboard: ${siteUrl}/admin`;
+  const html = `<p>A new order <b>${escapeHtml(order.orderNo)}</b> has been placed on your website.</p><p>${contact.map(escapeHtml).join("<br>")}</p>${itemsTable(order)}<p>Payment: ${escapeHtml(order.paymentMethod || "Cash on Delivery")}<br>Status: ${escapeHtml(order.status || "pending")}</p><p><a href="${siteUrl}/admin">Review order in your admin dashboard</a></p>`;
+  return message(fromAddress, ownerAddress, `[New order] ${order.orderNo}`, "New website order", text, html);
+}
+
 export function orderStatusEmail(order, status, fromAddress) {
   const copy = statusEmails[status];
   if (!copy) return null;
@@ -64,7 +77,7 @@ export function orderStatusEmail(order, status, fromAddress) {
 }
 
 // Emails never block or fail the request that triggered them.
-export function createCustomerMailer({ sendMail, fromAddress, onError = () => {} }) {
+export function createCustomerMailer({ sendMail, fromAddress, ownerAddress = fromAddress, onError = () => {} }) {
   const send = async (mail) => {
     if (!sendMail || !mail?.to) return false;
     try { await sendMail(mail); return true; }
@@ -72,7 +85,13 @@ export function createCustomerMailer({ sendMail, fromAddress, onError = () => {}
   };
   return {
     welcome: (customer) => send(welcomeEmail(customer, fromAddress)),
-    orderPlaced: (order) => send(orderPlacedEmail(order, fromAddress)),
+    orderPlaced: async (order) => {
+      // Separate messages keep the owner's delivery independent and recipients private.
+      const notifications = [send(ownerOrderEmail(order, fromAddress, ownerAddress))];
+      if (order.customer?.email) notifications.push(send(orderPlacedEmail(order, fromAddress)));
+      const results = await Promise.all(notifications);
+      return results.every(Boolean);
+    },
     orderStatus: (order, status) => send(orderStatusEmail(order, status, fromAddress)),
   };
 }

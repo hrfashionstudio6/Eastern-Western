@@ -45,6 +45,7 @@ app.post("/api/contact", express.json({ limit: "24kb" }), createContactHandler({
 const customerMailer = createCustomerMailer({
   sendMail: contactTransport ? message => contactTransport.sendMail(message) : null,
   fromAddress,
+  ownerAddress: toAddress,
   onError: error => console.error("Customer email delivery failed:", error.code || error.name),
 });
 
