@@ -909,3 +909,11 @@
 .hero-upload-hint { grid-column: 1 / -1; margin: 4px 0 12px; color: #777; font-size: 12px; line-height: 1.6; }
 .listing-form .listing-size-chart p { margin: 6px 0; font-size: 12px; }
 .listing-form .listing-size-chart input[type="file"] { min-width: 0; font-size: 12px; }
+
+.order-controls .order-remove {
+  color: #a11b1b;
+  background: #fff5f5;
+  border: 1px solid #dfb1b1;
+  padding: 10px 12px;
+  cursor: pointer;
+}

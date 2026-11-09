@@ -473,6 +473,12 @@ export default function AdminDashboard() {
     }
   }
 
+  function removeOrder(order) {
+    const label = order.orderNo || order.id;
+    if (!window.confirm(`Permanently remove order ${label}? This cannot be undone. The order will also be removed from customer order history and dashboard totals.`)) return;
+    return remove("orders", order.id);
+  }
+
   function updateOrder(order, updates) {
     return withLoading("Updating order…", () => updateOrderAction(order, updates));
   }
@@ -907,6 +913,7 @@ export default function AdminDashboard() {
                     <input type="number" min="0" defaultValue={order.deliveryDays || ""} onBlur={(event) => updateOrder(order, { deliveryDays: event.target.value })} placeholder="Delivery days" />
                     <textarea defaultValue={order.trackingNote || ""} onBlur={(event) => updateOrder(order, { trackingNote: event.target.value })} placeholder="Tracking note" />
                     {order.estimatedDeliveryDate && <small>Expected: {new Date(order.estimatedDeliveryDate).toLocaleDateString()}</small>}
+                    <button type="button" className="order-remove" onClick={() => removeOrder(order)}>Remove order</button>
                   </div>
                 </article>
               )) : <p className="admin-empty">No orders yet.</p>}
