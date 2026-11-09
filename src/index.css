@@ -5516,3 +5516,35 @@ main:has(> #offer-bar.launch-offer) #home-hero { margin-top: var(--launch-offer-
 @media (prefers-reduced-motion: reduce) {
   #home-hero .hero-season-copy p { animation: none; }
 }
+
+/* Collection articles should fit phone screens without desktop-sized spacing. */
+@media (max-width: 760px) {
+  #collections .section-head { margin-bottom: 28px; }
+  #collections .collection {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+    min-height: 0;
+  }
+  #collections .collection > .collection-img {
+    min-height: 0;
+    order: -1;
+  }
+  #collections .collection-img img {
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    aspect-ratio: auto;
+    object-fit: contain;
+  }
+  #collections .collection-copy {
+    min-width: 0;
+    padding: 24px 20px;
+    overflow-wrap: anywhere;
+  }
+  #collections .collection-copy h4 { margin: 14px 0 8px; font-size: 15px; }
+  #collections .collection-copy h3 { margin: 8px 0 14px; font-size: 28px; }
+  #collections .collection-copy > p { margin-bottom: 18px; }
+  #collections .collection-copy strong { margin: 0 0 10px; font-size: 24px; }
+  #collections .collection-copy del { margin-bottom: 14px; }
+  #collections .collection-copy .btn { width: 100%; min-height: 44px; }
+}
