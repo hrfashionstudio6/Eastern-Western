@@ -122,14 +122,12 @@ const templateContent = {
     { tag: "2026", name: "Children's wear", title: "Modern easy styles for children", text: "Provide your children with the best soft touch gear made for play and long lasting wear throughout every single busy day.", price: "$25.00", oldPrice: "$90.00", image: "/assets/37.png" },
   ],
   socialImages: ["/assets/72.png", "/assets/68.png", "/assets/69.jpg", "/assets/70.png", "/assets/71.png", "/assets/72.png", "/assets/73.png", "/assets/74.png", "/assets/72.png"],
+  heroBannerVersion: "2026-11-four-banners",
   heroSlides: [
-    { label: "Urban", image: "/assets/93.jpg" },
-    { label: "Latest", image: "/assets/03.jpg" },
-    { label: "Premium", image: "/assets/04.jpg" },
-    { label: "Arctic", image: "/assets/02.jpg" },
-    { label: "Casual", image: "/assets/94.png" },
-    { label: "Iconic", image: "/assets/95.png" },
-    { label: "Unique", image: "/assets/96.jpg" },
+    { label: "Falak Noor", image: "/assets/hero-banner-1.jpg" },
+    { label: "Ready to Wear", image: "/assets/hero-banner-2.jpg" },
+    { label: "Emerald Collection", image: "/assets/hero-banner-3.jpg" },
+    { label: "Eastern Western", image: "/assets/hero-banner-4.jpg" },
   ],
 };
 

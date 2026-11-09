@@ -261,6 +261,12 @@ async function ensureContent(db) {
     existing = { ...localizeBrandContent(existing), updatedAt: new Date() };
     await db.update("siteContent", { key: "main" }, existing);
   }
+  if (existing && existing.heroBannerVersion !== defaultContent.heroBannerVersion) {
+    existing = { ...existing, heroSlides: defaultContent.heroSlides, heroBannerVersion: defaultContent.heroBannerVersion, updatedAt: new Date() };
+    await db.update("siteContent", { key: "main" }, {
+      heroSlides: existing.heroSlides, heroBannerVersion: existing.heroBannerVersion, updatedAt: existing.updatedAt,
+    });
+  }
   if (!existing) {
     await db.update("siteContent", { key: "main" }, { ...defaultContent, key: "main", updatedAt: new Date() }, { upsert: true });
   } else {

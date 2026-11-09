@@ -736,7 +736,7 @@ function HomePage({ data }) {
   const slides = compactHeroSlides(sourceSlides).filter(slide => slide.image || slide.mobileImage);
   const homeArrivals = data.products.filter((item) => item.isNew).slice(0, 9);
   const homeSellers = data.products.filter((item) => item.bestSeller).slice(0, 6);
-  const [activeSlide, setActiveSlide] = useState(Math.min(3, Math.max(slides.length - 1, 0)));
+  const [activeSlide, setActiveSlide] = useState(0);
 
   useEffect(() => {
     if (!slides.length) return undefined;
