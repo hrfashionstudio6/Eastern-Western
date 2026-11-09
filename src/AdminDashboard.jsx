@@ -8,6 +8,7 @@ import { prepareProductImport } from "../shared/product-import.js";
 import { formatPKR } from "../shared/money.js";
 import { productLabels, productSubcategories, productSubcategory } from "../shared/product-labels.js";
 import { parseSizeChart } from "../shared/size-chart.js";
+import { deliveredOrders, orderRevenue } from "../shared/order-revenue.js";
 
 const tabs = ["Overview", "Listings", "Orders", "Site Editor", "Settings"];
 const tabIcons = {
@@ -698,8 +699,10 @@ export default function AdminDashboard() {
     );
   }
 
-  const revenue = data.orders.reduce((sum, order) => sum + Number(order.subtotal || 0), 0);
-  const weeklyRevenue = weeklyRevenueRows(data.orders);
+  const revenueOrders = deliveredOrders(data.orders);
+  const revenue = orderRevenue(revenueOrders);
+  const weeklyRevenue = weeklyRevenueRows(revenueOrders);
+  const weeklyRevenueTotal = weeklyRevenue.reduce((sum, row) => sum + row.value, 0);
   const maxWeeklyRevenue = Math.max(...weeklyRevenue.map((row) => row.value), 1);
   const orderStatusRows = chartRows(countBy(data.orders, (order) => order.status || "pending"));
   const categoryRows = chartRows(countBy(data.products, (product) => product.category || "Uncategorized"));
@@ -730,11 +733,11 @@ export default function AdminDashboard() {
               <article><span>Listings</span><b>{data.products.length}</b></article>
               <article><span>Blogs</span><b>{data.blogs.length}</b></article>
               <article><span>Orders</span><b>{data.orders.length}</b></article>
-              <article><span>Revenue</span><b>{formatPKR(revenue)}</b></article>
+              <article><span>Delivered revenue</span><b>{formatPKR(revenue)}</b></article>
             </div>
             <div className="overview-charts">
               <article className="chart-card chart-wide">
-                <div className="chart-head"><div><span>Sales graph</span><h3>Revenue this week</h3></div><b>{formatPKR(revenue)}</b></div>
+                <div className="chart-head"><div><span>Sales graph</span><h3>Delivered revenue this week</h3></div><b>{formatPKR(weeklyRevenueTotal)}</b></div>
                 <div className="bar-chart">
                   {weeklyRevenue.map((row) => <div className="bar-column" key={row.label}><i style={{ height: `${Math.max(8, (row.value / maxWeeklyRevenue) * 100)}%` }} /><span>{row.label}</span></div>)}
                 </div>
