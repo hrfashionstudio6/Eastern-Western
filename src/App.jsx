@@ -757,8 +757,8 @@ function HomePage({ data }) {
         <HeroImage key={activeHero.image + "|" + (activeHero.mobileImage || "")} image={activeHero.image} mobileImage={activeHero.mobileImage} alt="Eastern Western clothing collection" />
         <div className="hero-overlay" />
         <div className="hero-season-copy">
-          <h1>Winter '26</h1>
           <p>Live Now</p>
+          <h1>Winter '26</h1>
         </div>
         <div className="thumbs">{slides.map((slide, i) => <button className={i === slideIndex ? "active" : ""} onClick={() => setActiveSlide(i)} key={i} aria-label={`Show ${slide.label} collection`}><HeroImage image={slide.image} mobileImage={slide.mobileImage} /><span>{slide.label}</span></button>)}</div>
       </section>
