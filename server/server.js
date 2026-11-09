@@ -707,6 +707,23 @@ app.delete("/api/admin/blogs/:id", requireAdmin, async (req, res) => {
   }
 });
 
+app.delete("/api/admin/orders/:id", requireAdmin, async (req, res) => {
+  const id = objectId(req.params.id);
+  if (!id) return res.status(400).json({ error: "Invalid order id" });
+  if (databaseConfigured()) {
+    const db = await getDb();
+    const order = await db.get("orders", { _id: id });
+    if (!order) return res.status(404).json({ error: "Order not found" });
+    await db.remove("orders", { _id: id });
+  } else {
+    const store = await readLocalStore();
+    if (!store.orders.some((order) => order.id === id)) return res.status(404).json({ error: "Order not found" });
+    store.orders = store.orders.filter((order) => order.id !== id);
+    await writeLocalStore(store);
+  }
+  res.json({ ok: true });
+});
+
 app.patch("/api/admin/orders/:id", requireAdmin, async (req, res) => {
   const id = objectId(req.params.id);
   const next = { updatedAt: new Date() };
