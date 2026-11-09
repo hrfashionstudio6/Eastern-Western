@@ -1,3 +1,4 @@
+import { pageSeo, seoHead } from "../shared/seo.js";
 import { checkoutCustomer } from "../shared/checkout-customer.js";
 import { trackPageView, trackViewContent, trackAddToCart, trackCheckout, trackPurchase } from "./meta-pixel.js";
 import Header from "./StoreHeader.jsx";
@@ -407,7 +408,7 @@ function CheckoutPage({ items, customerAccount, customerToken, onQty, onRemove, 
               </article>
             ))}
           </div>
-          <dl className="co-costs"><div><dt>Subtotal</dt><dd>{cartMoney(subtotal, items)}</dd></div><div><dt>Payment</dt><dd>Cash on Delivery</dd></div><div className="co-total"><dt>Total <small>PKR</small></dt><dd>{cartMoney(subtotal, items)}</dd></div></dl>
+          <dl className="co-costs"><div><dt>Subtotal</dt><dd>{cartMoney(subtotal, items)}</dd></div><div><dt>Shipping (Pakistan)</dt><dd>Free</dd></div><div><dt>Payment</dt><dd>Cash on Delivery</dd></div><div className="co-total"><dt>Total <small>PKR</small></dt><dd>{cartMoney(subtotal, items)}</dd></div></dl>
           <div className="co-summary-foot"><span aria-hidden="true">✓</span><p>Review your articles and delivery details before placing your order.</p></div>
         </aside>
       </div>
@@ -650,7 +651,7 @@ function Footer({ settings = fallbackSiteData.content.settings }) {
       <div><a className="brand-logo footer-logo" href="/" aria-label="Eastern Western home"><img src={footerSettings.logoUrl || "/assets/easternwestern-logo.png"} alt="Eastern Western" /></a><p>{footerSettings.footerText}</p></div>
       <div><h4>Explore</h4><a href="/">Home</a><a href="/shop">Shop Women</a><a href="/bags">Bags — Coming soon</a><a href="/fragrance">Fragrance — Coming soon</a></div>
       <div className="footer-care"><h4>Customer Care</h4>{customerCareLinks.map(link => <a key={link.href} href={link.href}>{link.label}</a>)}</div>
-      <div><h4>Get in touch</h4><a href={chat} target="_blank" rel="noopener noreferrer">WhatsApp</a><a href={`mailto:${footerSettings.contactEmail}`}>{footerSettings.contactEmail}</a><a href={`tel:${footerSettings.contactPhone}`}>{footerSettings.contactPhone}</a><p>{footerSettings.contactAddress}</p></div>
+      <div><h4>Get in touch</h4><a href="https://www.instagram.com/easternwesternfashion/" target="_blank" rel="noopener noreferrer">Instagram</a><a href={chat} target="_blank" rel="noopener noreferrer">WhatsApp</a><a href={`mailto:${footerSettings.contactEmail}`}>{footerSettings.contactEmail}</a><a href={`tel:${footerSettings.contactPhone}`}>{footerSettings.contactPhone}</a><p>{footerSettings.contactAddress}</p></div>
     </div>
     <div className="footer-word">{footerSettings.brandName || "Eastern Western"}</div>
   </footer>;
@@ -1087,8 +1088,14 @@ function App() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
   useEffect(() => {
-    const pageTitle = customerCarePages[pathname.replace(/\/+$/, "")]?.title || (pathname.startsWith("/shop/") ? "Article" : ({ "/shop": "Shop Women", "/bags": "Bags — Coming soon", "/fragrance": "Fragrance — Coming soon", "/checkout": "Checkout" })[pathname]);
-    document.title = pageTitle ? `${pageTitle} | Eastern Western` : "Eastern Western | Pakistani Clothing";
+    if (siteData || isAdmin) {
+      const seo = pageSeo(pathname, siteData?.products || []);
+      document.title = seo.title;
+      document.head.querySelectorAll('meta[name="description"],meta[name="robots"],meta[property^="og:"],meta[name="twitter:card"],link[rel="canonical"],#page-schema').forEach(el => el.remove());
+      const template = document.createElement("template");
+      template.innerHTML = seoHead(seo).replace(/<title>[\s\S]*?<\/title>/, "");
+      document.head.append(...template.content.childNodes);
+    }
     const io = new IntersectionObserver((entries) => {
       entries.forEach((entry) => entry.isIntersecting && entry.target.classList.add("visible"));
     }, { rootMargin: "420px 0px", threshold: 0.01 });
