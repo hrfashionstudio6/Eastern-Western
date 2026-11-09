@@ -1,3 +1,4 @@
+import { pageSeo, renderSeo, sitemapXml, SITE_URL } from "../shared/seo.js";
 import { checkoutCustomer } from "../shared/checkout-customer.js";
 import { removedStorePath } from "../shared/storefront.js";
 import { videoHandlers } from "./video-storage.js";
@@ -23,6 +24,11 @@ import { cleanSizeChart } from "../shared/size-chart.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
+// Only redirect known storefront aliases; preserve local development and API clients.
+app.use((req, res, next) => {
+  if (["www.easternwestern.net", "easternwestern.pk", "www.easternwestern.pk"].includes(req.hostname.toLowerCase()) && !req.path.startsWith("/api/") && ["GET", "HEAD"].includes(req.method)) return res.redirect(301, SITE_URL + req.originalUrl);
+  next();
+});
 const port = Number(process.env.PORT || 5050);
 const host = process.env.HOST || "0.0.0.0";
 const adminPassword = process.env.ADMIN_PASSWORD;
@@ -781,8 +787,21 @@ app.get("/api/media/:name", async (req, res) => {
 });
 app.use("/uploads", express.static(uploadDir));
 app.get(removedStorePath, (_req, res) => res.redirect(301, "/shop"));
-app.use(express.static(distPath));
-app.get(/.*/, (_req, res) => res.sendFile(path.join(distPath, "index.html")));
+app.get("/robots.txt", (_req, res) => res.type("text/plain").send("User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /checkout\nSitemap: " + SITE_URL + "/sitemap.xml\n"));
+app.get("/sitemap.xml", async (_req, res) => {
+  try { res.type("application/xml").send(sitemapXml(await publishedProducts())); }
+  catch { res.status(503).type("text/plain").send("Sitemap temporarily unavailable"); }
+});
+app.use(express.static(distPath, { index: false }));
+app.get(/.*/, async (req, res) => {
+  try {
+    if (req.path.startsWith("/api/") || /\.[a-z0-9]+$/i.test(req.path)) return res.status(404).end();
+    const products = req.path.startsWith("/shop/") ? await publishedProducts() : [];
+    const seo = pageSeo(req.path, products);
+    const html = await fs.readFile(path.join(distPath, "index.html"), "utf8");
+    res.status(seo.known || req.path.startsWith("/admin") ? 200 : 404).type("html").send(renderSeo(html, seo));
+  } catch { res.status(503).set("X-Robots-Tag", "noindex").send("Page temporarily unavailable"); }
+});
 
 export { app };
 

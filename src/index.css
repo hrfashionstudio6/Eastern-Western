@@ -5548,3 +5548,12 @@ main:has(> #offer-bar.launch-offer) #home-hero { margin-top: var(--launch-offer-
   #collections .collection-copy del { margin-bottom: 14px; }
   #collections .collection-copy .btn { width: 100%; min-height: 44px; }
 }
+
+/* On phones keep navigation readable and clear of the campaign artwork. */
+@media (max-width: 760px) {
+  .launch-header { background: #fff; color: #1a1a17; border-bottom: 1px solid #eceae3; }
+  .launch-header .lh-logo img { filter: brightness(0); }
+  .launch-header .lh-cart b { background: #222; color: #fff; }
+  #home-hero { margin-top: 59px; }
+  main:has(> #offer-bar.launch-offer) #home-hero { margin-top: calc(var(--launch-offer-h) + 59px); }
+}
