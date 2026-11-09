@@ -5138,15 +5138,15 @@ main:has(> #offer-bar) #home-hero { margin-top: 29px; }
 .launch-offer-group { display: grid; grid-template-columns: repeat(4, var(--launch-offer-slot)); flex: none; align-items: center; height: 100%; }
 .launch-offer span { display: block; min-width: 0; padding: 0 14px; text-align: center; white-space: nowrap; font-size: clamp(11px, .8vw, 15px); font-weight: 500; letter-spacing: .01em; line-height: 1.4; }
 @keyframes launch-offer-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-.launch-header { position: fixed; z-index: 110; inset: var(--launch-offer-h) 0 auto; padding: 12px 28px 8px; color: #fff; background: linear-gradient(180deg, rgb(0 0 0 / 30%), transparent); font-family: "Inter", Arial, sans-serif; transition: background .2s ease, color .2s ease; }
+.launch-header { position: fixed; z-index: 110; inset: var(--launch-offer-h) 0 auto; padding: 12px 28px 8px; color: #fff; background: #000; font-family: "Inter", Arial, sans-serif; transition: background .2s ease, color .2s ease; }
 .launch-header.no-offer { top: 0; }
-.launch-header.is-solid, .launch-header:hover, .launch-header:focus-within { background: #fff; color: #1a1a17; border-bottom: 1px solid #eceae3; }
+.launch-header.is-solid, .launch-header:hover, .launch-header:focus-within { background: #000; color: #fff; border-bottom: 1px solid #222; }
 .lh-top { display: flex; align-items: flex-start; gap: 15px; }
 .lh-brand-group { min-width: 0; }
 .lh-brand { display: flex; align-items: center; gap: 10px; width: max-content; max-width: 100%; color: inherit; text-decoration: none; }
 .lh-brand img { display: block; flex-shrink: 0; width: 36px; height: 36px; object-fit: contain; filter: brightness(0) invert(1); }
 .lh-brand > span { font-family: Georgia, "Times New Roman", serif; font-size: clamp(20px, 1.45vw, 26px); font-weight: 400; line-height: 1.15; letter-spacing: .09em; text-transform: uppercase; white-space: nowrap; }
-.launch-header:is(.is-solid,:hover,:focus-within) .lh-brand img { filter: brightness(0); }
+.launch-header:is(.is-solid,:hover,:focus-within) .lh-brand img { filter: brightness(0) invert(1); }
 .lh-categories { display: flex; align-items: center; gap: 22px; min-height: 26px; margin: 2px 0 0 46px; }
 .lh-categories a { padding: 6px 0; color: inherit; font-size: 11px; font-weight: 500; letter-spacing: .055em; line-height: 1.4; text-decoration: none; text-transform: uppercase; white-space: nowrap; border-bottom: 1px solid transparent; }
 .lh-categories a:hover, .lh-categories a[aria-current] { border-bottom-color: currentColor; }
@@ -5158,7 +5158,7 @@ main:has(> #offer-bar) #home-hero { margin-top: 29px; }
 .lh-cart { position: relative; }
 .lh-cart b { position: absolute; top: 0; right: 0; display: grid; place-items: center; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 999px; background: currentColor; font-size: 0; }
 .lh-cart b { background: #fff; color: #222; font-size: 10px; font-weight: 500; }
-.launch-header:is(.is-solid,:hover,:focus-within) .lh-cart b { background: #222; color: #fff; }
+.launch-header:is(.is-solid,:hover,:focus-within) .lh-cart b { background: #fff; color: #222; }
 .launch-header :is(a,button):focus-visible, .whatsapp-float:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
 .lh-backdrop { position: fixed; z-index: 108; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; border-radius: 0; background: rgb(0 0 0 / 25%); }
 .lh-menu-panel { position: absolute; top: 100%; left: 24px; display: grid; width: min(330px, calc(100vw - 48px)); padding: 18px 24px; background: #fff; color: #222; border: 1px solid #e8e5dd; box-shadow: 0 14px 30px rgb(0 0 0 / 8%); }
@@ -5233,7 +5233,7 @@ main:has(> #offer-bar.launch-offer) #home-hero { margin-top: var(--launch-offer-
 .lh-categories { margin-left: 0; }
 .lh-logo { position: absolute; top: 50%; left: 50%; display: grid; place-items: center; width: 66px; height: 66px; transform: translate(-50%, -50%); }
 .lh-logo img { display: block; width: 100%; height: 100%; object-fit: contain; filter: brightness(0) invert(1); }
-.launch-header:is(.is-solid,:hover,:focus-within) .lh-logo img { filter: brightness(0); }
+.launch-header:is(.is-solid,:hover,:focus-within) .lh-logo img { filter: brightness(0) invert(1); }
 @media (min-width: 761px) and (max-width: 1100px) {
   .lh-brand > span { font-size: 20px; letter-spacing: .035em; }
   .lh-top { gap: 8px; }
