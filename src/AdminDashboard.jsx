@@ -1,3 +1,5 @@
+import { listingPrices } from "../shared/unstitched-offer.js";
+import { priceAmount as listingPriceAmount } from "../shared/money.js";
 import { compactHeroSlides } from "../shared/hero-images.js";
 import { uploadVideoFile } from "./video-upload.js";
 import { useEffect, useState } from "react";
@@ -84,10 +86,16 @@ function lines(value) {
 }
 
 function productToForm(product) {
+  const priceFields = (stitching) => {
+    const { price, regularPrice } = listingPrices(product, stitching);
+    return { price: price ? listingPriceAmount(price) : "", regularPrice: regularPrice ? listingPriceAmount(regularPrice) : "" };
+  };
   return {
     ...blankProduct,
     ...product,
     ...productLabels(product),
+    unstitchPricing: priceFields("Unstitch"),
+    stitchPricing: priceFields("Stitch"),
     subcategory: productSubcategory(product),
     mediaText: (product.media || []).filter((image) => image !== product.image && image !== product.hoverImage).join("\n"),
     tagsText: (product.tags || []).join(", "),
@@ -371,7 +379,9 @@ export default function AdminDashboard() {
   async function saveProductAction(event) {
     event.preventDefault();
     try {
-      const { mediaText, tagsText, ...cleanForm } = productForm;
+      const { mediaText, tagsText, unstitchPricing, stitchPricing, ...cleanForm } = productForm;
+      const existing = data.products.find((item) => item.id === productForm.id);
+      const original = existing ? productToForm(existing) : null;
       const body = {
         ...cleanForm,
         slug: productForm.slug || slugify(productForm.name),
@@ -379,6 +389,13 @@ export default function AdminDashboard() {
         tags: lines(tagsText),
         variants: productForm.variants || [],
       };
+      for (const [key, pricing] of Object.entries({ unstitchPricing, stitchPricing })) {
+        if (!original || Number(pricing.price) !== Number(original[key].price) || Number(pricing.regularPrice) !== Number(original[key].regularPrice)) body[key] = pricing;
+      }
+      if (!original) {
+        body.price = stitchPricing.price;
+        body.oldPrice = stitchPricing.regularPrice;
+      }
       const url = productForm.id ? `/api/admin/products/${productForm.id}` : "/api/admin/products";
       await request(url, token, { method: productForm.id ? "PUT" : "POST", body: JSON.stringify(body) });
       setProductForm(blankProduct);
@@ -791,8 +808,21 @@ export default function AdminDashboard() {
                 <ListingField label="Product code (optional)"><input value={productForm.sku || ""} onChange={(e) => setProductForm({ ...productForm, sku: e.target.value })} placeholder="e.g. EW-001" /></ListingField>
                 <ListingField label="Category / Kis qisam ka product?"><select value={productForm.category} onChange={(e) => setProductForm({ ...productForm, category: e.target.value })}>{productCategories.map((x) => <option key={x} value={x}>{({ "UNSTITCHED NEW IN": "Unstitched", "READY TO WEAR": "Ready to Wear", "FABRIC NEW IN": "Fabric" })[x] || x}</option>)}</select></ListingField>
                 <ListingField label="Type / Print ya Embroidered?"><select value={productSubcategory(productForm)} onChange={(e) => setProductForm({ ...productForm, subcategory: e.target.value })}>{productSubcategories.map((x) => <option key={x}>{x}</option>)}</select></ListingField>
-                <ListingField label="Selling price / Qeemat"><input required value={productForm.price} onChange={(e) => setProductForm({ ...productForm, price: e.target.value })} placeholder="e.g. PKR 5,500" /></ListingField>
-                <ListingField label="Old price (only for discount)"><input value={productForm.oldPrice || ""} onChange={(e) => setProductForm({ ...productForm, oldPrice: e.target.value })} placeholder="e.g. PKR 6,500 — otherwise leave blank" /></ListingField>
+                {[["unstitchPricing", "Unstitch"], ["stitchPricing", "Stitch"]].flatMap(([key, label]) =>
+                  [["regularPrice", "regular price"], ["price", "offer price"]].map(([field, title]) => (
+                    <ListingField key={key + field} label={label + " " + title + " (PKR)"}>
+                      <input type="number" min={field === "price" ? "0.01" : "0"} step="0.01" required={field === "price"}
+                        value={productForm[key]?.[field] ?? ""}
+                        onChange={(event) => {
+                          const value = event.target.value;
+                          setProductForm((current) => ({
+                            ...current,
+                            [key]: { price: "", regularPrice: "", ...current[key], [field]: value },
+                          }));
+                        }} />
+                    </ListingField>
+                  ))
+                )}
                 <ListingField label="Available pieces / Kitne pieces hain?"><input type="number" min="0" value={productForm.stock} onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })} /></ListingField>
                 <ListingField label="Product details / Kya shamil hai?" wide><textarea rows="3" value={productForm.description} onChange={(e) => setProductForm({ ...productForm, description: e.target.value })} placeholder="e.g. Khaddar 3-piece suit: shirt, trouser aur dupatta. Embroidered front." /></ListingField>
               </fieldset>

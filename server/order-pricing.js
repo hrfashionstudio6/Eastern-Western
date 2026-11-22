@@ -14,7 +14,7 @@ export function priceOrderItems(items, findProduct) {
     const color = String(item.color || "");
     const variants = Array.isArray(product.variants) ? product.variants : [];
     const variant = variants.find((entry) => sku && entry.sku === sku) || variants.find((entry) => color && entry.color === color);
-    const offer = item.stitching === "Stitch" ? null : unstitchedOffer(product);
+    const offer = item.stitching === "Stitch" ? product.stitchPricing : product.unstitchPricing ?? unstitchedOffer(product);
     return {
       slug: product.slug,
       ...(stitchingOptions.includes(item.stitching) ? { stitching: item.stitching } : {}),

@@ -16,6 +16,13 @@ function DetailText({ text }) {
   })}</div>;
 }
 
+export function articlePrice(product, stitching, variant) {
+  const stitched = stitching === "Stitch";
+  const price = stitched ? product.stitchPrice : product[3];
+  const fixed = stitched ? product.fixedStitchPrice : product.fixedUnstitchPrice;
+  return fixed ? price : variant?.price || price;
+}
+
 export default function ArticleDetails({ product, onAddToCart, contactUrl = whatsappLink() }) {
   const variants = Array.isArray(product.variants) ? product.variants : [];
   const first = variants[0];
@@ -38,7 +45,7 @@ export default function ArticleDetails({ product, onAddToCart, contactUrl = what
   const index = matchingVariant(variants, selection.color, selection.size, product);
   const variant = variants[index];
   const stitched = stitching === "Stitch";
-  const price = stitched ? variant?.price || product.stitchPrice : product.unstitchedOffer ? product[3] : variant?.price || product[3];
+  const price = articlePrice(product, stitching, variant);
   const oldPrice = priceAmount(stitched ? product.stitchRegularPrice : product[4]);
   const discount = oldPrice > priceAmount(price) ? Math.round((1 - priceAmount(price) / oldPrice) * 100) : 0;
   const fabric = variant?.material || product.fabric || "";

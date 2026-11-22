@@ -25,3 +25,16 @@ test("rejects unknown articles and clamps quantities", () => {
   assert.equal(priceOrderItems([{ slug: "angan", qty: -4 }], find)[0].qty, 1);
   assert.equal(priceOrderItems([{ slug: "angan", qty: 900 }], find)[0].qty, 50);
 });
+
+test("checkout uses each saved stitching price ahead of variant and launch prices", () => {
+  const product = {
+    ...products[0],
+    sku: "EWP-06 / 2 Piece",
+    unstitchPricing: { price: 3700, regularPrice: 4000 },
+    stitchPricing: { price: 7100, regularPrice: 8000 },
+  };
+  const items = ["Unstitch", "Stitch"].map((stitching) => ({
+    slug: product.slug, color: "Warm Ivory", stitching, price: 1,
+  }));
+  assert.deepEqual(priceOrderItems(items, () => product).map(({ price }) => price), [3700, 7100]);
+});

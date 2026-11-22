@@ -585,6 +585,10 @@ function productPayload(body) {
     price: body.price || "PKR 0",
     compareAtPrice,
     oldPrice: compareAtPrice,
+    ...Object.fromEntries(["unstitchPricing", "stitchPricing"].filter((key) => body[key]).map((key) => [key, {
+      price: Number(body[key].price),
+      regularPrice: body[key].regularPrice === "" ? "" : Number(body[key].regularPrice),
+    }])),
     image,
     hoverImage,
     media: [...new Set([image, hoverImage, ...media].filter(Boolean))],
@@ -611,7 +615,20 @@ app.post("/api/admin/products/import", requireAdmin, async (req, res) => {
   } catch (error) { res.status(error.message?.includes("sheet") || error.message?.includes("heading") || error.message?.includes("rows") ? 400 : 503).json({ error: error.message }); }
 });
 
-app.post("/api/admin/products", requireAdmin, async (req, res) => {
+function validateListingPrices(req, res, next) {
+  for (const key of ["unstitchPricing", "stitchPricing"]) {
+    const pricing = req.body[key];
+    if (pricing === undefined) continue;
+    const price = Number(pricing?.price);
+    const regular = pricing?.regularPrice === "" ? price : Number(pricing?.regularPrice);
+    if (!Number.isFinite(price) || price <= 0 || !Number.isFinite(regular) || regular < price) {
+      return res.status(400).json({ error: "Enter a positive offer price and a regular price at least as high, or leave the regular price blank." });
+    }
+  }
+  next();
+}
+
+app.post("/api/admin/products", requireAdmin, validateListingPrices, async (req, res) => {
   const product = { ...productPayload(req.body), createdAt: new Date() };
   try {
     const db = await getDb();
@@ -626,7 +643,7 @@ app.post("/api/admin/products", requireAdmin, async (req, res) => {
   }
 });
 
-app.put("/api/admin/products/:id", requireAdmin, async (req, res) => {
+app.put("/api/admin/products/:id", requireAdmin, validateListingPrices, async (req, res) => {
   const id = objectId(req.params.id);
   const next = productPayload(req.body);
   try {

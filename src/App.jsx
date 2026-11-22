@@ -12,9 +12,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import useSiteRoute from "./useSiteRoute.js";
 import { withLoading } from "./loading-state.js";
 import AdminDashboard from "./AdminDashboard.jsx";
-import { unstitchedOffer } from "../shared/unstitched-offer.js";
+import { discountPercent, listingPrices, unstitchedOffer } from "../shared/unstitched-offer.js";
 import { stitchingOptions } from "../shared/stitching.js";
-import ArticleDetails, { ColourName } from "./ArticleDetails.jsx";
+import ArticleDetails, { articlePrice, ColourName } from "./ArticleDetails.jsx";
 import ContactForm from "./ContactForm.jsx";
 import { routeSlug } from "../shared/route-slug.js";
 import { loadProduct } from "../shared/load-product.js";
@@ -79,7 +79,8 @@ const allProducts = shopProducts;
 const fallbackSiteData = { content: defaultContent, products: [], blogs: [] };
 
 function productDocToItem(product) {
-  const offer = unstitchedOffer(product);
+  const unstitch = listingPrices(product, "Unstitch");
+  const stitch = listingPrices(product, "Stitch");
   const media = Array.isArray(product.media) ? product.media.filter(Boolean) : [];
   const image = product.image || media[0] || "";
   const hoverImage = product.hoverImage || media[1] || image;
@@ -87,8 +88,8 @@ function productDocToItem(product) {
     product.tag || "New",
     product.name || "Untitled product",
     product.slug || "product",
-    offer?.price ?? (product.price || "$0.00"),
-    offer?.regularPrice ?? (product.oldPrice || product.compareAtPrice || ""),
+    unstitch.price ?? "$0.00",
+    unstitch.regularPrice,
     image,
     hoverImage,
     product.description || "",
@@ -100,9 +101,10 @@ function productDocToItem(product) {
   item.media = media.length ? media : [image, hoverImage].filter(Boolean);
   item.tags = product.tags || [];
   item.variants = product.variants || [];
-  item.stitchPrice = product.price;
-  item.stitchRegularPrice = product.oldPrice || product.compareAtPrice || "";
-  item.unstitchedOffer = Boolean(offer);
+  item.stitchPrice = stitch.price;
+  item.stitchRegularPrice = stitch.regularPrice;
+  item.fixedStitchPrice = Boolean(product.stitchPricing);
+  item.fixedUnstitchPrice = Boolean(product.unstitchPricing || unstitchedOffer(product));
   item.featured = product.featured;
   Object.assign(item, productLabels(product));
   item.subcategory = productSubcategory(product);
@@ -558,6 +560,7 @@ function ProductCard({ item, listing = false, stitching }) {
   const stitched = stitching === "Stitch";
   const price = stitched ? item.stitchPrice : offerPrice;
   const old = stitched ? item.stitchRegularPrice : offerRegularPrice;
+  const discount = discountPercent(price, old);
   const colors = [...new Map((item.variants || []).map((variant) => String(variant.color || "").trim()).filter(Boolean).map((color) => [color.toLowerCase(), color])).values()];
   return (
     <div className="reveal">
@@ -574,12 +577,12 @@ function ProductCard({ item, listing = false, stitching }) {
           <>
             <h3>{name}</h3>
             <small>{item.category || "EasternWestern New In"}</small>
-            <div className="price-row">{old && <s>Regular price {formatPKR(old)}</s>}<b>{formatPKR(price)}</b>{(stitched ? Math.round((1 - priceAmount(price) / priceAmount(old)) * 100) === 10 : item.unstitchedOffer) && <span>10% OFF</span>}</div>
+            <div className="price-row">{discount > 0 && <s>Regular price {formatPKR(old)}</s>}<b>{formatPKR(price)}</b>{discount > 0 && <span>{discount}% OFF</span>}</div>
           </>
         ) : (
           <>
             <h3>{name}</h3>
-            <div>{old && <s>{formatPKR(old)}</s>} <b>{formatPKR(price)}</b>{item.unstitchedOffer && <small>10% OFF</small>}</div>
+            <div>{discount > 0 && <s>{formatPKR(old)}</s>} <b>{formatPKR(price)}</b>{discount > 0 && <small>{discount}% OFF</small>}</div>
           </>
         )}
       </div>
@@ -1043,9 +1046,14 @@ function App() {
     setCustomerOpen(false);
     if (!window.location.hash) window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, [route]);
+  const pricedCartItems = cartItems.map((item) => {
+    const product = siteData?.products.find((entry) => entry[2] === item.slug);
+    const fixed = item.stitching === "Stitch" ? product?.fixedStitchPrice : product?.fixedUnstitchPrice;
+    return fixed ? { ...item, price: articlePrice(product, item.stitching) } : item;
+  });
   const cartCount = cartItems.reduce((sum, item) => sum + item.qty, 0);
   const addToCart = (product, quantity = 1, variant, option = 0, buyNow = false, stitching) => {
-    const nextItem = { ...cartProduct(product), price: stitching === "Stitch" ? variant?.price || product.stitchPrice : product.unstitchedOffer ? product[3] : variant?.price || product[3], ...(variant ? { image: variant.image || product[5], size: variant.size, color: variant.color, sku: variant.sku || product.sku } : {}), stitching, cartKey: [product[2], ...(variant ? [option] : []), ...(stitching ? [stitching] : [])].join("::") };
+    const nextItem = { ...cartProduct(product), price: articlePrice(product, stitching, variant), ...(variant ? { image: variant.image || product[5], size: variant.size, color: variant.color, sku: variant.sku || product.sku } : {}), stitching, cartKey: [product[2], ...(variant ? [option] : []), ...(stitching ? [stitching] : [])].join("::") };
     setCartItems((items) => {
       const exists = items.find((item) => (item.cartKey || item.slug) === nextItem.cartKey);
       if (exists) return items.map((item) => (item.cartKey || item.slug) === nextItem.cartKey ? { ...item, qty: item.qty + quantity } : item);
@@ -1133,8 +1141,8 @@ function App() {
       <Header hasOffer={siteData.content?.settings?.offerEnabled !== false} scrolled={scrolled} cartCount={cartCount} customer={customerAccount} onSearch={() => setSearchOpen(true)} onCart={() => setCartOpen(true)} onAccount={() => setCustomerOpen(true)} />
       <SearchOverlay open={searchOpen} onClose={closeSearch} products={siteData.products} />
       <CustomerPanel open={customerOpen} token={customerToken} customer={customerAccount} onClose={() => setCustomerOpen(false)} onAuth={saveCustomerAuth} onLogout={logoutCustomer} />
-      <CartDrawer open={cartOpen} items={cartItems} onClose={() => setCartOpen(false)} onQty={updateCartQty} onRemove={removeFromCart} />
-      <Router key={pathname} data={siteData} onAddToCart={addToCart} cartItems={cartItems} customerAccount={customerAccount} customerToken={customerToken} onQty={updateCartQty} onRemove={removeFromCart} onOrderSuccess={() => setCartItems([])} onNeedLogin={() => setCustomerOpen(true)} />
+      <CartDrawer open={cartOpen} items={pricedCartItems} onClose={() => setCartOpen(false)} onQty={updateCartQty} onRemove={removeFromCart} />
+      <Router key={pathname} data={siteData} onAddToCart={addToCart} cartItems={pricedCartItems} customerAccount={customerAccount} customerToken={customerToken} onQty={updateCartQty} onRemove={removeFromCart} onOrderSuccess={() => setCartItems([])} onNeedLogin={() => setCustomerOpen(true)} />
       <Footer settings={siteData.content?.settings || fallbackSiteData.content.settings} />
       <WhatsAppButton href={whatsappLink(siteData.content?.settings?.contactPhone)} route={route} />
     </main>
