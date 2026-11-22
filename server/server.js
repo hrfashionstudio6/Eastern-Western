@@ -586,6 +586,7 @@ function productPayload(body) {
     compareAtPrice,
     oldPrice: compareAtPrice,
     ...Object.fromEntries(["unstitchPricing", "stitchPricing"].filter((key) => body[key]).map((key) => [key, {
+      ...(key === "stitchPricing" ? { editedAfterLaunchOffer: true } : {}),
       price: Number(body[key].price),
       regularPrice: body[key].regularPrice === "" ? "" : Number(body[key].regularPrice),
     }])),

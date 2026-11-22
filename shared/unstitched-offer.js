@@ -24,9 +24,11 @@ const stitchedOfferArticles = new Set([
 
 export function fixedListingPrices(product, stitching) {
   if (stitching !== "Stitch") return product.unstitchPricing ?? unstitchedOffer(product);
-  if (product.stitchPricing) return product.stitchPricing;
-
   const name = String(product.name || "").trim().toLowerCase();
+  const saved = product.stitchPricing;
+  // The confirmed launch offer replaces Gul Angan’s previous admin price.
+  const previousGulAnganPrice = name === "gul angan" && saved?.price === 6999 && saved.regularPrice === 7698 && !saved.editedAfterLaunchOffer;
+  if (saved && !previousGulAnganPrice) return saved;
   const regularPrice = priceAmount(product.oldPrice || product.compareAtPrice);
   if (!regularPrice || !stitchedOfferArticles.has(name)) return null;
   return { price: Math.round(regularPrice * 75) / 100, regularPrice };
