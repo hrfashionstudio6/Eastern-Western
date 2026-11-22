@@ -9,6 +9,11 @@ export function priceOrderItems(items, findProduct) {
       error.status = 400;
       throw error;
     }
+    if (item.stitching === "Stitch") {
+      const error = new Error("Stitch pricing is pending. Please remove the stitched article to continue.");
+      error.status = 400;
+      throw error;
+    }
     const sku = String(item.sku || "");
     const color = String(item.color || "");
     const variants = Array.isArray(product.variants) ? product.variants : [];

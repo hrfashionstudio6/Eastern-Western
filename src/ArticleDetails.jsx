@@ -48,7 +48,8 @@ export default function ArticleDetails({ product, onAddToCart, contactUrl = what
   const gallery = [...new Set([product[5], product[6], ...(product.media || []), ...variants.map(variant => variant.image)].filter(Boolean))];
   const activeImage = gallery[imageIndex] || gallery[0];
   const needsSize = sizes.length > 0 && !selection.size;
-  const canAdd = !needsSize && (!variants.length || index >= 0);
+  const stitched = stitching === "Stitch";
+  const canAdd = !stitched && !needsSize && (!variants.length || index >= 0);
 
   useEffect(() => {
     if (!zoomOpen) return undefined;
@@ -100,7 +101,7 @@ export default function ArticleDetails({ product, onAddToCart, contactUrl = what
         <div className="pdp-heading-row"><p className="pdp-category">{product.category || "Eastern Western"}</p></div>
         <h1 className="pdp-title">{product[1]}</h1>
         {(variant?.sku || product.sku) && <p className="pdp-code">Article code: {variant?.sku || product.sku}</p>}
-        <div className="pdp-price"><strong>{formatPKR(price)}</strong>{oldPrice > priceAmount(price) && <s>{formatPKR(product[4])}</s>}{discount > 0 && <span>Save {discount}%</span>}</div>
+        <div className="pdp-price">{stitched ? <strong>Price to be announced</strong> : <><strong>{formatPKR(price)}</strong>{oldPrice > priceAmount(price) && <s>{formatPKR(product[4])}</s>}{discount > 0 && <span>Save {discount}%</span>}</>}</div>
         {fabric && <p className="pdp-fabric"><span>Fabric</span>{fabric}</p>}
 
         {colors.length > 0 && <fieldset className="pdp-option"><legend>Colour</legend><div className="pdp-color-options">{colors.map((color, colorIndex) => {
@@ -121,7 +122,7 @@ export default function ArticleDetails({ product, onAddToCart, contactUrl = what
 
         <div className="pdp-purchase" data-float-clear>
           <div className="pdp-quantity-label">Quantity</div>
-          <div className="pdp-purchase-controls"><div className="pdp-quantity"><button type="button" disabled={quantity <= 1} onClick={() => setQuantity(current => Math.max(1, current - 1))} aria-label="Decrease quantity">−</button><output aria-label="Quantity" aria-live="polite">{quantity}</output><button type="button" onClick={() => setQuantity(current => current + 1)} aria-label="Increase quantity">+</button></div><button type="button" className="pdp-add" disabled={!canAdd} onClick={() => addToCart()}>{needsSize ? "Select a size" : "Add to cart"}</button></div>
+          <div className="pdp-purchase-controls"><div className="pdp-quantity"><button type="button" disabled={quantity <= 1} onClick={() => setQuantity(current => Math.max(1, current - 1))} aria-label="Decrease quantity">−</button><output aria-label="Quantity" aria-live="polite">{quantity}</output><button type="button" onClick={() => setQuantity(current => current + 1)} aria-label="Increase quantity">+</button></div><button type="button" className="pdp-add" disabled={!canAdd} onClick={() => addToCart()}>{stitched ? "Price pending" : needsSize ? "Select a size" : "Add to cart"}</button></div>
           <button type="button" className="pdp-buy-now" disabled={!canAdd} onClick={() => addToCart(true)}>{needsSize ? "Choose a size to buy" : "Buy now"}</button>
           <p className="pdp-payment">Prices in PKR <span aria-hidden="true">·</span> Cash on Delivery</p>
         </div>

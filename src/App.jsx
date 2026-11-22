@@ -547,12 +547,14 @@ function SaleBar({ settings }) {
   return <div id="offer-bar" className="launch-offer"><div className="launch-offer-track">{[0, 1].map(group => <div className="launch-offer-group" key={group} aria-hidden={group ? "true" : undefined}>{Array.from({ length: 4 }, (_, index) => <span key={index} aria-hidden={!group && index ? "true" : undefined}>{text}</span>)}</div>)}</div></div>;
 }
 
-function ProductCard({ item, listing = false }) {
+function ProductCard({ item, listing = false, stitching }) {
   const [, name, slug, price, old, image, hover] = item;
+  const productUrl = slugPath("shop", slug);
+  const stitched = stitching === "Stitch";
   const colors = [...new Map((item.variants || []).map((variant) => String(variant.color || "").trim()).filter(Boolean).map((color) => [color.toLowerCase(), color])).values()];
   return (
     <div className="reveal">
-    <a className={`product-card ${listing ? "catalog-card" : ""}`} href={slugPath("shop", slug)}>
+    <a className={`product-card ${listing ? "catalog-card" : ""}`} href={stitching ? productUrl + "?stitching=" + stitching : productUrl}>
       <div className="product-media">
         {image ? <img src={image} alt={name} /> : <div className="media-placeholder">No image</div>}
         {hover && hover !== image && <img src={hover} alt={name} />}
@@ -565,7 +567,7 @@ function ProductCard({ item, listing = false }) {
           <>
             <h3>{name}</h3>
             <small>{item.category || "EasternWestern New In"}</small>
-            <div className="price-row"><span>Sale price</span><b>{formatPKR(price)}</b>{old && <s>Regular price {formatPKR(old)}</s>}</div>
+            <div className="price-row">{stitched ? <span>Price to be announced</span> : <><span>Sale price</span><b>{formatPKR(price)}</b>{old && <s>Regular price {formatPKR(old)}</s>}</>}</div>
           </>
         ) : (
           <>
@@ -577,7 +579,7 @@ function ProductCard({ item, listing = false }) {
       {colors.length > 0 && <p className="card-colours"><span>Colour:</span> {colors.join(", ")}</p>}
     </a>
     <div className="card-stitching" role="group" aria-label="Stitching options">
-      {stitchingOptions.map((option) => <a key={option} href={slugPath("shop", slug) + "?stitching=" + option} aria-label={name + " — " + option}>{option}</a>)}
+      {(stitching ? [stitching] : stitchingOptions).map((option) => <a key={option} href={productUrl + "?stitching=" + option} aria-label={name + " — " + option}>{option}</a>)}
     </div>
     </div>
   );
@@ -670,12 +672,15 @@ function pageHero(content, key) {
 
 const shopPickTabs = ["UNSTITCHED", "READY TO WEAR", "LUXURY PRET", "FREEDOM TO BUY", "MEN", "ACCESSORIES"];
 
+const collectionStitching = { UNSTITCHED: "Unstitch", "READY TO WEAR": "Stitch" };
+
 function productGroups(products = []) {
   const category = (item) => String(item.category || "").trim().toUpperCase();
+  const clothing = products.filter((item) => /UNSTITCHED|READY/.test(category(item)));
   return {
     "All Products": products,
-    "UNSTITCHED": products.filter((item) => category(item).includes("UNSTITCHED")),
-    "READY TO WEAR": products.filter((item) => category(item).includes("READY")),
+    "UNSTITCHED": clothing,
+    "READY TO WEAR": clothing,
     "LUXURY PRET": products.filter((item) => category(item).includes("LUXURY")),
     "FREEDOM TO BUY": products.filter((item) => category(item).includes("FABRIC")),
     "MEN": products.filter((item) => ["MEN", "MEN'S WEAR", "MENS WEAR"].includes(category(item))),
@@ -684,7 +689,7 @@ function productGroups(products = []) {
   };
 }
 
-function PickMarqueeRow({ items, reverse = false }) {
+function PickMarqueeRow({ items, reverse = false, stitching }) {
   const moving = items.length === 4;
   return (
     <div className={`pick-marquee${reverse ? " pick-marquee-reverse" : ""}${moving ? "" : " pick-marquee-static"}`} role="group" aria-label={reverse ? "Collection row 2" : "Collection row 1"}>
@@ -692,7 +697,7 @@ function PickMarqueeRow({ items, reverse = false }) {
         {(moving ? [0, 1] : [0]).map((copy) => (
           <div className="pick-marquee-set" key={copy} aria-hidden={copy === 1 ? true : undefined}>
             {items.map((item) => (
-              <a href={slugPath("shop", item[2])} className="pick-tile" key={item.id || item[2]} tabIndex={copy === 1 ? -1 : undefined}>
+              <a href={slugPath("shop", item[2]) + (stitching ? "?stitching=" + stitching : "")} className="pick-tile" key={item.id || item[2]} tabIndex={copy === 1 ? -1 : undefined}>
                 <img src={item[5]} alt={copy === 1 ? "" : item[1]} loading="lazy" decoding="async" />
               </a>
             ))}
@@ -709,7 +714,8 @@ function PopularPicks({ products = [], active = "UNSTITCHED", onSelect }) {
   const groups = productGroups(products);
   const requested = onSelect ? active : localActive;
   const selected = groups[requested]?.length ? requested : shopPickTabs.find((label) => groups[label].length) || "";
-  const pickProducts = (groups[selected] || []).slice(0, 8);
+  const stitching = collectionStitching[selected];
+  const pickProducts = stitching ? groups[selected] : (groups[selected] || []).slice(0, 8);
   const choose = (label) => {
     if (onSelect) onSelect(label);
     else setLocalActive(label);
@@ -730,8 +736,9 @@ function PopularPicks({ products = [], active = "UNSTITCHED", onSelect }) {
             </div>
           )}
           <div className="pick-marquees" data-paused={paused ? "true" : undefined} key={selected}>
-            <PickMarqueeRow items={pickProducts.slice(0, 4)} />
-            {pickProducts.length > 4 && <PickMarqueeRow items={pickProducts.slice(4, 8)} reverse />}
+            {Array.from({ length: Math.ceil(pickProducts.length / 4) }, (_, row) => (
+              <PickMarqueeRow key={row} items={pickProducts.slice(row * 4, row * 4 + 4)} stitching={stitching} reverse={row % 2 === 1} />
+            ))}
           </div>
         </>
       ) : <EmptyState title="New styles coming soon" text="Our available articles will appear here. Check back for new arrivals." />}
@@ -856,7 +863,7 @@ function ShopPage({ products, content, contactUrl, search }) {
             <fieldset><legend>By Type</legend>{productSubcategories.map((type) => check("types", type, type))}</fieldset>
             {activeFilters ? <button type="button" className="catalog-clear" onClick={() => setSelected({ prices: [], pieces: [], types: [] })}>Clear filters</button> : null}
           </div>}
-          {currentProducts.length ? <div className="product-grid listing-grid">{currentProducts.map((item) => <ProductCard key={item[1]} item={item} listing />)}</div> : <EmptyState title={filtered ? "No matching articles" : "New styles coming soon"} text={filtered ? "Try removing a filter to see more articles." : "Our available articles will appear here. Check back for new arrivals."} />}
+          {currentProducts.length ? <div className="product-grid listing-grid">{currentProducts.map((item) => <ProductCard key={item[1]} item={item} stitching={collectionStitching[selectedFilter]} listing />)}</div> : <EmptyState title={filtered ? "No matching articles" : "New styles coming soon"} text={filtered ? "Try removing a filter to see more articles." : "Our available articles will appear here. Check back for new arrivals."} />}
         </div>
       </section>
     </>
