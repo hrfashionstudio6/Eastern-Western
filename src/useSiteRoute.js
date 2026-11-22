@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const isPage = (path) => /^\/(?:about|shop(?:\/[^/]+)?|blog(?:\/[^/]+)?|contact|checkout|admin(?:\/[^/]+)*)?\/?$/.test(path);
+const isPage = (path) => /^\/(?:about|unstitched|ready-to-wear|shop(?:\/[^/]+)?|blog(?:\/[^/]+)?|contact|checkout|admin(?:\/[^/]+)*)?\/?$/.test(path);
 
 export default function useSiteRoute() {
   const [route, setRoute] = useState(() => window.location.pathname + window.location.search + window.location.hash);

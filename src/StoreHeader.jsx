@@ -11,7 +11,7 @@ export default function StoreHeader({ scrolled, cartCount = 0, customer, onSearc
   const [openGroup, setOpenGroup] = useState("Ready To Wear");
   const toggle = useRef(null);
   const solid = scrolled || pathname !== "/" || menuOpen;
-  const links = [["Women", "/shop"], ["Bags", "/bags"], ["Fragrance", "/fragrance"]];
+  const links = [["Unstitched", "/unstitched"], ["Ready to Wear", "/ready-to-wear"], ["Shop All", "/shop"]];
   useEffect(() => { setMenuOpen(false); }, [pathname]);
   useEffect(() => {
     if (!menuOpen) return undefined;
@@ -27,7 +27,7 @@ export default function StoreHeader({ scrolled, cartCount = 0, customer, onSearc
         <button ref={toggle} className="lh-icon lh-menu" type="button" aria-label={menuOpen ? "Close menu" : "Open menu"} aria-controls="store-menu" aria-expanded={menuOpen} onClick={() => setMenuOpen(value => !value)}><svg viewBox="0 0 24 24" aria-hidden="true">{menuOpen ? <path d="m5 5 14 14M5 19 19 5" /> : <path d="M3 5h18M3 12h18M3 19h18" />}</svg></button>
         <div className="lh-brand-group">
           <a className="lh-brand" href="/" aria-label="Eastern Western home"><span>Eastern Western</span></a>
-          <nav className="lh-categories" aria-label="Collections">{links.map(([label, href]) => <a key={href} href={href} aria-label={label === "Women" ? "Shop Women" : label} aria-current={(href === "/shop" ? pathname.startsWith("/shop") : pathname === href) ? "page" : undefined}>{label}</a>)}</nav>
+          <nav className="lh-categories" aria-label="Collections">{links.map(([label, href]) => <a key={href} href={href} aria-label={label === "Shop All" ? "Shop all articles" : label} aria-current={(href === "/shop" ? pathname.startsWith("/shop") : pathname === href) ? "page" : undefined}>{label}</a>)}</nav>
         </div>
         <a className="lh-logo" href="/" aria-label="Eastern Western logo — home"><img src="/assets/easternwestern-logo.png" alt="" /></a>
         <div className="lh-actions">
@@ -46,7 +46,7 @@ export default function StoreHeader({ scrolled, cartCount = 0, customer, onSearc
             : <span key={label} className="lh-menu-soon" aria-disabled="true">{label}<small>Coming soon</small></span>)}</div>}
         </div>)}
         <a href="/shop#shop-listings" onClick={() => setMenuOpen(false)}>View All</a>
-        {links.filter(([, href]) => href !== "/shop").map(([label, href]) => <a key={href} href={href} onClick={() => setMenuOpen(false)}>{label}<small>Coming soon</small></a>)}
+        {links.filter(([, href]) => href !== "/shop").map(([label, href]) => <a key={href} href={href} onClick={() => setMenuOpen(false)}>{label}</a>)}
         <button type="button" onClick={() => { setMenuOpen(false); onSearch(); }}>Search articles</button>
       </nav>}
     </header>

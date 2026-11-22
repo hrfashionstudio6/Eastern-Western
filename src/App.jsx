@@ -668,7 +668,7 @@ function Footer({ settings = fallbackSiteData.content.settings }) {
     <div className="newsletter"><h3>Need help with<br />an article or order?</h3><a className="btn" href={chat} target="_blank" rel="noopener noreferrer">Chat on WhatsApp</a></div>
     <div className="footer-grid">
       <div><a className="brand-logo footer-logo" href="/" aria-label="Eastern Western home"><img src={footerSettings.logoUrl || "/assets/easternwestern-logo.png"} alt="Eastern Western" /></a><p>{footerSettings.footerText}</p></div>
-      <div><h4>Explore</h4><a href="/">Home</a><a href="/shop">Shop Women</a><a href="/bags">Bags — Coming soon</a><a href="/fragrance">Fragrance — Coming soon</a></div>
+      <div><h4>Explore</h4><a href="/">Home</a><a href="/shop">Shop all</a><a href="/unstitched">Unstitched</a><a href="/ready-to-wear">Ready to Wear</a><a href="/bags">Bags — Coming soon</a><a href="/fragrance">Fragrance — Coming soon</a></div>
       <div className="footer-care"><h4>Customer Care</h4>{customerCareLinks.map(link => <a key={link.href} href={link.href}>{link.label}</a>)}</div>
       <div><h4>Get in touch</h4><a href="https://www.instagram.com/easternwesternfashion/" target="_blank" rel="noopener noreferrer">Instagram</a><a href={chat} target="_blank" rel="noopener noreferrer">WhatsApp</a><a href={`mailto:${footerSettings.contactEmail}`}>{footerSettings.contactEmail}</a><a href={`tel:${footerSettings.contactPhone}`}>{footerSettings.contactPhone}</a><p>{footerSettings.contactAddress}</p></div>
     </div>
@@ -839,7 +839,7 @@ function AboutPage({ content }) {
   );
 }
 
-function ShopPage({ products, content, contactUrl, search }) {
+function ShopPage({ products, content, contactUrl, search, collectionPage }) {
   const query = shopQuery(search);
   const [filter, setFilter] = useState(query.category || "UNSTITCHED");
   const [selected, setSelected] = useState({ prices: [], pieces: [], types: query.type ? [query.type] : [] });
@@ -849,7 +849,7 @@ function ShopPage({ products, content, contactUrl, search }) {
     if (query.category) setFilter(query.category);
     setSelected((current) => ({ ...current, types: query.type ? [query.type] : [] }));
   }, [query.category, query.type]);
-  const heroContent = pageHero(content, "shop");
+  const heroContent = collectionPage ? { ...pageHero(content, "shop"), ...collectionPage } : pageHero(content, "shop");
   const groups = productGroups(products);
   const selectedFilter = groups[filter]?.length ? filter : shopPickTabs.find((label) => groups[label].length) || "All Products";
   const view = (item) => ({ item, name: item[1], price: selectedFilter === "READY TO WEAR" ? item.stitchPrice : item[3], sku: item.sku, subcategory: item.subcategory, bestSeller: item.bestSeller });
@@ -861,7 +861,7 @@ function ShopPage({ products, content, contactUrl, search }) {
   return (
     <>
       <PageHero {...heroContent} id="shop-hero" contactUrl={contactUrl} />
-      <PopularPicks products={products} active={selectedFilter} onSelect={setFilter} />
+      {!collectionPage && <PopularPicks products={products} active={selectedFilter} onSelect={setFilter} />}
       <section id="shop-listings" className="section catalog-section">
         <div className="catalog-results">
           <div className="catalog-toolbar">
@@ -1003,6 +1003,8 @@ function Router({ data, onAddToCart, cartItems, customerAccount, customerToken, 
   if (pathname.startsWith("/admin")) return <AdminDashboard />;
   if (pathname === "/") return <HomePage data={data} />;
   if (pathname === "/shop") return <ShopPage products={data.products} content={data.content} contactUrl={contactUrl} search={window.location.search} />;
+  if (pathname === "/unstitched") return <ShopPage products={data.products} content={data.content} contactUrl={contactUrl} search="?category=unstitched" collectionPage={{ kicker: "SHOP EASTERN WESTERN", companion: "UNSTITCHED", title: "Unstitched", text: "Browse Eastern Western's unstitched collection, view article details and prices in PKR, and choose the options available for each article." }} />;
+  if (pathname === "/ready-to-wear") return <ShopPage products={data.products} content={data.content} contactUrl={contactUrl} search="?category=ready-to-wear" collectionPage={{ kicker: "SHOP EASTERN WESTERN", companion: "READY TO WEAR", title: "Ready to Wear", text: "Browse Eastern Western's ready-to-wear collection, view article details and prices in PKR, and order online." }} />;
   if (pathname === "/checkout") return <CheckoutPage items={cartItems} customerAccount={customerAccount} customerToken={customerToken} onQty={onQty} onRemove={onRemove} onOrderSuccess={onOrderSuccess} onNeedLogin={onNeedLogin} contactUrl={contactUrl} />;
   if (pathname.startsWith("/shop/")) return <ProductPage slug={routeSlug(pathname)} products={data.products} onAddToCart={onAddToCart} contactUrl={contactUrl} />;
   return <NotFoundPage />;

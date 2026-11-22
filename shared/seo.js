@@ -2,7 +2,7 @@ import { customerCarePages } from "./customer-care.js";
 import { priceAmount } from "./money.js";
 import { routeSlug } from "./route-slug.js";
 export const SITE_URL = "https://easternwestern.net";
-export const pageTitles = { "/": "Pakistani Clothing", "/shop": "Shop Women", "/bags": "Bags — Coming soon", "/fragrance": "Fragrance — Coming soon", "/checkout": "Checkout", ...Object.fromEntries(Object.entries(customerCarePages).map(([path, page]) => [path, page.title])) };
+export const pageTitles = { "/": "Pakistani Clothing", "/shop": "Shop All", "/unstitched": "Unstitched", "/ready-to-wear": "Ready to Wear", "/bags": "Bags — Coming soon", "/fragrance": "Fragrance — Coming soon", "/checkout": "Checkout", ...Object.fromEntries(Object.entries(customerCarePages).map(([path, page]) => [path, page.title])) };
 export const sitemapPaths = Object.keys(pageTitles).filter(path => !["/checkout", "/track-your-order"].includes(path));
 export function pageSeo(pathname, products = []) {
   const path = pathname.replace(/\/+$/, "") || "/";
@@ -12,7 +12,11 @@ export function pageSeo(pathname, products = []) {
   const known = Object.hasOwn(pageTitles, path) || Boolean(product) || path === "/admin";
   const noindex = !known || path.startsWith("/admin") || ["/checkout", "/track-your-order", "/bags", "/fragrance"].includes(path);
   const title = `${name || pageTitles[path] || (path.startsWith("/admin") ? "Admin" : "Page not found")} | Eastern Western`;
-  const description = product ? `Shop ${name} by Eastern Western${product.category ? ` — ${product.category}` : ""}. View article photos, sizes and prices in PKR. Free delivery across Pakistan. Cash on Delivery available.` : path === "/" ? "Explore Eastern Western Pakistani ready-to-wear clothing. Shop the Winter '26 collection with free delivery across Pakistan and Cash on Delivery." : `${pageTitles[path] || "Page not found"} at Eastern Western. Explore Pakistani clothing, article details and customer care. Free delivery across Pakistan.`;
+  const collectionDescriptions = {
+    "/unstitched": "Shop Eastern Western unstitched clothing. Browse available Pakistani outfits and compare article details and prices in PKR.",
+    "/ready-to-wear": "Shop Eastern Western ready-to-wear clothing. Browse available Pakistani outfits and compare article details and prices in PKR.",
+  };
+  const description = product ? `Shop ${name} by Eastern Western${product.category ? ` — ${product.category}` : ""}. View article photos, sizes and prices in PKR. Free delivery across Pakistan. Cash on Delivery available.` : collectionDescriptions[path] || (path === "/" ? "Explore Eastern Western Pakistani ready-to-wear clothing. Shop the Winter '26 collection with free delivery across Pakistan and Cash on Delivery." : `${pageTitles[path] || "Page not found"} at Eastern Western. Explore Pakistani clothing, article details and customer care. Free delivery across Pakistan.`);
   const canonical = SITE_URL + (product ? "/shop/" + encodeURIComponent(product.slug || product[2]) : path);
   const image = new URL(product?.image || product?.[5] || "/assets/hero-banner-1.jpg", SITE_URL).href;
   const schema = product ? { "@context": "https://schema.org", "@type": "Product", name, image: [image], description, url: canonical, brand: { "@type": "Brand", name: "Eastern Western" }, ...(product.sku ? { sku: product.sku } : {}), offers: { "@type": "Offer", url: canonical, priceCurrency: "PKR", price: priceAmount(product.price || product[3]), itemCondition: "https://schema.org/NewCondition" } } : path === "/" ? { "@context": "https://schema.org", "@type": "Organization", name: "Eastern Western", url: SITE_URL, logo: SITE_URL + "/assets/easternwestern-logo.png", sameAs: ["https://www.instagram.com/easternwesternfashion/"] } : null;
