@@ -108,7 +108,7 @@ export default function ArticleDetails({ product, onAddToCart, contactUrl = what
           return <button type="button" className="pdp-color-choice" key={color} aria-label={"Colour option " + (colorIndex + 1) + ": " + color} aria-pressed={selection.color === color} disabled={!available} onClick={() => selectColor(color)}><ColourName value={color} />{selection.color === color && <span className="pdp-color-check" aria-hidden="true">✓</span>}</button>;
         })}</div></fieldset>}
 
-        <fieldset className="pdp-option">
+        <fieldset className="pdp-option pdp-stitching">
           <legend>Stitching</legend>
           <div className="pdp-sizes">
             {stitchingOptions.map((option) => <button type="button" key={option} aria-pressed={stitching === option} onClick={() => setStitching(option)}>{option}</button>)}

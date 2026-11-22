@@ -5559,4 +5559,5 @@ main:has(> #offer-bar.launch-offer) #home-hero { margin-top: var(--launch-offer-
 }
 
 .card-stitching { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-.card-stitching a { border: 1px solid currentColor; padding: 6px 12px; font-size: 12px; }
+.card-stitching a { border: 1px solid currentColor; padding: 6px 12px; font-size: 12px; font-weight: 600; }
+.pdp-stitching .pdp-sizes button { font-weight: 600; }
