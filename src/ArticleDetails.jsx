@@ -101,7 +101,7 @@ export default function ArticleDetails({ product, onAddToCart, contactUrl = what
         <div className="pdp-heading-row"><p className="pdp-category">{product.category || "Eastern Western"}</p></div>
         <h1 className="pdp-title">{product[1]}</h1>
         {(variant?.sku || product.sku) && <p className="pdp-code">Article code: {variant?.sku || product.sku}</p>}
-        <div className="pdp-price">{stitched ? <strong>Price to be announced</strong> : <><strong>{formatPKR(price)}</strong>{oldPrice > priceAmount(price) && <s>{formatPKR(product[4])}</s>}{discount > 0 && <span>Save {discount}%</span>}</>}</div>
+        <div className="pdp-price">{stitched ? <strong>Price to be announced</strong> : <>{oldPrice > priceAmount(price) && <s>{formatPKR(product[4])}</s>}<strong>{formatPKR(price)}</strong>{discount > 0 && <span>{discount}% OFF</span>}</>}</div>
         {fabric && <p className="pdp-fabric"><span>Fabric</span>{fabric}</p>}
 
         {colors.length > 0 && <fieldset className="pdp-option"><legend>Colour</legend><div className="pdp-color-options">{colors.map((color, colorIndex) => {

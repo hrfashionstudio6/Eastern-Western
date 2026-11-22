@@ -1,3 +1,4 @@
+import { unstitchedOffer } from "../shared/unstitched-offer.js";
 import { stitchingOptions } from "../shared/stitching.js";
 
 // Prices, names and photos come from the saved article, never from the browser.
@@ -26,7 +27,7 @@ export function priceOrderItems(items, findProduct) {
       sku: sku || String(variant?.sku || product.sku || ""),
       name: product.name,
       image: variant?.image || product.image || "",
-      price: variant?.price || product.price,
+      price: unstitchedOffer(product)?.price ?? (variant?.price || product.price),
       qty: Math.min(50, Math.max(1, Math.floor(Number(item.qty)) || 1)),
     };
   });

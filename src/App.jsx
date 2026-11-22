@@ -12,6 +12,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import useSiteRoute from "./useSiteRoute.js";
 import { withLoading } from "./loading-state.js";
 import AdminDashboard from "./AdminDashboard.jsx";
+import { unstitchedOffer } from "../shared/unstitched-offer.js";
 import { stitchingOptions } from "../shared/stitching.js";
 import ArticleDetails, { ColourName } from "./ArticleDetails.jsx";
 import ContactForm from "./ContactForm.jsx";
@@ -78,6 +79,7 @@ const allProducts = shopProducts;
 const fallbackSiteData = { content: defaultContent, products: [], blogs: [] };
 
 function productDocToItem(product) {
+  const offer = unstitchedOffer(product);
   const media = Array.isArray(product.media) ? product.media.filter(Boolean) : [];
   const image = product.image || media[0] || "";
   const hoverImage = product.hoverImage || media[1] || image;
@@ -85,8 +87,8 @@ function productDocToItem(product) {
     product.tag || "New",
     product.name || "Untitled product",
     product.slug || "product",
-    product.price || "$0.00",
-    product.oldPrice || product.compareAtPrice || "",
+    offer?.price ?? (product.price || "$0.00"),
+    offer?.regularPrice ?? (product.oldPrice || product.compareAtPrice || ""),
     image,
     hoverImage,
     product.description || "",
@@ -97,7 +99,8 @@ function productDocToItem(product) {
   item.status = product.status;
   item.media = media.length ? media : [image, hoverImage].filter(Boolean);
   item.tags = product.tags || [];
-  item.variants = product.variants || [];
+  item.variants = (product.variants || []).map((variant) => offer ? { ...variant, price: offer.price } : variant);
+  item.unstitchedOffer = Boolean(offer);
   item.featured = product.featured;
   Object.assign(item, productLabels(product));
   item.subcategory = productSubcategory(product);
@@ -567,12 +570,12 @@ function ProductCard({ item, listing = false, stitching }) {
           <>
             <h3>{name}</h3>
             <small>{item.category || "EasternWestern New In"}</small>
-            <div className="price-row">{stitched ? <span>Price to be announced</span> : <><span>Sale price</span><b>{formatPKR(price)}</b>{old && <s>Regular price {formatPKR(old)}</s>}</>}</div>
+            <div className="price-row">{stitched ? <span>Price to be announced</span> : <>{old && <s>Regular price {formatPKR(old)}</s>}<b>{formatPKR(price)}</b>{item.unstitchedOffer && <span>10% OFF</span>}</>}</div>
           </>
         ) : (
           <>
             <h3>{name}</h3>
-            <div><b>{formatPKR(price)}</b>{old && <s>{formatPKR(old)}</s>}</div>
+            <div>{old && <s>{formatPKR(old)}</s>} <b>{formatPKR(price)}</b>{item.unstitchedOffer && <small>10% OFF</small>}</div>
           </>
         )}
       </div>
