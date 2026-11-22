@@ -38,3 +38,9 @@ test("checkout uses each saved stitching price ahead of variant and launch price
   }));
   assert.deepEqual(priceOrderItems(items, () => product).map(({ price }) => price), [3700, 7100]);
 });
+
+test("stitched launch price is 25% off the regular price, including paise", () => {
+  const product = { ...products[0], oldPrice: "PKR 6,999" };
+  const [item] = priceOrderItems([{ slug: product.slug, stitching: "Stitch", color: "Warm Ivory" }], () => product);
+  assert.equal(item.price, 5249.25);
+});

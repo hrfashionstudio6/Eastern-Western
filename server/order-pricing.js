@@ -1,4 +1,4 @@
-import { unstitchedOffer } from "../shared/unstitched-offer.js";
+import { fixedListingPrices } from "../shared/unstitched-offer.js";
 import { stitchingOptions } from "../shared/stitching.js";
 
 // Prices, names and photos come from the saved article, never from the browser.
@@ -14,7 +14,7 @@ export function priceOrderItems(items, findProduct) {
     const color = String(item.color || "");
     const variants = Array.isArray(product.variants) ? product.variants : [];
     const variant = variants.find((entry) => sku && entry.sku === sku) || variants.find((entry) => color && entry.color === color);
-    const offer = item.stitching === "Stitch" ? product.stitchPricing : product.unstitchPricing ?? unstitchedOffer(product);
+    const offer = fixedListingPrices(product, item.stitching);
     return {
       slug: product.slug,
       ...(stitchingOptions.includes(item.stitching) ? { stitching: item.stitching } : {}),
