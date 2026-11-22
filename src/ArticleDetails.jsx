@@ -37,8 +37,9 @@ export default function ArticleDetails({ product, onAddToCart, contactUrl = what
   const sizes = [...new Set(variants.flatMap(variant => splitSizes(variant.size)))];
   const index = matchingVariant(variants, selection.color, selection.size, product);
   const variant = variants[index];
-  const price = variant?.price || product[3];
-  const oldPrice = priceAmount(product[4]);
+  const stitched = stitching === "Stitch";
+  const price = stitched ? variant?.price || product.stitchPrice : product.unstitchedOffer ? product[3] : variant?.price || product[3];
+  const oldPrice = priceAmount(stitched ? product.stitchRegularPrice : product[4]);
   const discount = oldPrice > priceAmount(price) ? Math.round((1 - priceAmount(price) / oldPrice) * 100) : 0;
   const fabric = variant?.material || product.fabric || "";
   const sections = descriptionSections(product[7]);
@@ -48,8 +49,7 @@ export default function ArticleDetails({ product, onAddToCart, contactUrl = what
   const gallery = [...new Set([product[5], product[6], ...(product.media || []), ...variants.map(variant => variant.image)].filter(Boolean))];
   const activeImage = gallery[imageIndex] || gallery[0];
   const needsSize = sizes.length > 0 && !selection.size;
-  const stitched = stitching === "Stitch";
-  const canAdd = !stitched && !needsSize && (!variants.length || index >= 0);
+  const canAdd = !needsSize && (!variants.length || index >= 0);
 
   useEffect(() => {
     if (!zoomOpen) return undefined;
@@ -101,7 +101,7 @@ export default function ArticleDetails({ product, onAddToCart, contactUrl = what
         <div className="pdp-heading-row"><p className="pdp-category">{product.category || "Eastern Western"}</p></div>
         <h1 className="pdp-title">{product[1]}</h1>
         {(variant?.sku || product.sku) && <p className="pdp-code">Article code: {variant?.sku || product.sku}</p>}
-        <div className="pdp-price">{stitched ? <strong>Price to be announced</strong> : <>{oldPrice > priceAmount(price) && <s>{formatPKR(product[4])}</s>}<strong>{formatPKR(price)}</strong>{discount > 0 && <span>{discount}% OFF</span>}</>}</div>
+        <div className="pdp-price">{oldPrice > priceAmount(price) && <s>{formatPKR(oldPrice)}</s>}<strong>{formatPKR(price)}</strong>{discount > 0 && <span>{discount}% OFF</span>}</div>
         {fabric && <p className="pdp-fabric"><span>Fabric</span>{fabric}</p>}
 
         {colors.length > 0 && <fieldset className="pdp-option"><legend>Colour</legend><div className="pdp-color-options">{colors.map((color, colorIndex) => {
@@ -122,7 +122,7 @@ export default function ArticleDetails({ product, onAddToCart, contactUrl = what
 
         <div className="pdp-purchase" data-float-clear>
           <div className="pdp-quantity-label">Quantity</div>
-          <div className="pdp-purchase-controls"><div className="pdp-quantity"><button type="button" disabled={quantity <= 1} onClick={() => setQuantity(current => Math.max(1, current - 1))} aria-label="Decrease quantity">−</button><output aria-label="Quantity" aria-live="polite">{quantity}</output><button type="button" onClick={() => setQuantity(current => current + 1)} aria-label="Increase quantity">+</button></div><button type="button" className="pdp-add" disabled={!canAdd} onClick={() => addToCart()}>{stitched ? "Price pending" : needsSize ? "Select a size" : "Add to cart"}</button></div>
+          <div className="pdp-purchase-controls"><div className="pdp-quantity"><button type="button" disabled={quantity <= 1} onClick={() => setQuantity(current => Math.max(1, current - 1))} aria-label="Decrease quantity">−</button><output aria-label="Quantity" aria-live="polite">{quantity}</output><button type="button" onClick={() => setQuantity(current => current + 1)} aria-label="Increase quantity">+</button></div><button type="button" className="pdp-add" disabled={!canAdd} onClick={() => addToCart()}>{needsSize ? "Select a size" : "Add to cart"}</button></div>
           <button type="button" className="pdp-buy-now" disabled={!canAdd} onClick={() => addToCart(true)}>{needsSize ? "Choose a size to buy" : "Buy now"}</button>
           <p className="pdp-payment">Prices in PKR <span aria-hidden="true">·</span> Cash on Delivery</p>
         </div>

@@ -99,7 +99,9 @@ function productDocToItem(product) {
   item.status = product.status;
   item.media = media.length ? media : [image, hoverImage].filter(Boolean);
   item.tags = product.tags || [];
-  item.variants = (product.variants || []).map((variant) => offer ? { ...variant, price: offer.price } : variant);
+  item.variants = product.variants || [];
+  item.stitchPrice = product.price;
+  item.stitchRegularPrice = product.oldPrice || product.compareAtPrice || "";
   item.unstitchedOffer = Boolean(offer);
   item.featured = product.featured;
   Object.assign(item, productLabels(product));
@@ -551,9 +553,11 @@ function SaleBar({ settings }) {
 }
 
 function ProductCard({ item, listing = false, stitching }) {
-  const [, name, slug, price, old, image, hover] = item;
+  const [, name, slug, offerPrice, offerRegularPrice, image, hover] = item;
   const productUrl = slugPath("shop", slug);
   const stitched = stitching === "Stitch";
+  const price = stitched ? item.stitchPrice : offerPrice;
+  const old = stitched ? item.stitchRegularPrice : offerRegularPrice;
   const colors = [...new Map((item.variants || []).map((variant) => String(variant.color || "").trim()).filter(Boolean).map((color) => [color.toLowerCase(), color])).values()];
   return (
     <div className="reveal">
@@ -570,7 +574,7 @@ function ProductCard({ item, listing = false, stitching }) {
           <>
             <h3>{name}</h3>
             <small>{item.category || "EasternWestern New In"}</small>
-            <div className="price-row">{stitched ? <span>Price to be announced</span> : <>{old && <s>Regular price {formatPKR(old)}</s>}<b>{formatPKR(price)}</b>{item.unstitchedOffer && <span>10% OFF</span>}</>}</div>
+            <div className="price-row">{old && <s>Regular price {formatPKR(old)}</s>}<b>{formatPKR(price)}</b>{(stitched ? Math.round((1 - priceAmount(price) / priceAmount(old)) * 100) === 10 : item.unstitchedOffer) && <span>10% OFF</span>}</div>
           </>
         ) : (
           <>
@@ -841,7 +845,7 @@ function ShopPage({ products, content, contactUrl, search }) {
   const heroContent = pageHero(content, "shop");
   const groups = productGroups(products);
   const selectedFilter = groups[filter]?.length ? filter : shopPickTabs.find((label) => groups[label].length) || "All Products";
-  const view = (item) => ({ item, name: item[1], price: item[3], sku: item.sku, subcategory: item.subcategory, bestSeller: item.bestSeller });
+  const view = (item) => ({ item, name: item[1], price: selectedFilter === "READY TO WEAR" ? item.stitchPrice : item[3], sku: item.sku, subcategory: item.subcategory, bestSeller: item.bestSeller });
   const currentProducts = sortProducts(filterProducts(groups[selectedFilter].map(view), selected), sort).map((entry) => entry.item);
   const toggle = (key, value) => setSelected((current) => ({ ...current, [key]: current[key].includes(value) ? current[key].filter((item) => item !== value) : [...current[key], value] }));
   const check = (key, value, label) => <label key={value}><input type="checkbox" checked={selected[key].includes(value)} onChange={() => toggle(key, value)} /> {label}</label>;
@@ -1041,7 +1045,7 @@ function App() {
   }, [route]);
   const cartCount = cartItems.reduce((sum, item) => sum + item.qty, 0);
   const addToCart = (product, quantity = 1, variant, option = 0, buyNow = false, stitching) => {
-    const nextItem = { ...cartProduct(product), ...(variant ? { price: variant.price || product[3], image: variant.image || product[5], size: variant.size, color: variant.color, sku: variant.sku || product.sku } : {}), stitching, cartKey: [product[2], ...(variant ? [option] : []), ...(stitching ? [stitching] : [])].join("::") };
+    const nextItem = { ...cartProduct(product), price: stitching === "Stitch" ? variant?.price || product.stitchPrice : product.unstitchedOffer ? product[3] : variant?.price || product[3], ...(variant ? { image: variant.image || product[5], size: variant.size, color: variant.color, sku: variant.sku || product.sku } : {}), stitching, cartKey: [product[2], ...(variant ? [option] : []), ...(stitching ? [stitching] : [])].join("::") };
     setCartItems((items) => {
       const exists = items.find((item) => (item.cartKey || item.slug) === nextItem.cartKey);
       if (exists) return items.map((item) => (item.cartKey || item.slug) === nextItem.cartKey ? { ...item, qty: item.qty + quantity } : item);

@@ -10,15 +10,11 @@ export function priceOrderItems(items, findProduct) {
       error.status = 400;
       throw error;
     }
-    if (item.stitching === "Stitch") {
-      const error = new Error("Stitch pricing is pending. Please remove the stitched article to continue.");
-      error.status = 400;
-      throw error;
-    }
     const sku = String(item.sku || "");
     const color = String(item.color || "");
     const variants = Array.isArray(product.variants) ? product.variants : [];
     const variant = variants.find((entry) => sku && entry.sku === sku) || variants.find((entry) => color && entry.color === color);
+    const offer = item.stitching === "Stitch" ? null : unstitchedOffer(product);
     return {
       slug: product.slug,
       ...(stitchingOptions.includes(item.stitching) ? { stitching: item.stitching } : {}),
@@ -27,7 +23,7 @@ export function priceOrderItems(items, findProduct) {
       sku: sku || String(variant?.sku || product.sku || ""),
       name: product.name,
       image: variant?.image || product.image || "",
-      price: unstitchedOffer(product)?.price ?? (variant?.price || product.price),
+      price: offer?.price ?? (variant?.price || product.price),
       qty: Math.min(50, Math.max(1, Math.floor(Number(item.qty)) || 1)),
     };
   });
