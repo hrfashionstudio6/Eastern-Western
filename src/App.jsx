@@ -12,6 +12,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import useSiteRoute from "./useSiteRoute.js";
 import { withLoading } from "./loading-state.js";
 import AdminDashboard from "./AdminDashboard.jsx";
+import { stitchingOptions } from "../shared/stitching.js";
 import ArticleDetails, { ColourName } from "./ArticleDetails.jsx";
 import ContactForm from "./ContactForm.jsx";
 import { routeSlug } from "../shared/route-slug.js";
@@ -242,7 +243,7 @@ function CartDrawer({ open, items, onClose, onQty, onRemove }) {
                 <article className="cart-line" key={item.cartKey || item.slug}>
                   <img src={item.image} alt="" />
                   <div>
-                    <h3>{item.name}</h3>{(item.size || item.color) && <div className="cart-option-summary">{item.size && <small>Size: {item.size}</small>}{item.color && <ColourName value={item.color} />}</div>}
+                    <h3>{item.name}</h3>{item.stitching && <small>{item.stitching}</small>}{(item.size || item.color) && <div className="cart-option-summary">{item.size && <small>Size: {item.size}</small>}{item.color && <ColourName value={item.color} />}</div>}
                     <p>{formatPKR(item.price)}</p>
                     <div className="qty-row">
                       <button aria-label={`Decrease ${item.name}`} onClick={() => onQty(item.cartKey || item.slug, item.qty - 1)}>-</button>
@@ -400,6 +401,7 @@ function CheckoutPage({ items, customerAccount, customerToken, onQty, onRemove, 
                 <a className="co-photo" href={"/shop/" + encodeURIComponent(item.slug)} aria-label={"View " + item.name}><img src={item.image} alt={item.name} /></a>
                 <div className="co-line-body">
                   <div className="co-line-title"><a href={"/shop/" + encodeURIComponent(item.slug)}>{item.name}</a><strong>{formatPKR(priceValue(item.price) * item.qty)}</strong></div>
+                  {item.stitching && <p className="co-size">{item.stitching}</p>}
                   {item.size && <p className="co-size">Size: {item.size}</p>}
                   {item.color && <div className="co-colour"><span>Colour</span><ColourName value={item.color} /></div>}
                   <p className="co-unit-price">{formatPKR(item.price)} each</p>
@@ -549,7 +551,8 @@ function ProductCard({ item, listing = false }) {
   const [, name, slug, price, old, image, hover] = item;
   const colors = [...new Map((item.variants || []).map((variant) => String(variant.color || "").trim()).filter(Boolean).map((color) => [color.toLowerCase(), color])).values()];
   return (
-    <a className={`product-card reveal ${listing ? "catalog-card" : ""}`} href={slugPath("shop", slug)}>
+    <div className="reveal">
+    <a className={`product-card ${listing ? "catalog-card" : ""}`} href={slugPath("shop", slug)}>
       <div className="product-media">
         {image ? <img src={image} alt={name} /> : <div className="media-placeholder">No image</div>}
         {hover && hover !== image && <img src={hover} alt={name} />}
@@ -573,6 +576,10 @@ function ProductCard({ item, listing = false }) {
       </div>
       {colors.length > 0 && <p className="card-colours"><span>Colour:</span> {colors.join(", ")}</p>}
     </a>
+    <div className="card-stitching" role="group" aria-label="Stitching options">
+      {stitchingOptions.map((option) => <a key={option} href={slugPath("shop", slug) + "?stitching=" + option} aria-label={name + " — " + option}>{option}</a>)}
+    </div>
+    </div>
   );
 }
 
@@ -1023,8 +1030,8 @@ function App() {
     if (!window.location.hash) window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, [route]);
   const cartCount = cartItems.reduce((sum, item) => sum + item.qty, 0);
-  const addToCart = (product, quantity = 1, variant, option = 0, buyNow = false) => {
-    const nextItem = { ...cartProduct(product), ...(variant ? { price: variant.price || product[3], image: variant.image || product[5], size: variant.size, color: variant.color, sku: variant.sku || product.sku } : {}), cartKey: variant ? `${product[2]}::${option}` : product[2] };
+  const addToCart = (product, quantity = 1, variant, option = 0, buyNow = false, stitching) => {
+    const nextItem = { ...cartProduct(product), ...(variant ? { price: variant.price || product[3], image: variant.image || product[5], size: variant.size, color: variant.color, sku: variant.sku || product.sku } : {}), stitching, cartKey: [product[2], ...(variant ? [option] : []), ...(stitching ? [stitching] : [])].join("::") };
     setCartItems((items) => {
       const exists = items.find((item) => (item.cartKey || item.slug) === nextItem.cartKey);
       if (exists) return items.map((item) => (item.cartKey || item.slug) === nextItem.cartKey ? { ...item, qty: item.qty + quantity } : item);

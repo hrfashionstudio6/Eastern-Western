@@ -5557,3 +5557,6 @@ main:has(> #offer-bar.launch-offer) #home-hero { margin-top: var(--launch-offer-
   #home-hero { margin-top: 59px; }
   main:has(> #offer-bar.launch-offer) #home-hero { margin-top: calc(var(--launch-offer-h) + 59px); }
 }
+
+.card-stitching { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.card-stitching a { border: 1px solid currentColor; padding: 6px 12px; font-size: 12px; }

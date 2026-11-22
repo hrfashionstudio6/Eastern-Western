@@ -1,3 +1,4 @@
+import { stitchingOptions } from "../shared/stitching.js";
 import { whatsappLink } from "../shared/storefront.js";
 import { useEffect, useRef, useState } from "react";
 import { formatPKR, priceAmount } from "../shared/money.js";
@@ -21,6 +22,10 @@ export default function ArticleDetails({ product, onAddToCart, contactUrl = what
   const initialColor = String(first?.color || "").trim();
   const initialSizes = [...new Set(variants.filter(variant => !initialColor || String(variant.color || "").trim() === initialColor).flatMap(variant => splitSizes(variant.size)))];
   const [selection, setSelection] = useState(() => ({ color: initialColor, size: initialSizes.length === 1 ? initialSizes[0] : "" }));
+  const [stitching, setStitching] = useState(() => {
+    const requested = new URLSearchParams(window.location.search).get("stitching");
+    return stitchingOptions.find((option) => option === requested) || stitchingOptions[0];
+  });
   const [quantity, setQuantity] = useState(1);
   const [imageIndex, setImageIndex] = useState(0);
   const [zoomOpen, setZoomOpen] = useState(false);
@@ -78,7 +83,7 @@ export default function ArticleDetails({ product, onAddToCart, contactUrl = what
   const addToCart = (buyNow = false) => {
     if (!canAdd) return;
     const chosen = variant ? { ...variant, size: selection.size || variant.size } : undefined;
-    onAddToCart(product, quantity, chosen, index + ":" + selection.size, buyNow);
+    onAddToCart(product, quantity, chosen, index + ":" + selection.size, buyNow, stitching);
   };
 
   return <section className="section product-detail-page">
@@ -103,6 +108,12 @@ export default function ArticleDetails({ product, onAddToCart, contactUrl = what
           return <button type="button" className="pdp-color-choice" key={color} aria-label={"Colour option " + (colorIndex + 1) + ": " + color} aria-pressed={selection.color === color} disabled={!available} onClick={() => selectColor(color)}><ColourName value={color} />{selection.color === color && <span className="pdp-color-check" aria-hidden="true">✓</span>}</button>;
         })}</div></fieldset>}
 
+        <fieldset className="pdp-option">
+          <legend>Stitching</legend>
+          <div className="pdp-sizes">
+            {stitchingOptions.map((option) => <button type="button" key={option} aria-pressed={stitching === option} onClick={() => setStitching(option)}>{option}</button>)}
+          </div>
+        </fieldset>
         {sizes.length > 0 && <fieldset className="pdp-option"><legend>Size {selection.size && <span>— {selection.size}</span>}</legend><div className="pdp-sizes">{sizes.map(size => {
           const available = matchingVariant(variants, selection.color, size, product) >= 0;
           return <button type="button" key={size} aria-pressed={selection.size === size} disabled={!available} onClick={() => selectSize(size)}>{size}</button>;

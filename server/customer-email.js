@@ -22,14 +22,14 @@ function layout(heading, bodyHtml) {
 
 function itemsTable(order) {
   const rows = (order.items || []).map((item) => {
-    const options = [item.size && "Size: " + item.size, item.color && "Colour: " + item.color].filter(Boolean).join(" · ");
+    const options = [item.stitching, item.size && "Size: " + item.size, item.color && "Colour: " + item.color].filter(Boolean).join(" · ");
     return `<tr><td style="padding:8px 0;border-bottom:1px solid #f0f0f0">${escapeHtml(item.name)} × ${Number(item.qty) || 1}${options ? `<br><span style="color:#888;font-size:12px">${escapeHtml(options)}</span>` : ""}</td><td align="right" style="padding:8px 0;border-bottom:1px solid #f0f0f0;white-space:nowrap">${escapeHtml(formatPKR(Number(item.qty || 1) * priceAmount(item.price)))}</td></tr>`;
   }).join("");
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:14px 0;font-size:13px">${rows}<tr><td style="padding:10px 0;font-weight:bold">Total (Cash on Delivery)</td><td align="right" style="padding:10px 0;font-weight:bold">${escapeHtml(formatPKR(order.subtotal))}</td></tr></table>`;
 }
 
 function itemsText(order) {
-  return (order.items || []).map((item) => `- ${item.name} x ${Number(item.qty) || 1}${item.size ? ", size " + item.size : ""}${item.color ? ", " + item.color : ""}: ${formatPKR(Number(item.qty || 1) * priceAmount(item.price))}`).concat("Total (Cash on Delivery): " + formatPKR(order.subtotal)).join("\n");
+  return (order.items || []).map((item) => `- ${item.name} x ${Number(item.qty) || 1}${item.stitching ? ", " + item.stitching : ""}${item.size ? ", size " + item.size : ""}${item.color ? ", " + item.color : ""}: ${formatPKR(Number(item.qty || 1) * priceAmount(item.price))}`).concat("Total (Cash on Delivery): " + formatPKR(order.subtotal)).join("\n");
 }
 
 function message(fromAddress, to, subject, heading, text, html) {

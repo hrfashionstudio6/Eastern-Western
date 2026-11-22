@@ -899,7 +899,7 @@ export default function AdminDashboard() {
                     <span>{order.customer?.name} - {order.customer?.phone}</span>
                     <small>{order.customer?.email}</small>
                     <small>{order.customer?.address}</small>
-                    <small>{order.items?.map((item) => `${item.name}${item.size || item.color ? ` (${[item.size, item.color].filter(Boolean).join(" / ")})` : ""} x${item.qty}`).join(", ")}</small>
+                    <small>{order.items?.map((item) => `${item.name}${item.stitching || item.size || item.color ? ` (${[item.stitching, item.size, item.color].filter(Boolean).join(" / ")})` : ""} x${item.qty}`).join(", ")}</small>
                   </div>
                   <div className="order-payment">
                     <b>{formatPKR(order.subtotal)}</b>

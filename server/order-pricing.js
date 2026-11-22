@@ -1,3 +1,5 @@
+import { stitchingOptions } from "../shared/stitching.js";
+
 // Prices, names and photos come from the saved article, never from the browser.
 export function priceOrderItems(items, findProduct) {
   return items.map((item) => {
@@ -13,6 +15,7 @@ export function priceOrderItems(items, findProduct) {
     const variant = variants.find((entry) => sku && entry.sku === sku) || variants.find((entry) => color && entry.color === color);
     return {
       slug: product.slug,
+      ...(stitchingOptions.includes(item.stitching) ? { stitching: item.stitching } : {}),
       size: String(item.size || ""),
       color,
       sku: sku || String(variant?.sku || product.sku || ""),
