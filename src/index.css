@@ -5566,31 +5566,29 @@ main:has(> #offer-bar.launch-offer) #home-hero { margin-top: var(--launch-offer-
 .stitch-offer-badge {
   position: absolute;
   z-index: 3;
-  top: 10px;
-  left: 10px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid #171b24;
-  border-radius: 8px;
-  background: #fff;
-  color: #171b24;
-  padding: 3px;
-  box-shadow: 0 2px 8px rgb(17 24 39 / 18%);
-  font: 650 11px/1.2 "Inter", Arial, sans-serif;
+  top: 11px;
+  left: 11px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  color: #fff;
+  font-family: "Inter", Arial, sans-serif;
+  line-height: 1.05;
+  text-shadow: 0 1px 3px #111, 0 0 8px rgb(17 17 17 / 65%);
   white-space: nowrap;
   pointer-events: none;
 }
-.stitch-offer-label { padding: 0 2px 0 5px; }
-.stitch-offer-percent {
-  border-radius: 5px;
-  background: #172033;
-  color: #fff;
-  padding: 4px 6px;
+.stitch-offer-label {
   font-size: 10px;
-  font-weight: 750;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.stitch-offer-percent {
+  font-size: 15px;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
-  letter-spacing: .025em;
 }
 .product-card .product-media .stitch-offer-badge + .tag.tag-new { top: 44px; }
 .pdp-main-media .stitch-offer-badge + .pdp-photo-count { left: auto; right: 14px; }
