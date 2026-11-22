@@ -5559,22 +5559,34 @@ main:has(> #offer-bar.launch-offer) #home-hero { margin-top: var(--launch-offer-
 }
 
 .card-stitching { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-.card-stitching a { border: 1px solid currentColor; padding: 6px 12px; font-size: 12px; font-weight: 600; }
-.pdp-stitching .pdp-sizes button { font-weight: 600; }
-
-.pick-tile, .collection-img { position: relative; }
-.stitch-offer-badge {
-  position: absolute;
-  z-index: 3;
-  top: 10px;
-  left: 10px;
-  border: 1px solid #111;
-  background: #fff;
-  color: #111;
+.card-stitching a,
+.pdp-stitching .pdp-sizes button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
   padding: 5px 8px;
-  font: 700 11px/1.2 "Inter", Arial, sans-serif;
-  white-space: nowrap;
-  pointer-events: none;
+  border: 1px solid #d3dae7;
+  border-radius: 8px;
+  background: #fff;
+  color: #172033;
+  font-size: 12px;
+  font-weight: 650;
+  text-decoration: none;
 }
-.product-card .product-media .stitch-offer-badge + .tag.tag-new { top: 40px; }
-.pdp-main-media .stitch-offer-badge + .pdp-photo-count { left: auto; right: 14px; }
+.stitching-discount {
+  padding: 3px 5px;
+  border-radius: 5px;
+  background: #edf7f2;
+  color: #156448;
+  font-size: 10px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+.card-stitching a:hover,
+.card-stitching a:focus-visible,
+.pdp-stitching .pdp-sizes button[aria-pressed="true"] {
+  border-color: #172033;
+  background: #172033;
+  color: #fff;
+}

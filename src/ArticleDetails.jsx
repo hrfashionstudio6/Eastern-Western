@@ -5,9 +5,10 @@ import { useEffect, useRef, useState } from "react";
 import { formatPKR, priceAmount } from "../shared/money.js";
 import { descriptionSections, matchingVariant, splitSizes } from "../shared/article-options.js";
 
-export function StitchOfferBadge({ product }) {
-  const discount = discountPercent(product.stitchPrice, product.stitchRegularPrice);
-  return discount > 0 ? <span className="stitch-offer-badge">Stitch {discount}% OFF</span> : null;
+export function StitchingOptionLabel({ product, option, variant }) {
+  const regularPrice = option === "Stitch" ? product.stitchRegularPrice : product[4];
+  const discount = discountPercent(articlePrice(product, option, variant), regularPrice);
+  return <>{option}{discount > 0 && <span className="stitching-discount">{discount}% OFF</span>}</>;
 }
 
 export function ColourName({ value }) {
@@ -106,7 +107,6 @@ export default function ArticleDetails({ product, onAddToCart, contactUrl = what
       <div className="pdp-gallery">
         <div className="pdp-main-media">
           {activeImage ? <button type="button" className="pdp-photo-button" onClick={() => setZoomOpen(true)} aria-label={"Open larger photo of " + product[1]}><img className="pdp-photo" src={activeImage} alt={product[1] + " — photo " + (imageIndex + 1)} /><span className="pdp-zoom-hint">View larger ↗</span></button> : <div className="pdp-no-image">Photo coming soon</div>}
-          {activeImage && <StitchOfferBadge product={product} />}
           {gallery.length > 1 && <><span className="pdp-photo-count">{imageIndex + 1} / {gallery.length}</span><button type="button" className="pdp-photo-arrow pdp-photo-prev" onClick={() => nextPhoto(-1)} aria-label="Previous product photo">‹</button><button type="button" className="pdp-photo-arrow pdp-photo-next" onClick={() => nextPhoto(1)} aria-label="Next product photo">›</button></>}
         </div>
         {gallery.length > 1 && <div className="pdp-thumbnails" aria-label="Product photos">{gallery.map((src, photoIndex) => <button type="button" key={src} className={photoIndex === imageIndex ? "is-active" : ""} aria-pressed={photoIndex === imageIndex} onClick={() => setImageIndex(photoIndex)} aria-label={"View photo " + (photoIndex + 1)}><img src={src} alt="" loading="lazy" /></button>)}</div>}
@@ -126,7 +126,7 @@ export default function ArticleDetails({ product, onAddToCart, contactUrl = what
         <fieldset className="pdp-option pdp-stitching">
           <legend>Stitching</legend>
           <div className="pdp-sizes">
-            {stitchingOptions.map((option) => <button type="button" key={option} aria-pressed={stitching === option} onClick={() => setStitching(option)}>{option}</button>)}
+            {stitchingOptions.map((option) => <button type="button" key={option} aria-pressed={stitching === option} onClick={() => setStitching(option)}><StitchingOptionLabel product={product} option={option} variant={variant} /></button>)}
           </div>
         </fieldset>
         {sizes.length > 0 && <fieldset className="pdp-option"><legend>Size {selection.size && <span>— {selection.size}</span>}</legend><div className="pdp-sizes">{sizes.map(size => {
