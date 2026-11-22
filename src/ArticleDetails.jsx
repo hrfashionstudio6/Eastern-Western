@@ -7,12 +7,7 @@ import { descriptionSections, matchingVariant, splitSizes } from "../shared/arti
 
 export function StitchOfferBadge({ product }) {
   const discount = discountPercent(product.stitchPrice, product.stitchRegularPrice);
-  return discount > 0 ? (
-    <span className="stitch-offer-badge">
-      <span className="stitch-offer-label">Stitch</span>
-      <span className="stitch-offer-percent">{discount}% OFF</span>
-    </span>
-  ) : null;
+  return discount > 0 ? <span className="stitch-offer-badge">Stitch {discount}% OFF</span> : null;
 }
 
 export function ColourName({ value }) {

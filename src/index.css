@@ -5566,29 +5566,15 @@ main:has(> #offer-bar.launch-offer) #home-hero { margin-top: var(--launch-offer-
 .stitch-offer-badge {
   position: absolute;
   z-index: 3;
-  top: 11px;
-  left: 11px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  color: #fff;
-  font-family: "Inter", Arial, sans-serif;
-  line-height: 1.05;
-  text-shadow: 0 1px 3px #111, 0 0 8px rgb(17 17 17 / 65%);
+  top: 10px;
+  left: 10px;
+  border: 1px solid #111;
+  background: #fff;
+  color: #111;
+  padding: 5px 8px;
+  font: 700 11px/1.2 "Inter", Arial, sans-serif;
   white-space: nowrap;
   pointer-events: none;
 }
-.stitch-offer-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-}
-.stitch-offer-percent {
-  font-size: 15px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-}
-.product-card .product-media .stitch-offer-badge + .tag.tag-new { top: 44px; }
+.product-card .product-media .stitch-offer-badge + .tag.tag-new { top: 40px; }
 .pdp-main-media .stitch-offer-badge + .pdp-photo-count { left: auto; right: 14px; }
