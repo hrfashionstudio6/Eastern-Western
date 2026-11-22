@@ -14,7 +14,7 @@ import { withLoading } from "./loading-state.js";
 import AdminDashboard from "./AdminDashboard.jsx";
 import { discountPercent, fixedListingPrices, listingPrices } from "../shared/unstitched-offer.js";
 import { stitchingOptions } from "../shared/stitching.js";
-import ArticleDetails, { articlePrice, ColourName } from "./ArticleDetails.jsx";
+import ArticleDetails, { articlePrice, ColourName, StitchOfferBadge } from "./ArticleDetails.jsx";
 import ContactForm from "./ContactForm.jsx";
 import { routeSlug } from "../shared/route-slug.js";
 import { loadProduct } from "../shared/load-product.js";
@@ -568,6 +568,7 @@ function ProductCard({ item, listing = false, stitching }) {
       <div className="product-media">
         {image ? <img src={image} alt={name} /> : <div className="media-placeholder">No image</div>}
         {hover && hover !== image && <img src={hover} alt={name} />}
+        {image && <StitchOfferBadge product={item} />}
         {item.isNew && <div className="tag tag-new">New</div>}
         {item.bestSeller && <div className="tag tag-best">Best seller</div>}
         {listing && <span className="quick-add">Choose options</span>}
@@ -641,7 +642,7 @@ function CollectionsSection({ products = [] }) {
             <Button dark href={slugPath("shop", item[2])}>View article</Button>
           </div>
           <a className="collection-img" href={slugPath("shop", item[2])} aria-label={`View ${item[1]}`}>
-            {(item.media?.[3] || item[5]) ? <img src={item.media?.[3] || item[5]} alt={item[1]} loading="lazy" /> : <div className="media-placeholder">No image</div>}
+            {(item.media?.[3] || item[5]) ? <><img src={item.media?.[3] || item[5]} alt={item[1]} loading="lazy" /><StitchOfferBadge product={item} /></> : <div className="media-placeholder">No image</div>}
           </a>
         </div>
       ))}
@@ -709,6 +710,7 @@ function PickMarqueeRow({ items, reverse = false, stitching }) {
             {items.map((item) => (
               <a href={slugPath("shop", item[2]) + (stitching ? "?stitching=" + stitching : "")} className="pick-tile" key={item.id || item[2]} tabIndex={copy === 1 ? -1 : undefined}>
                 <img src={item[5]} alt={copy === 1 ? "" : item[1]} loading="lazy" decoding="async" />
+                {item[5] && <StitchOfferBadge product={item} />}
               </a>
             ))}
           </div>

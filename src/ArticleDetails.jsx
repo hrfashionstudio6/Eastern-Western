@@ -1,8 +1,14 @@
+import { discountPercent } from "../shared/unstitched-offer.js";
 import { stitchingOptions } from "../shared/stitching.js";
 import { whatsappLink } from "../shared/storefront.js";
 import { useEffect, useRef, useState } from "react";
 import { formatPKR, priceAmount } from "../shared/money.js";
 import { descriptionSections, matchingVariant, splitSizes } from "../shared/article-options.js";
+
+export function StitchOfferBadge({ product }) {
+  const discount = discountPercent(product.stitchPrice, product.stitchRegularPrice);
+  return discount > 0 ? <span className="stitch-offer-badge">Stitch {discount}% OFF</span> : null;
+}
 
 export function ColourName({ value }) {
   return <span className="colour-name">{String(value || "").trim() || "Colour as pictured"}</span>;
@@ -100,6 +106,7 @@ export default function ArticleDetails({ product, onAddToCart, contactUrl = what
       <div className="pdp-gallery">
         <div className="pdp-main-media">
           {activeImage ? <button type="button" className="pdp-photo-button" onClick={() => setZoomOpen(true)} aria-label={"Open larger photo of " + product[1]}><img className="pdp-photo" src={activeImage} alt={product[1] + " — photo " + (imageIndex + 1)} /><span className="pdp-zoom-hint">View larger ↗</span></button> : <div className="pdp-no-image">Photo coming soon</div>}
+          {activeImage && <StitchOfferBadge product={product} />}
           {gallery.length > 1 && <><span className="pdp-photo-count">{imageIndex + 1} / {gallery.length}</span><button type="button" className="pdp-photo-arrow pdp-photo-prev" onClick={() => nextPhoto(-1)} aria-label="Previous product photo">‹</button><button type="button" className="pdp-photo-arrow pdp-photo-next" onClick={() => nextPhoto(1)} aria-label="Next product photo">›</button></>}
         </div>
         {gallery.length > 1 && <div className="pdp-thumbnails" aria-label="Product photos">{gallery.map((src, photoIndex) => <button type="button" key={src} className={photoIndex === imageIndex ? "is-active" : ""} aria-pressed={photoIndex === imageIndex} onClick={() => setImageIndex(photoIndex)} aria-label={"View photo " + (photoIndex + 1)}><img src={src} alt="" loading="lazy" /></button>)}</div>}
