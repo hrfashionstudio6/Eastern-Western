@@ -725,7 +725,11 @@ function PopularPicks({ products = [], active = "UNSTITCHED", onSelect }) {
   const requested = onSelect ? active : localActive;
   const selected = groups[requested]?.length ? requested : shopPickTabs.find((label) => groups[label].length) || "";
   const stitching = collectionStitching[selected];
-  const pickProducts = stitching ? groups[selected] : (groups[selected] || []).slice(0, 8);
+  const collection = groups[selected] || [];
+  const sliderLimit = stitching && collection.length > 4 && collection.length % 4 === 1
+    ? collection.length - 1
+    : stitching ? collection.length : 8;
+  const pickProducts = collection.slice(0, sliderLimit);
   const choose = (label) => {
     if (onSelect) onSelect(label);
     else setLocalActive(label);
